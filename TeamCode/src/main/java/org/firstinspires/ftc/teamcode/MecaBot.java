@@ -51,7 +51,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Servo channel:  Servo to open left claw:  "left_hand"
  * Servo channel:  Servo to open right claw: "right_hand"
  */
-public class TestBot
+public class MecaBot
 {
     /* Public OpMode members. */
     public DcMotor leftFrontDrive = null;
@@ -66,7 +66,7 @@ public class TestBot
     private ElapsedTime period = new ElapsedTime();
 
     /* Constructor */
-    public TestBot(){
+    public MecaBot(){
 
     }
 
@@ -76,10 +76,10 @@ public class TestBot
         hwMap = ahwMap;
 
         // Define and Initialize Motors
-        leftFrontDrive  = hwMap.get(DcMotor.class, "left_front_ drive");
-        leftBackDrive = hwMap.get(DcMotor.class, "left_back_drive");
-        rightFrontDrive = hwMap.get(DcMotor.class, "right_front_ drive");
-        rightBackDrive = hwMap.get(DcMotor.class, "right_back_drive");
+        leftFrontDrive  = hwMap.get(DcMotor.class, "leftFrontDrive");
+        leftBackDrive = hwMap.get(DcMotor.class, "leftBackDrive");
+        rightFrontDrive = hwMap.get(DcMotor.class, "rightFrontDrive");
+        rightBackDrive = hwMap.get(DcMotor.class, "rightBackDrive");
 
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);

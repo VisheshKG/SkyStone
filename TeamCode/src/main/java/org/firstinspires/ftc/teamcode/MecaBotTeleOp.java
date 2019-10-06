@@ -1,18 +1,14 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.util.Range;
-
-import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
 
 
 @TeleOp(name = "TestTeleOP")
-public class TestBotTeleOp extends LinearOpMode {
+public class MecaBotTeleOp extends LinearOpMode {
 
     /* Declare OpMode members. */
-    TestBot robot = new TestBot();   // Use a Pushbot's hardware
+    MecaBot robot = new MecaBot();   // Use a Pushbot's hardware
                 // sets rate to move servo
 
     @Override
