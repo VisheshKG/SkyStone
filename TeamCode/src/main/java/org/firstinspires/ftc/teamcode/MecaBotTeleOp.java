@@ -4,20 +4,25 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 
-@TeleOp(name = "TestTeleOP")
+@TeleOp(name = "MainTeleOP")
 public class MecaBotTeleOp extends LinearOpMode {
 
     /* Declare OpMode members. */
     MecaBot robot = new MecaBot();   // Use a Pushbot's hardware
-                // sets rate to move servo
 
     @Override
     public void runOpMode() {
+        drive();
+        lift();
+    }
+
+    public void drive() {
+        // motor power
         double leftFront = 0;
         double leftBack = 0;
         double rightFront = 0;
         double rightBack = 0;
-        double max = 0;
+        double max;
 
         /* Initialize the hardware variables.
          * The init() method of the hardware class does all the work here
@@ -33,9 +38,11 @@ public class MecaBotTeleOp extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
+            telemetry.addData("Say", "Op Mod Started");
+            telemetry.update();
 
             //if we want to move sideways (MECANUM)
-            if (gamepad1.left_stick_x > gamepad1.left_stick_y) {
+            if (Math.abs(gamepad1.left_stick_x) > Math.abs(gamepad1.left_stick_y)) {
 
                 // if we want to move right
                 if (gamepad1.left_stick_x > 0) {
@@ -74,9 +81,13 @@ public class MecaBotTeleOp extends LinearOpMode {
                 leftBack -= gamepad1.right_stick_x;
                 leftFront += gamepad1.right_stick_x;
 
-                // find the highest power motor and divide all motors by that to preserve the ratio
-                // while also keeping the maximum power at 1
-                max = Math.max(Math.max(leftFront, leftBack), Math.max(rightFront, rightBack));
+
+            }
+
+            // find the highest power motor and divide all motors by that to preserve the ratio
+            // while also keeping the maximum power at 1
+            max = Math.max(Math.max(leftFront, leftBack), Math.max(rightFront, rightBack));
+            if (max != 0) {
                 leftFront /= max;
                 leftBack /= max;
                 rightFront /= max;
@@ -88,6 +99,15 @@ public class MecaBotTeleOp extends LinearOpMode {
             robot.leftBackDrive.setPower(leftBack);
             robot.rightFrontDrive.setPower(rightFront);
             robot.rightBackDrive.setPower(rightBack);
+
+            telemetry.addData("Say", "Iteration Complete");
+            telemetry.update();
+        }
+    }
+
+    public void lift() {
+        if (gamepad2.left_stick_y != 0) {
+            robot.liftMotor.setPower(gamepad2.left_stick_y);
         }
     }
 }

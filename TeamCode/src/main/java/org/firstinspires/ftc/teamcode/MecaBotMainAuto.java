@@ -42,15 +42,15 @@ public abstract class MecaBotMainAuto extends LinearOpMode {
 
         // Loop until both motors are no longer busy.
         // TODO: find a better way to move than empty loop until reached target position
-/*
-        while (leftDriveMotor.isBusy() || rightDriveMotor.isBusy()) {
-            if (leftDriveMotor.getCurrentPosition() > leftDriveMotor.getTargetPosition() - 10 && leftDriveMotor.getCurrentPosition() < leftDriveMotor.getTargetPosition() + 10) {
-                if (rightDriveMotor.getCurrentPosition() > rightDriveMotor.getTargetPosition() - 10 && rightDriveMotor.getCurrentPosition() < rightDriveMotor.getCurrentPosition() + 10) {
+
+        while (robot.leftBackDrive.isBusy() || robot.rightBackDrive.isBusy()) {
+            if (robot.leftBackDrive.getCurrentPosition() > robot.leftBackDrive.getTargetPosition() - 10 && robot.leftBackDrive.getCurrentPosition() < robot.leftBackDrive.getTargetPosition() + 10) {
+                if (robot.rightBackDrive.getCurrentPosition() > robot.rightBackDrive.getTargetPosition() - 10 && robot.rightBackDrive.getCurrentPosition() < robot.rightBackDrive.getCurrentPosition() + 10) {
                     break;
                 }
             }
         }
- */
+
         // Stop powering the motors - robot has moved to intended position
         robot.leftBackDrive.setPower(0);
         robot.leftFrontDrive.setPower(0);
@@ -104,16 +104,14 @@ public abstract class MecaBotMainAuto extends LinearOpMode {
 
         // Loop until motors are no longer busy
         // TODO: find a better way to move than empty loop until reached target position
-/*
-        while (leftDriveMotor.isBusy() || rightDriveMotor.isBusy()) {
-            if (leftDriveMotor.getCurrentPosition() > leftDriveMotor.getTargetPosition() - 10 && leftDriveMotor.getCurrentPosition() < leftDriveMotor.getTargetPosition() + 10) {
-                if (rightDriveMotor.getCurrentPosition() > rightDriveMotor.getTargetPosition() - 10 && rightDriveMotor.getCurrentPosition() < rightDriveMotor.getCurrentPosition() + 10) {
+
+        while (robot.leftBackDrive.isBusy() || robot.rightBackDrive.isBusy()) {
+            if (robot.leftBackDrive.getCurrentPosition() > robot.leftBackDrive.getTargetPosition() - 10 && robot.leftBackDrive.getCurrentPosition() < robot.leftBackDrive.getTargetPosition() + 10) {
+                if (robot.rightBackDrive.getCurrentPosition() > robot.rightBackDrive.getTargetPosition() - 10 && robot.rightBackDrive.getCurrentPosition() < robot.rightBackDrive.getCurrentPosition() + 10) {
                     break;
                 }
             }
-
- */
         }
 
-
+    }
 }
