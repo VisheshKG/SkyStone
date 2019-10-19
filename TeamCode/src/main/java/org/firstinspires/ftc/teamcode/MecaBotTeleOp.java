@@ -29,7 +29,7 @@ public class MecaBotTeleOp extends LinearOpMode {
             telemetry.addData("Say", "Iteration Started");
             telemetry.update();
             drive();
-            lift();
+            //lift();
             telemetry.addData("Say", "Iteration Complete");
             telemetry.update();
         }
@@ -44,52 +44,42 @@ public class MecaBotTeleOp extends LinearOpMode {
         double max;
 
             //if we want to move sideways (MECANUM)
- /*           if (Math.abs(gamepad1.left_stick_x) > Math.abs(gamepad1.left_stick_y)) {
+            if (Math.abs(gamepad1.right_stick_x) > Math.abs(gamepad1.right_stick_y)) {
 
-                // if we want to move right
-                if (gamepad1.left_stick_x > 0) {
-                    //right inside
-                    rightFront -= gamepad1.left_stick_x;
-                    rightBack += gamepad1.left_stick_x;
+                // if we want to move right sideways, joystick value is positive
+                //right inside
+                rightFront -= gamepad1.right_stick_x;
+                rightBack += gamepad1.right_stick_x;
 
-                    //left outside
-                    leftFront += gamepad1.left_stick_x;
-                    leftBack -= gamepad1.left_stick_x;
-                }
+                //left outside
+                leftFront += gamepad1.right_stick_x;
+                leftBack -= gamepad1.right_stick_x;
 
-                // if we want to move left
-                else if (gamepad1.left_stick_x < 0) {
-                    //left inside
-                    leftFront -= gamepad1.left_stick_x;
-                    leftBack += gamepad1.left_stick_x;
-
-                    //right outside
-                    rightFront += gamepad1.left_stick_x;
-                    rightBack -= gamepad1.left_stick_x;
-                }
+                // if we want to move left, its same code as above, joystick value is negative
             }
             // normal tank movement
-            else { */
+            else {
 
-                // basic forward/backwards, joystick forward is negative so negate it
-                leftFront += -gamepad1.left_stick_y;
-                leftBack += -gamepad1.left_stick_y;
-                rightFront += -gamepad1.left_stick_y;
-                rightBack += -gamepad1.left_stick_y;
+                // basic forward/backwards, run motors at speed controlled by joystick
+                leftFront += gamepad1.right_stick_y;
+                leftBack += gamepad1.right_stick_y;
+                rightFront += gamepad1.right_stick_y;
+                rightBack += gamepad1.right_stick_y;
 
-                // add turning joystick to right motors, subtract from left
-                leftFront += gamepad1.right_stick_x;
-                leftBack += gamepad1.right_stick_x;
-                rightFront -= gamepad1.right_stick_x;
-                rightBack -= gamepad1.right_stick_x;
+                // right press on joystick is positive, left press is negative
+                // to turn right, add turning joystick to left motors, subtract from right
+                // to turn left, same code applies, sign is reversed automatically by joystick value
+                leftFront += gamepad1.left_stick_x;
+                leftBack += gamepad1.left_stick_x;
+                rightFront -= gamepad1.left_stick_x;
+                rightBack -= gamepad1.left_stick_x;
 
-
- //           }
+           }
 
             // find the highest power motor and divide all motors by that to preserve the ratio
             // while also keeping the maximum power at 1
-            max = Math.max(Math.max(leftFront, leftBack), Math.max(rightFront, rightBack));
-            if (max != 0) {
+            max = Math.max(Math.max(Math.abs(leftFront), Math.abs(leftBack)), Math.max(Math.abs(rightFront), Math.abs(rightBack)));
+            if (max > 1) {
                 leftFront /= max;
                 leftBack /= max;
                 rightFront /= max;
@@ -103,10 +93,11 @@ public class MecaBotTeleOp extends LinearOpMode {
             robot.rightBackDrive.setPower(rightBack);
         }
 
-
+/*
     public void lift() {
         if (gamepad2.left_stick_y != 0) {
             robot.liftMotor.setPower(gamepad2.left_stick_y);
         }
     }
+ */
 }
