@@ -44,18 +44,29 @@ public class MecaBotTeleOp extends LinearOpMode {
         double max;
 
             //if we want to move sideways (MECANUM)
-            if (Math.abs(gamepad1.right_stick_x) > Math.abs(gamepad1.right_stick_y)) {
+            if (Math.abs(gamepad1.left_stick_x) > 0) {
 
                 // if we want to move right sideways, joystick value is positive
                 //right inside
-                rightFront -= gamepad1.right_stick_x;
-                rightBack += gamepad1.right_stick_x;
+                rightFront -= gamepad1.left_stick_x;
+                rightBack += gamepad1.left_stick_x;
 
                 //left outside
-                leftFront += gamepad1.right_stick_x;
-                leftBack -= gamepad1.right_stick_x;
+                leftFront += gamepad1.left_stick_x;
+                leftBack -= gamepad1.left_stick_x;
 
                 // if we want to move left, its same code as above, joystick value is negative
+            }
+            // Diagonal movement
+            else if (Math.abs(gamepad1.left_stick_y) > 0) {
+                if (gamepad1.left_stick_y > 0) {
+                    leftFront += gamepad1.left_stick_y;
+                    rightBack += gamepad1.left_stick_y;
+                }
+                else if (gamepad1.left_stick_y < 0) {
+                    rightFront += gamepad1.left_stick_y;
+                    leftBack += gamepad1.left_stick_y;
+                }
             }
             // normal tank movement
             else {
@@ -69,10 +80,10 @@ public class MecaBotTeleOp extends LinearOpMode {
                 // right press on joystick is positive, left press is negative
                 // to turn right, add turning joystick to left motors, subtract from right
                 // to turn left, same code applies, sign is reversed automatically by joystick value
-                leftFront += gamepad1.left_stick_x;
-                leftBack += gamepad1.left_stick_x;
-                rightFront -= gamepad1.left_stick_x;
-                rightBack -= gamepad1.left_stick_x;
+                leftFront += gamepad1.right_stick_x;
+                leftBack += gamepad1.right_stick_x;
+                rightFront -= gamepad1.right_stick_x;
+                rightBack -= gamepad1.right_stick_x;
 
            }
 
