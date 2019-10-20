@@ -51,16 +51,12 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Servo channel:  Servo to open left claw:  "left_hand"
  * Servo channel:  Servo to open right claw: "right_hand"
  */
-public class MecaBot
-{
+public class BackupBot {
     /* Public OpMode members. */
     public DcMotor leftFrontDrive = null;
     public DcMotor leftBackDrive = null;
     public DcMotor rightFrontDrive = null;
     public DcMotor rightBackDrive = null;
-    public DcMotor liftMotor = null;
-    public DcMotor leftIntake = null;
-    public DcMotor rightIntake = null;
 
     //constants here
 
@@ -69,7 +65,7 @@ public class MecaBot
     private ElapsedTime period = new ElapsedTime();
 
     /* Constructor */
-    public MecaBot(){
+    public BackupBot(){
 
     }
 
@@ -83,18 +79,11 @@ public class MecaBot
         leftBackDrive = hwMap.get(DcMotor.class, "leftBackDrive");
         rightFrontDrive = hwMap.get(DcMotor.class, "rightFrontDrive");
         rightBackDrive = hwMap.get(DcMotor.class, "rightBackDrive");
-        liftMotor = hwMap.get(DcMotor.class, "liftMotor");
-        leftIntake = hwMap.get(DcMotor.class, "leftIntake");
-        rightIntake = hwMap.get(DcMotor.class, "rightIntake");
 
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
-        liftMotor.setDirection(DcMotor.Direction.FORWARD);
-        leftIntake.setDirection(DcMotor.Direction.REVERSE);
-        rightIntake.setDirection(DcMotor.Direction.FORWARD);
-
 
 
 
@@ -102,10 +91,6 @@ public class MecaBot
         leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        liftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
 
 
         // Set all motors to zero power
@@ -113,9 +98,6 @@ public class MecaBot
         leftBackDrive.setPower(0);
         rightFrontDrive.setPower(0);
         rightBackDrive.setPower(0);
-        liftMotor.setPower(0);
-        leftIntake.setPower(0);
-        rightIntake.setPower(0);
 
 
         // Set all motors to run without encoders.
@@ -124,9 +106,6 @@ public class MecaBot
         leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Define and initialize ALL installed servos.
  /*       leftClaw  = hwMap.get(Servo.class, "left_hand");

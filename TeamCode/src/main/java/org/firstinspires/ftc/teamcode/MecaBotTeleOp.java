@@ -29,7 +29,8 @@ public class MecaBotTeleOp extends LinearOpMode {
             telemetry.addData("Say", "Iteration Started");
             telemetry.update();
             drive();
-            //lift();
+            lift();
+            intake();
             telemetry.addData("Say", "Iteration Complete");
             telemetry.update();
         }
@@ -104,11 +105,22 @@ public class MecaBotTeleOp extends LinearOpMode {
             robot.rightBackDrive.setPower(rightBack);
         }
 
-/*
+
     public void lift() {
         if (gamepad2.left_stick_y != 0) {
             robot.liftMotor.setPower(gamepad2.left_stick_y);
         }
     }
- */
+
+    public void intake() {
+        if (gamepad2.right_trigger != 0) {
+            robot.leftIntake.setPower(gamepad2.right_trigger);
+            robot.rightIntake.setPower(gamepad2.right_trigger);
+        }
+        else if (gamepad2.left_trigger != 0) {
+            robot.leftIntake.setPower(-gamepad2.right_trigger);
+            robot.rightIntake.setPower(-gamepad2.right_trigger);
+        }
+    }
+
 }
