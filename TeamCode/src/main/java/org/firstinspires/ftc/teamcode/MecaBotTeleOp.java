@@ -110,6 +110,21 @@ public class MecaBotTeleOp extends LinearOpMode {
         if (gamepad2.left_stick_y != 0) {
             robot.liftMotor.setPower(gamepad2.left_stick_y);
         }
+        if (gamepad2.right_stick_y != 0) {
+            robot.liftServo.setPower(gamepad2.right_stick_y);
+        }
+        if (gamepad2.dpad_up) {
+            robot.clawRotate.setPower(0.5);
+        }
+        else if (gamepad2.dpad_down) {
+            robot.clawRotate.setPower(-0.5);
+        }
+        if (gamepad2.right_bumper) {
+            robot.clawGrab.setPosition(0); //TODO
+        }
+        else if (gamepad2.left_bumper) {
+            robot.clawGrab.setPosition(0); //TODO
+        }
     }
 
     public void intake() {
@@ -118,8 +133,17 @@ public class MecaBotTeleOp extends LinearOpMode {
             robot.rightIntake.setPower(gamepad2.right_trigger);
         }
         else if (gamepad2.left_trigger != 0) {
-            robot.leftIntake.setPower(-gamepad2.right_trigger);
-            robot.rightIntake.setPower(-gamepad2.right_trigger);
+            robot.leftIntake.setPower(-gamepad2.left_trigger);
+            robot.rightIntake.setPower(-gamepad2.left_trigger);
+        }
+    }
+
+    public void bumper() {
+        if (gamepad2.a) {
+            robot.bumperServo.setPosition(0); //TODO
+        }
+        else if (gamepad2.b) {
+            robot.bumperServo.setPosition(0); //TODO
         }
     }
 

@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -61,6 +62,10 @@ public class MecaBot
     public DcMotor liftMotor = null;
     public DcMotor leftIntake = null;
     public DcMotor rightIntake = null;
+    public CRServo liftServo = null;
+    public CRServo clawRotate = null;
+    public Servo clawGrab = null;
+    public Servo bumperServo = null;
 
     //constants here
 
@@ -86,6 +91,10 @@ public class MecaBot
         liftMotor = hwMap.get(DcMotor.class, "liftMotor");
         leftIntake = hwMap.get(DcMotor.class, "leftIntake");
         rightIntake = hwMap.get(DcMotor.class, "rightIntake");
+        liftServo = hwMap.get(CRServo.class, "liftServo");
+        clawRotate = hwMap.get(CRServo.class, "clawRotate");
+        clawGrab = hwMap.get(Servo.class, "clawGrab");
+        bumperServo = hwMap.get(Servo.class, "bumperServo");
 
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
