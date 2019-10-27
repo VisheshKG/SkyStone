@@ -103,7 +103,8 @@ public class MecaBot
         liftMotor.setDirection(DcMotor.Direction.FORWARD);
         leftIntake.setDirection(DcMotor.Direction.REVERSE);
         rightIntake.setDirection(DcMotor.Direction.FORWARD);
-
+        liftServo.setDirection(CRServo.Direction.FORWARD);
+        clawRotate.setDirection(CRServo.Direction.FORWARD);
 
 
 
@@ -117,6 +118,8 @@ public class MecaBot
 
 
 
+
+
         // Set all motors to zero power
         leftFrontDrive.setPower(0);
         leftBackDrive.setPower(0);
@@ -125,6 +128,8 @@ public class MecaBot
         liftMotor.setPower(0);
         leftIntake.setPower(0);
         rightIntake.setPower(0);
+        liftServo.setPower(0);
+        clawRotate.setPower(0);
 
 
         // Set all motors to run without encoders.
@@ -136,6 +141,7 @@ public class MecaBot
         liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         leftIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
 
         // Define and initialize ALL installed servos.
  /*       leftClaw  = hwMap.get(Servo.class, "left_hand");

@@ -31,6 +31,7 @@ public class MecaBotTeleOp extends LinearOpMode {
             drive();
             lift();
             intake();
+            bumper();
             telemetry.addData("Say", "Iteration Complete");
             telemetry.update();
         }
@@ -107,18 +108,21 @@ public class MecaBotTeleOp extends LinearOpMode {
 
 
     public void lift() {
-        if (gamepad2.left_stick_y != 0) {
-            robot.liftMotor.setPower(gamepad2.left_stick_y);
-        }
-        if (gamepad2.right_stick_y != 0) {
-            robot.liftServo.setPower(gamepad2.right_stick_y);
-        }
-        if (gamepad2.dpad_up) {
-            robot.clawRotate.setPower(0.5);
-        }
-        else if (gamepad2.dpad_down) {
-            robot.clawRotate.setPower(-0.5);
-        }
+
+        robot.liftMotor.setPower(gamepad2.left_stick_y);
+        robot.liftServo.setPower(gamepad2.right_stick_y);
+
+       if (gamepad2.right_trigger > 0) {
+           robot.clawRotate.setPower(gamepad2.right_trigger);
+       }
+       else if (gamepad2.left_trigger > 0) {
+           robot.clawRotate.setPower(-gamepad2.left_trigger);
+       }
+       else {
+           robot.clawRotate.setPower(0);
+       }
+
+
         if (gamepad2.right_bumper) {
             robot.clawGrab.setPosition(0); //TODO
         }
@@ -128,14 +132,20 @@ public class MecaBotTeleOp extends LinearOpMode {
     }
 
     public void intake() {
-        if (gamepad2.right_trigger != 0) {
-            robot.leftIntake.setPower(gamepad2.right_trigger);
-            robot.rightIntake.setPower(gamepad2.right_trigger);
+
+        if (gamepad1.right_trigger > 0) {
+            robot.leftIntake.setPower(gamepad1.right_trigger);
+            robot.rightIntake.setPower(gamepad1.right_trigger);
         }
-        else if (gamepad2.left_trigger != 0) {
-            robot.leftIntake.setPower(-gamepad2.left_trigger);
-            robot.rightIntake.setPower(-gamepad2.left_trigger);
+        else if (gamepad1.left_trigger > 0) {
+            robot.leftIntake.setPower(-gamepad1.left_trigger);
+            robot.rightIntake.setPower(-gamepad1.left_trigger);
         }
+        else {
+            robot.leftIntake.setPower(0);
+            robot.rightIntake.setPower(0);
+        }
+
     }
 
     public void bumper() {
