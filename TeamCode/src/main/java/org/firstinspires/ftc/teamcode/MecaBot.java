@@ -62,8 +62,8 @@ public class MecaBot
     public DcMotor liftMotor = null;
     public DcMotor leftIntake = null;
     public DcMotor rightIntake = null;
-    public CRServo liftServo = null;
-    public CRServo clawRotate = null;
+    public Servo liftServo = null;
+    public Servo clawRotate = null;
     public Servo clawGrab = null;
     public Servo bumperServo = null;
 
@@ -91,8 +91,8 @@ public class MecaBot
         liftMotor = hwMap.get(DcMotor.class, "liftMotor");
         leftIntake = hwMap.get(DcMotor.class, "leftIntake");
         rightIntake = hwMap.get(DcMotor.class, "rightIntake");
-        liftServo = hwMap.get(CRServo.class, "liftServo");
-        clawRotate = hwMap.get(CRServo.class, "clawRotate");
+        liftServo = hwMap.get(Servo.class, "liftServo");
+        clawRotate = hwMap.get(Servo.class, "clawRotate");
         clawGrab = hwMap.get(Servo.class, "clawGrab");
         bumperServo = hwMap.get(Servo.class, "bumperServo");
 
@@ -103,8 +103,6 @@ public class MecaBot
         liftMotor.setDirection(DcMotor.Direction.FORWARD);
         leftIntake.setDirection(DcMotor.Direction.REVERSE);
         rightIntake.setDirection(DcMotor.Direction.FORWARD);
-        liftServo.setDirection(CRServo.Direction.FORWARD);
-        clawRotate.setDirection(CRServo.Direction.FORWARD);
 
 
 
@@ -128,8 +126,9 @@ public class MecaBot
         liftMotor.setPower(0);
         leftIntake.setPower(0);
         rightIntake.setPower(0);
-        liftServo.setPower(0);
-        clawRotate.setPower(0);
+        liftServo.setPosition(1.0);  // start at max clockwise position
+        clawRotate.setPosition(1.0); // start at max clockwise position
+        clawGrab.setPosition(1.0); // claw closes by rotating anti-clockwise, start with open claw
 
 
         // Set all motors to run without encoders.

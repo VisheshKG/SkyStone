@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Gamepad;
 
 
 @TeleOp(name = "MainTeleOP")
@@ -32,6 +33,7 @@ public class MecaBotTeleOp extends LinearOpMode {
             lift();
             intake();
             bumper();
+            //test();
             telemetry.addData("Say", "Iteration Complete");
             telemetry.update();
         }
@@ -74,10 +76,10 @@ public class MecaBotTeleOp extends LinearOpMode {
             else {
 
                 // basic forward/backwards, run motors at speed controlled by joystick
-                leftFront += gamepad1.right_stick_y;
-                leftBack += gamepad1.right_stick_y;
-                rightFront += gamepad1.right_stick_y;
-                rightBack += gamepad1.right_stick_y;
+                leftFront -= gamepad1.right_stick_y;
+                leftBack -= gamepad1.right_stick_y;
+                rightFront -= gamepad1.right_stick_y;
+                rightBack -= gamepad1.right_stick_y;
 
                 // right press on joystick is positive, left press is negative
                 // to turn right, add turning joystick to left motors, subtract from right
@@ -110,24 +112,20 @@ public class MecaBotTeleOp extends LinearOpMode {
     public void lift() {
 
         robot.liftMotor.setPower(gamepad2.left_stick_y);
-        robot.liftServo.setPower(gamepad2.right_stick_y);
+        robot.liftServo.setPosition(robot.liftServo.getPosition() + (gamepad2.right_stick_y / 20));
 
        if (gamepad2.right_trigger > 0) {
-           robot.clawRotate.setPower(gamepad2.right_trigger);
+           robot.clawRotate.setPosition(0.0);
        }
        else if (gamepad2.left_trigger > 0) {
-           robot.clawRotate.setPower(-gamepad2.left_trigger);
+           robot.clawRotate.setPosition(0.5);
        }
-       else {
-           robot.clawRotate.setPower(0);
-       }
-
 
         if (gamepad2.right_bumper) {
-            robot.clawGrab.setPosition(0); //TODO
+            robot.clawGrab.setPosition(0.0); // right is grab the stone, claw closed
         }
         else if (gamepad2.left_bumper) {
-            robot.clawGrab.setPosition(0); //TODO
+            robot.clawGrab.setPosition(1.0); // left is release the stone, claw open
         }
     }
 
@@ -150,11 +148,14 @@ public class MecaBotTeleOp extends LinearOpMode {
 
     public void bumper() {
         if (gamepad2.a) {
-            robot.bumperServo.setPosition(0); //TODO
+            robot.bumperServo.setPosition(90); //TODO
         }
         else if (gamepad2.b) {
             robot.bumperServo.setPosition(0); //TODO
         }
     }
 
+    public void test() {
+
+    }
 }
