@@ -111,8 +111,17 @@ public class MecaBotTeleOp extends LinearOpMode {
 
     public void lift() {
 
-        robot.liftMotor.setPower(gamepad2.left_stick_y);
-        robot.liftServo.setPosition(robot.liftServo.getPosition() + (gamepad2.right_stick_y / 20));
+       robot.liftMotor.setPower(gamepad2.left_stick_y);
+       //robot.liftServo.setPosition(robot.liftServo.getPosition() + (gamepad2.right_stick_y / 20));
+
+       if (gamepad2.right_stick_y > 0) {
+           robot.liftServo.setPosition(0.0);
+       }
+       else if (gamepad2.right_stick_y < 0) {
+           robot.liftServo.setPosition(1.0);
+       }
+
+       //robot.clawRotate.setPosition(robot.clawRotate.getPosition() + (gamepad2.right_trigger / 20) - (gamepad2.left_trigger / 20));
 
        if (gamepad2.right_trigger > 0) {
            robot.clawRotate.setPosition(0.0);
@@ -125,7 +134,7 @@ public class MecaBotTeleOp extends LinearOpMode {
             robot.clawGrab.setPosition(0.0); // right is grab the stone, claw closed
         }
         else if (gamepad2.left_bumper) {
-            robot.clawGrab.setPosition(1.0); // left is release the stone, claw open
+            robot.clawGrab.setPosition(0.2); // left is release the stone, claw open
         }
     }
 
@@ -148,10 +157,10 @@ public class MecaBotTeleOp extends LinearOpMode {
 
     public void bumper() {
         if (gamepad2.a) {
-            robot.bumperServo.setPosition(90); //TODO
+            robot.bumperServo.setPosition(1.0); //open
         }
         else if (gamepad2.b) {
-            robot.bumperServo.setPosition(0); //TODO
+            robot.bumperServo.setPosition(0.5); //close
         }
     }
 

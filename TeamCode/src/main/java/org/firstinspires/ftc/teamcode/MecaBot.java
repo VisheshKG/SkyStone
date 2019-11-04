@@ -128,7 +128,7 @@ public class MecaBot
         rightIntake.setPower(0);
         liftServo.setPosition(1.0);  // start at max clockwise position
         clawRotate.setPosition(1.0); // start at max clockwise position
-        clawGrab.setPosition(1.0); // claw closes by rotating anti-clockwise, start with open claw
+        clawGrab.setPosition(0.2); // claw closes by rotating anti-clockwise, start with open claw
 
 
         // Set all motors to run without encoders.

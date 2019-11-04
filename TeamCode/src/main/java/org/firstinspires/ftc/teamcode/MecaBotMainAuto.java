@@ -10,8 +10,9 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 public abstract class MecaBotMainAuto extends LinearOpMode {
 
     MecaBot robot = new MecaBot();
-    private final static int FORWARD_MULTIPLIER = 0;
-    private final static int TURN_MULTIPLIER = 0;
+    private final static int FORWARD_MULTIPLIER = 1;
+    private final static int RIGHT_MULTIPLIER = 1;
+    private final static int TURN_MULTIPLIER = 1;
 
     protected void moveForwards(int mm, double speed) {
 
@@ -72,6 +73,32 @@ public abstract class MecaBotMainAuto extends LinearOpMode {
         robot.rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         //TODO: Find out how mecanum wheels work with encoders and finish method
+
+        // Multiply the distance we require by a determined constant to tell the motors how far to turn/set our target postion
+        //TODO: find the correct constant
+        robot.leftBackDrive.setTargetPosition(mm * -RIGHT_MULTIPLIER);
+        robot.leftFrontDrive.setTargetPosition(mm * RIGHT_MULTIPLIER);
+        robot.rightBackDrive.setTargetPosition(mm * RIGHT_MULTIPLIER);
+        robot.rightFrontDrive.setTargetPosition(mm * -RIGHT_MULTIPLIER);
+
+        // Set the power of the motors to whatever speed is needed
+        robot.leftBackDrive.setPower(speed);
+        robot.leftFrontDrive.setPower(speed);
+        robot.rightBackDrive.setPower(speed);
+        robot.rightFrontDrive.setPower(speed);
+
+        // Loop until both motors are no longer busy.
+        // TODO: find a better way to move than empty loop until reached target position
+
+        while (robot.leftBackDrive.isBusy() || robot.rightBackDrive.isBusy()) {
+            if (robot.leftBackDrive.getCurrentPosition() > robot.leftBackDrive.getTargetPosition() - 10 && robot.leftBackDrive.getCurrentPosition() < robot.leftBackDrive.getTargetPosition() + 10) {
+                if (robot.rightBackDrive.getCurrentPosition() > robot.rightBackDrive.getTargetPosition() - 10 && robot.rightBackDrive.getCurrentPosition() < robot.rightBackDrive.getCurrentPosition() + 10) {
+                    break;
+                }
+            }
+        }
+
+
     }
 
     protected void turn(int degrees, double speed) {
