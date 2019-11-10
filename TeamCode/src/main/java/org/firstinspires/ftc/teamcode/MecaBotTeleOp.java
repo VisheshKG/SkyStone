@@ -8,6 +8,8 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 @TeleOp(name = "MainTeleOP")
 public class MecaBotTeleOp extends LinearOpMode {
 
+    static final int    CYCLE_MS    =   5;     // period of each cycle
+
     /* Declare OpMode members. */
     MecaBot robot = new MecaBot();   // Use a Pushbot's hardware
 
@@ -27,15 +29,13 @@ public class MecaBotTeleOp extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-            telemetry.addData("Say", "Iteration Started");
-            telemetry.update();
             drive();
             lift();
             intake();
             bumper();
             //test();
-            telemetry.addData("Say", "Iteration Complete");
-            telemetry.update();
+            sleep(CYCLE_MS);
+            idle();
         }
     }
 
@@ -112,30 +112,45 @@ public class MecaBotTeleOp extends LinearOpMode {
     public void lift() {
 
        robot.liftMotor.setPower(gamepad2.left_stick_y);
+       telemetry.addData(">", "entered lift loop");
        //robot.liftServo.setPosition(robot.liftServo.getPosition() + (gamepad2.right_stick_y / 20));
 
+        // If operator joystick is pushed upwards, move the lift arm inside the robot
        if (gamepad2.right_stick_y > 0) {
            robot.liftServo.setPosition(0.0);
+           telemetry.addData(">", "right joystick pushed up %5.2f", gamepad2.right_stick_y);
+
        }
+       // If operator joystick is pushed downwards, move the lift arm outside the robot
        else if (gamepad2.right_stick_y < 0) {
            robot.liftServo.setPosition(1.0);
+           telemetry.addData(">", "right joystick pushed down %5.2f", gamepad2.right_stick_y);
+
        }
 
        //robot.clawRotate.setPosition(robot.clawRotate.getPosition() + (gamepad2.right_trigger / 20) - (gamepad2.left_trigger / 20));
 
+        // If operator right trigger is pressed, rotate claw to Stone pickup position inside robot
        if (gamepad2.right_trigger > 0) {
            robot.clawRotate.setPosition(0.0);
+           telemetry.addData(">", "right trigger pushed %5.2f", gamepad2.right_trigger);
+
        }
+       // If operator left trigger is pressed, rotate claw perpendicular to Stone pickup position
        else if (gamepad2.left_trigger > 0) {
            robot.clawRotate.setPosition(0.5);
+           telemetry.addData(">", "left trigger pushed %5.2f", gamepad2.left_trigger);
        }
 
         if (gamepad2.right_bumper) {
             robot.clawGrab.setPosition(0.0); // right is grab the stone, claw closed
+            telemetry.addData(">", "right bumper pushed %5.2f", gamepad2.right_bumper);
         }
         else if (gamepad2.left_bumper) {
             robot.clawGrab.setPosition(0.2); // left is release the stone, claw open
+            telemetry.addData(">", "left bumper pushed %5.2f", gamepad2.left_bumper);
         }
+        telemetry.update();
     }
 
     public void intake() {
