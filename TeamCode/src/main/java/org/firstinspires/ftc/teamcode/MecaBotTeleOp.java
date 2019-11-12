@@ -5,10 +5,10 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
 
-@TeleOp(name = "MainTeleOP")
+@TeleOp(name = "MecaBotTeleOp")
 public class MecaBotTeleOp extends LinearOpMode {
 
-    static final int    CYCLE_MS    =   5;     // period of each cycle
+    static final int    CYCLE_MS    =   50;     // period of each cycle
     public static final double MIN_SERVO       =  0.0 ;
     public static final double MID_SERVO       =  0.5 ;
     public static final double MAX_SERVO       =  1.0 ;
@@ -142,18 +142,16 @@ public class MecaBotTeleOp extends LinearOpMode {
        }
        // If operator left trigger is pressed, rotate claw perpendicular to Stone pickup position
        else if (gamepad2.left_trigger > 0) {
-           robot.clawRotate.setPosition(0.5);
+           robot.clawRotate.setPosition(1.0);
            telemetry.addData(">", "left trigger pushed %5.2f", gamepad2.left_trigger);
        }
 
         if (gamepad2.right_bumper) {
-            //robot.clawGrab.setPosition(0.0); // right is grab the stone, claw closed
-            robot.clawGrab.setPower(0.1);
+            robot.clawGrab.setPosition(0.0); // right is grab the stone, claw closed
             telemetry.addData(">", "right bumper pushed");
         }
         else if (gamepad2.left_bumper) {
-            //robot.clawGrab.setPosition(0.2); // left is release the stone, claw open
-            robot.clawGrab.setPower(-0.1);
+            robot.clawGrab.setPosition(0.2); // left is release the stone, claw open
             telemetry.addData(">", "left bumper pushed");
         }
         telemetry.update();
