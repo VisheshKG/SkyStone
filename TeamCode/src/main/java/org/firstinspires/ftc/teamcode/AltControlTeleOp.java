@@ -2,13 +2,19 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Gamepad;
 
 
-@TeleOp(name = "Alt Control TeleOP")
+@TeleOp(name = "MainTeleOP")
 public class AltControlTeleOp extends LinearOpMode {
 
+    static final int    CYCLE_MS    =   5;     // period of each cycle
+    public static final double MIN_SERVO       =  0.0 ;
+    public static final double MID_SERVO       =  0.5 ;
+    public static final double MAX_SERVO       =  1.0 ;
+
     /* Declare OpMode members. */
-    BackupBot robot = new BackupBot();   // Use a Pushbot's hardware
+    MecaBot robot = new MecaBot();   // Use a Pushbot's hardware
 
     @Override
     public void runOpMode() {
@@ -16,6 +22,7 @@ public class AltControlTeleOp extends LinearOpMode {
          * The init() method of the hardware class does all the work here
          */
         robot.init(hardwareMap);
+        telemetry.addData(">", "Hardware initialized. Servo setPosition() called.");
 
         // Send telemetry message to signify robot waiting;
         telemetry.addData("Say", "Waiting for Start");    //
@@ -26,12 +33,13 @@ public class AltControlTeleOp extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-            telemetry.addData("Say", "Iteration Started");
-            telemetry.update();
             drive();
-            //lift();
-            telemetry.addData("Say", "Iteration Complete");
-            telemetry.update();
+            lift();
+            intake();
+            bumper();
+            //test();
+            sleep(CYCLE_MS);
+            idle();
         }
     }
 
@@ -44,7 +52,7 @@ public class AltControlTeleOp extends LinearOpMode {
         double max;
 
         //if we want to move sideways (MECANUM)
-        if (Math.abs(gamepad1.left_stick_x) > Math.abs(gamepad1.left_stick_y)) {
+        if (Math.abs(gamepad1.left_stick_x) > 0) {
 
             // if we want to move right sideways, joystick value is positive
             //right inside
@@ -57,14 +65,15 @@ public class AltControlTeleOp extends LinearOpMode {
 
             // if we want to move left, its same code as above, joystick value is negative
         }
+
         // normal tank movement
         else {
 
             // basic forward/backwards, run motors at speed controlled by joystick
-            leftFront += gamepad1.left_stick_y;
-            leftBack += gamepad1.left_stick_y;
-            rightFront += gamepad1.left_stick_y;
-            rightBack += gamepad1.left_stick_y;
+            leftFront -= gamepad1.left_stick_y;
+            leftBack -= gamepad1.left_stick_y;
+            rightFront -= gamepad1.left_stick_y;
+            rightBack -= gamepad1.left_stick_y;
 
             // right press on joystick is positive, left press is negative
             // to turn right, add turning joystick to left motors, subtract from right
@@ -93,11 +102,80 @@ public class AltControlTeleOp extends LinearOpMode {
         robot.rightBackDrive.setPower(rightBack);
     }
 
-/*
+
     public void lift() {
-        if (gamepad2.left_stick_y != 0) {
-            robot.liftMotor.setPower(gamepad2.left_stick_y);
+
+        robot.liftMotor.setPower(gamepad2.left_stick_y);
+        telemetry.addData(">", "entered lift loop");
+        //robot.liftServo.setPosition(robot.liftServo.getPosition() + (gamepad2.right_stick_y / 20));
+
+        // If operator joystick is pushed upwards, move the lift arm inside the robot
+        if (gamepad2.right_stick_y > 0) {
+            robot.liftServo.setPosition(0.0);
+            telemetry.addData(">", "right joystick pushed up %5.2f", gamepad2.right_stick_y);
+
+        }
+        // If operator joystick is pushed downwards, move the lift arm outside the robot
+        else if (gamepad2.right_stick_y < 0) {
+            robot.liftServo.setPosition(1.0);
+            telemetry.addData(">", "right joystick pushed down %5.2f", gamepad2.right_stick_y);
+
+        }
+
+        //robot.clawRotate.setPosition(robot.clawRotate.getPosition() + (gamepad2.right_trigger / 20) - (gamepad2.left_trigger / 20));
+
+        // If operator right trigger is pressed, rotate claw to Stone pickup position inside robot
+        if (gamepad2.right_trigger > 0) {
+            robot.clawRotate.setPosition(0.0);
+            telemetry.addData(">", "right trigger pushed %5.2f", gamepad2.right_trigger);
+
+        }
+        // If operator left trigger is pressed, rotate claw perpendicular to Stone pickup position
+        else if (gamepad2.left_trigger > 0) {
+            robot.clawRotate.setPosition(0.5);
+            telemetry.addData(">", "left trigger pushed %5.2f", gamepad2.left_trigger);
+        }
+
+        if (gamepad2.right_bumper) {
+            //robot.clawGrab.setPosition(0.0); // right is grab the stone, claw closed
+            robot.clawGrab.setPower(0.1);
+            telemetry.addData(">", "right bumper pushed");
+        }
+        else if (gamepad2.left_bumper) {
+            //robot.clawGrab.setPosition(0.2); // left is release the stone, claw open
+            robot.clawGrab.setPower(-0.1);
+            telemetry.addData(">", "left bumper pushed");
+        }
+        telemetry.update();
+    }
+
+    public void intake() {
+
+        if (gamepad1.right_trigger > 0) {
+            robot.leftIntake.setPower(gamepad1.right_trigger);
+            robot.rightIntake.setPower(gamepad1.right_trigger);
+        }
+        else if (gamepad1.left_trigger > 0) {
+            robot.leftIntake.setPower(-gamepad1.left_trigger);
+            robot.rightIntake.setPower(-gamepad1.left_trigger);
+        }
+        else {
+            robot.leftIntake.setPower(0);
+            robot.rightIntake.setPower(0);
+        }
+
+    }
+
+    public void bumper() {
+        if (gamepad2.a) {
+            robot.bumperServo.setPosition(1.0); //open
+        }
+        else if (gamepad2.b) {
+            robot.bumperServo.setPosition(0.5); //close
         }
     }
- */
+
+    public void test() {
+
+    }
 }

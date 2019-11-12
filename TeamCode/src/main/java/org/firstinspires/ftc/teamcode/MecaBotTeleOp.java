@@ -9,6 +9,9 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 public class MecaBotTeleOp extends LinearOpMode {
 
     static final int    CYCLE_MS    =   5;     // period of each cycle
+    public static final double MIN_SERVO       =  0.0 ;
+    public static final double MID_SERVO       =  0.5 ;
+    public static final double MAX_SERVO       =  1.0 ;
 
     /* Declare OpMode members. */
     MecaBot robot = new MecaBot();   // Use a Pushbot's hardware
@@ -19,6 +22,7 @@ public class MecaBotTeleOp extends LinearOpMode {
          * The init() method of the hardware class does all the work here
          */
         robot.init(hardwareMap);
+        telemetry.addData(">", "Hardware initialized. Servo setPosition() called.");
 
         // Send telemetry message to signify robot waiting;
         telemetry.addData("Say", "Waiting for Start");    //
@@ -143,12 +147,14 @@ public class MecaBotTeleOp extends LinearOpMode {
        }
 
         if (gamepad2.right_bumper) {
-            robot.clawGrab.setPosition(0.0); // right is grab the stone, claw closed
-            telemetry.addData(">", "right bumper pushed %5.2f", gamepad2.right_bumper);
+            //robot.clawGrab.setPosition(0.0); // right is grab the stone, claw closed
+            robot.clawGrab.setPower(0.1);
+            telemetry.addData(">", "right bumper pushed");
         }
         else if (gamepad2.left_bumper) {
-            robot.clawGrab.setPosition(0.2); // left is release the stone, claw open
-            telemetry.addData(">", "left bumper pushed %5.2f", gamepad2.left_bumper);
+            //robot.clawGrab.setPosition(0.2); // left is release the stone, claw open
+            robot.clawGrab.setPower(-0.1);
+            telemetry.addData(">", "left bumper pushed");
         }
         telemetry.update();
     }

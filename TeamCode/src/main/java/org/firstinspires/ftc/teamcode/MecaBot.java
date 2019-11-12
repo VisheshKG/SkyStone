@@ -64,7 +64,7 @@ public class MecaBot
     public DcMotor rightIntake = null;
     public Servo liftServo = null;
     public Servo clawRotate = null;
-    public Servo clawGrab = null;
+    public CRServo clawGrab = null;
     public Servo bumperServo = null;
 
     //constants here
@@ -93,7 +93,7 @@ public class MecaBot
         rightIntake = hwMap.get(DcMotor.class, "rightIntake");
         liftServo = hwMap.get(Servo.class, "liftServo");
         clawRotate = hwMap.get(Servo.class, "clawRotate");
-        clawGrab = hwMap.get(Servo.class, "clawGrab");
+        clawGrab = hwMap.get(CRServo.class, "clawGrab");
         bumperServo = hwMap.get(Servo.class, "bumperServo");
 
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
@@ -128,8 +128,9 @@ public class MecaBot
         rightIntake.setPower(0);
         liftServo.setPosition(1.0);  // start at max clockwise position
         clawRotate.setPosition(1.0); // start at max clockwise position
-        clawGrab.setPosition(0.2); // claw closes by rotating anti-clockwise, start with open claw
+        //clawGrab.setPosition(0.2);   // claw closes by rotating anti-clockwise, start with open claw
 
+        clawGrab.setPower(0);
 
         // Set all motors to run without encoders.
         // May want to use RUN_USING_ENCODERS if encoders are installed.
