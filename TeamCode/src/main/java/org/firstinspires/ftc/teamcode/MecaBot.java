@@ -68,6 +68,14 @@ public class MecaBot
     public Servo bumperServo = null;
 
     //constants here
+    public static final double ARM_INSIDE = 1.0;
+    public static final double ARM_OUTSIDE = 0.0;
+    public static final double CLAW_PARALLEL = 0.92;
+    public static final double CLAW_PERPENDICULAR = 0.60;
+    public static final double CLAW_OPEN = 0.45;
+    public static final double CLAW_CLOSE = 0.40;
+    public static final double LIFT_MAX = 4950;
+    public static final double LIFT_MIN = 0;
 
     /* local OpMode members. */
     HardwareMap hwMap =  null;
@@ -100,7 +108,7 @@ public class MecaBot
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
-        liftMotor.setDirection(DcMotor.Direction.FORWARD);
+        liftMotor.setDirection(DcMotor.Direction.REVERSE);
         leftIntake.setDirection(DcMotor.Direction.REVERSE);
         rightIntake.setDirection(DcMotor.Direction.FORWARD);
 
@@ -114,7 +122,16 @@ public class MecaBot
         leftIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-
+        // Set all motors to run without encoders.
+        // May want to use RUN_USING_ENCODERS if encoders are installed.
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        liftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
 
@@ -126,19 +143,11 @@ public class MecaBot
         liftMotor.setPower(0);
         leftIntake.setPower(0);
         rightIntake.setPower(0);
-        liftServo.setPosition(1.0);  // start at max clockwise position
-        clawRotate.setPosition(1.0); // start at max clockwise position
-        clawGrab.setPosition(0.2);   // claw closes by rotating anti-clockwise, start with open claw
+        liftServo.setPosition(ARM_INSIDE);  // start at max clockwise position
+        clawRotate.setPosition(CLAW_PARALLEL); // start at max clockwise position
+        clawGrab.setPosition(CLAW_OPEN);   // claw closes by rotating anti-clockwise, start with open claw
 
-        // Set all motors to run without encoders.
-        // May want to use RUN_USING_ENCODERS if encoders are installed.
-        leftFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
 
 
         // Define and initialize ALL installed servos.

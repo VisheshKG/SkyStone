@@ -22,10 +22,10 @@ public class MecaBotTeleOp extends LinearOpMode {
          * The init() method of the hardware class does all the work here
          */
         robot.init(hardwareMap);
-        telemetry.addData(">", "Hardware initialized. Servo setPosition() called.");
+        telemetry.addData(">", "Hardware initialized");
 
         // Send telemetry message to signify robot waiting;
-        telemetry.addData("Say", "Waiting for Start");    //
+        telemetry.addData(">", "Waiting for Start");    //
         telemetry.update();
 
         // Wait for the game to start (driver presses PLAY)
@@ -37,9 +37,7 @@ public class MecaBotTeleOp extends LinearOpMode {
             lift();
             intake();
             bumper();
-            //test();
-            sleep(CYCLE_MS);
-            idle();
+            telemetry.update();
         }
     }
 
@@ -52,7 +50,7 @@ public class MecaBotTeleOp extends LinearOpMode {
         double max;
 
             //if we want to move sideways (MECANUM)
-            if (Math.abs(gamepad1.left_stick_x) > 0) {
+            if (Math.abs(gamepad1.left_stick_x) > Math.abs(gamepad1.left_stick_y)) {
 
                 // if we want to move right sideways, joystick value is positive
                 //right inside
@@ -65,25 +63,15 @@ public class MecaBotTeleOp extends LinearOpMode {
 
                 // if we want to move left, its same code as above, joystick value is negative
             }
-            // Diagonal movement
-            else if (Math.abs(gamepad1.left_stick_y) > 0) {
-                if (gamepad1.left_stick_y > 0) {
-                    leftFront += gamepad1.left_stick_y;
-                    rightBack += gamepad1.left_stick_y;
-                }
-                else if (gamepad1.left_stick_y < 0) {
-                    rightFront += gamepad1.left_stick_y;
-                    leftBack += gamepad1.left_stick_y;
-                }
-            }
+
             // normal tank movement
             else {
 
                 // basic forward/backwards, run motors at speed controlled by joystick
-                leftFront -= gamepad1.right_stick_y;
-                leftBack -= gamepad1.right_stick_y;
-                rightFront -= gamepad1.right_stick_y;
-                rightBack -= gamepad1.right_stick_y;
+                leftFront -= gamepad1.left_stick_y;
+                leftBack -= gamepad1.left_stick_y;
+                rightFront -= gamepad1.left_stick_y;
+                rightBack -= gamepad1.left_stick_y;
 
                 // right press on joystick is positive, left press is negative
                 // to turn right, add turning joystick to left motors, subtract from right
@@ -114,20 +102,29 @@ public class MecaBotTeleOp extends LinearOpMode {
 
 
     public void lift() {
-
-       robot.liftMotor.setPower(gamepad2.left_stick_y);
        telemetry.addData(">", "entered lift loop");
+
+       if (gamepad2.left_stick_y > 0 && robot.liftMotor.getCurrentPosition() < robot.LIFT_MAX) {
+           robot.liftMotor.setPower(gamepad2.left_stick_y);
+       }
+       else if (gamepad2.left_stick_y < 0 && robot.liftMotor.getCurrentPosition() > robot.LIFT_MIN) {
+           robot.liftMotor.setPower(gamepad2.left_stick_y);
+       }
+       else {
+           robot.liftMotor.setPower(0 );
+       }
+       telemetry.addData(">", "Lift tick count = " + robot.liftMotor.getCurrentPosition());
        //robot.liftServo.setPosition(robot.liftServo.getPosition() + (gamepad2.right_stick_y / 20));
 
-        // If operator joystick is pushed upwards, move the lift arm inside the robot
+        // If operator joystick is pushed upwards, move the lift arm outside the robot
        if (gamepad2.right_stick_y > 0) {
-           robot.liftServo.setPosition(0.0);
+           robot.liftServo.setPosition(robot.ARM_OUTSIDE);
            telemetry.addData(">", "right joystick pushed up %5.2f", gamepad2.right_stick_y);
 
        }
-       // If operator joystick is pushed downwards, move the lift arm outside the robot
+       // If operator joystick is pushed downwards, move the lift arm inside the robot
        else if (gamepad2.right_stick_y < 0) {
-           robot.liftServo.setPosition(1.0);
+           robot.liftServo.setPosition(robot.ARM_INSIDE);
            telemetry.addData(">", "right joystick pushed down %5.2f", gamepad2.right_stick_y);
 
        }
@@ -136,36 +133,35 @@ public class MecaBotTeleOp extends LinearOpMode {
 
         // If operator right trigger is pressed, rotate claw to Stone pickup position inside robot
        if (gamepad2.right_trigger > 0) {
-           robot.clawRotate.setPosition(0.0);
+           robot.clawRotate.setPosition(robot.CLAW_PARALLEL);
            telemetry.addData(">", "right trigger pushed %5.2f", gamepad2.right_trigger);
 
        }
        // If operator left trigger is pressed, rotate claw perpendicular to Stone pickup position
        else if (gamepad2.left_trigger > 0) {
-           robot.clawRotate.setPosition(1.0);
+           robot.clawRotate.setPosition(robot.CLAW_PERPENDICULAR);
            telemetry.addData(">", "left trigger pushed %5.2f", gamepad2.left_trigger);
        }
 
         if (gamepad2.right_bumper) {
-            robot.clawGrab.setPosition(0.0); // right is grab the stone, claw closed
+            robot.clawGrab.setPosition(robot.CLAW_CLOSE); // right is grab the stone, claw closed
             telemetry.addData(">", "right bumper pushed");
         }
         else if (gamepad2.left_bumper) {
-            robot.clawGrab.setPosition(0.2); // left is release the stone, claw open
+            robot.clawGrab.setPosition(robot.CLAW_OPEN); // left is release the stone, claw open
             telemetry.addData(">", "left bumper pushed");
         }
-        telemetry.update();
     }
 
     public void intake() {
 
         if (gamepad1.right_trigger > 0) {
-            robot.leftIntake.setPower(gamepad1.right_trigger);
-            robot.rightIntake.setPower(gamepad1.right_trigger);
+            robot.leftIntake.setPower(-gamepad1.right_trigger);
+            robot.rightIntake.setPower(-gamepad1.right_trigger);
         }
         else if (gamepad1.left_trigger > 0) {
-            robot.leftIntake.setPower(-gamepad1.left_trigger);
-            robot.rightIntake.setPower(-gamepad1.left_trigger);
+            robot.leftIntake.setPower(gamepad1.left_trigger);
+            robot.rightIntake.setPower(gamepad1.left_trigger);
         }
         else {
             robot.leftIntake.setPower(0);
@@ -183,7 +179,4 @@ public class MecaBotTeleOp extends LinearOpMode {
         }
     }
 
-    public void test() {
-
-    }
 }
