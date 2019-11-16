@@ -67,14 +67,9 @@ public class MecaBotMove {
         moveForwardBack(mm, false);
     }
 
-    public void moveLeft(double inches) {
+    public void moveLeftRight(double inches, boolean goleft) {
         double mm = inches * mmPerInch;
-        moveLeftRight(mm, true);
-    }
-
-    public void moveRight(double inches) {
-        double mm = inches * mmPerInch;
-        moveLeftRight(mm, false);
+        moveLeftRightmm(mm, goleft);
     }
 
     private void moveForwardBack(double mm, boolean driveForward) {
@@ -132,8 +127,9 @@ public class MecaBotMove {
         myOpMode.telemetry.update();
     }
 
+    //--------------Vishesh: Please complete methods below
     // Move robot left or right
-    public void moveLeftRight(double mm, boolean left) {
+    private void moveLeftRightmm(double mm, boolean left) {
 
     }
 
