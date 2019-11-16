@@ -71,8 +71,9 @@ public class MecaBot
     //constants here
     public static final double LIFT_TOP = 4950;
     public static final double LIFT_BOTTOM = 0;
-    public static final double ARM_INSIDE = 0.8;
-    public static final double ARM_OUTSIDE = 0.0;
+    public static final double ARM_INSIDE = Servo.MAX_POSITION;
+    public static final double ARM_OUTSIDE = Servo.MIN_POSITION;
+    public static final double ARM_STEP = 0.04;
     public static final double CLAW_PARALLEL = 0.92;
     public static final double CLAW_PERPENDICULAR = 0.60;
     public static final double CLAW_OPEN = 0.45;
@@ -115,7 +116,7 @@ public class MecaBot
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
-        liftMotor.setDirection(DcMotor.Direction.REVERSE);
+        liftMotor.setDirection(DcMotor.Direction.FORWARD);
         leftIntake.setDirection(DcMotor.Direction.REVERSE);
         rightIntake.setDirection(DcMotor.Direction.FORWARD);
 
