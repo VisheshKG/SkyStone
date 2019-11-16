@@ -35,6 +35,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
 /**
  * This is NOT an opmode.
@@ -112,6 +113,7 @@ public class MecaBot
         bumperServo = hwMap.get(Servo.class, "bumperServo");
         sideArmServo = hwMap.get(Servo.class, "sideArmServo");
 
+        // Set motor direction
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
@@ -119,8 +121,6 @@ public class MecaBot
         liftMotor.setDirection(DcMotor.Direction.FORWARD);
         leftIntake.setDirection(DcMotor.Direction.REVERSE);
         rightIntake.setDirection(DcMotor.Direction.FORWARD);
-
-
 
         leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -132,10 +132,8 @@ public class MecaBot
 
         // Set all motors to run without encoders.
         // May want to use RUN_USING_ENCODERS if encoders are installed.
-        leftFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
         liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         liftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -157,6 +155,105 @@ public class MecaBot
         bumperServo.setPosition(BUMPER_UP);
         sideArmServo.setPosition(SIDEARM_UP);
 
+    }
+
+    public void setDriveMode(DcMotor.RunMode runMode) {
+        leftBackDrive.setMode(runMode);
+        leftFrontDrive.setMode(runMode);
+        rightBackDrive.setMode(runMode);
+        rightFrontDrive.setMode(runMode);
+
+    }
+    public void resetDriveEncoder() {
+        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    }
+
+    public void driveForwardBackStop(double speed) {
+
+        speed = Range.clip( speed, -1.0, 1.0);
+        leftFrontDrive.setPower(speed);
+        leftBackDrive.setPower(speed);
+        rightFrontDrive.setPower(speed);
+        rightBackDrive.setPower(speed);
+    }
+
+    public void driveStraight(double speed) {
+        this.driveForwardBackStop(speed);
+    }
+
+    public void stopDriving() {
+        this.driveForwardBackStop(0);
+    }
+
+    public void driveTank(double driveSpeed, double turnSpeed) {
+
+        driveSpeed = Range.clip(driveSpeed, -1.0, 1.0);
+
+        // basic forward/backwards, run motors at drive speed, negative speed is reverse direction
+        double leftFront = driveSpeed;
+        double leftBack = driveSpeed;
+        double rightFront = driveSpeed;
+        double rightBack = driveSpeed;
+
+        // right turn is positive turnSpeed, left turn is negative turnSpeed
+        // to turn right, add turnSpeed to left motors, subtract from right motors
+        // to turn left, same code applies, negative values cause left turn automatically
+        turnSpeed = Range.clip(turnSpeed, -1.0, 1.0);
+        leftFront += turnSpeed;
+        leftBack += turnSpeed;
+        rightFront -= turnSpeed;
+        rightBack -= turnSpeed;
+
+        driveWheels(leftFront, leftBack, rightFront, rightBack);
+    }
+
+    public void driveMecanum(double sideSpeed) {
+        // if we want to move right sideways, sideSpeed value is positive
+        // right inside
+        double rightFront = -sideSpeed;
+        double rightBack = +sideSpeed;
+
+        // left outside
+        double leftFront = +sideSpeed;
+        double leftBack = -sideSpeed;
+
+        // if we want to move left, its same code as above, sideSpeed value is negative
+
+        driveWheels(leftFront, leftBack, rightFront, rightBack);
+    }
+
+    public void driveWheels(double leftFront, double leftBack, double rightFront, double rightBack) {
+        // find the highest power motor and divide all motors by that to preserve the ratio
+        // while also keeping the maximum power at 1
+        double max = Math.max(Math.max(Math.abs(leftFront), Math.abs(leftBack)), Math.max(Math.abs(rightFront), Math.abs(rightBack)));
+        if (max > 1) {
+            leftFront /= max;
+            leftBack /= max;
+            rightFront /= max;
+            rightBack /= max;
+        }
+
+        //set drive train motor's power to the values calculated
+        leftFrontDrive.setPower(leftFront);
+        leftBackDrive.setPower(leftBack);
+        rightFrontDrive.setPower(rightFront);
+        rightBackDrive.setPower(rightBack);
+    }
+
+    public void grabFoundation() {
+        bumperServo.setPosition(BUMPER_DOWN); // bumper down to engage the foundation
+    }
+    public void releaseFoundation() {
+        bumperServo.setPosition(BUMPER_UP); // bumper down to engage the foundation
+    }
+    public void grabStoneWithSidearm() {
+        sideArmServo.setPosition(SIDEARM_DOWN); // side arm down to engage the stone
+    }
+    public void releaseStoneWithSidearm() {
+        sideArmServo.setPosition(SIDEARM_UP); // side arm up and free
     }
 }
 
