@@ -3,15 +3,13 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.Servo;
 
 
 @TeleOp(name = "MecaBotTeleOp")
 public class MecaBotTeleOp extends LinearOpMode {
 
     static final int    CYCLE_MS    =   50;     // period of each cycle
-    public static final double MIN_SERVO       =  0.0 ;
-    public static final double MID_SERVO       =  0.5 ;
-    public static final double MAX_SERVO       =  1.0 ;
 
     /* Declare OpMode members. */
     MecaBot robot = new MecaBot();   // Use a Pushbot's hardware
@@ -37,6 +35,7 @@ public class MecaBotTeleOp extends LinearOpMode {
             lift();
             intake();
             bumper();
+            sidearm();
             telemetry.update();
         }
     }
@@ -102,18 +101,21 @@ public class MecaBotTeleOp extends LinearOpMode {
 
 
     public void lift() {
-       telemetry.addData(">", "entered lift loop");
 
-       if (gamepad2.left_stick_y > 0 && robot.liftMotor.getCurrentPosition() < robot.LIFT_MAX) {
+// The lift encoder limits are not working correctly. Need to debug this block
+/*
+       if (gamepad2.left_stick_y > 0 && robot.liftMotor.getCurrentPosition() < robot.LIFT_TOP) {
            robot.liftMotor.setPower(gamepad2.left_stick_y);
        }
-       else if (gamepad2.left_stick_y < 0 && robot.liftMotor.getCurrentPosition() > robot.LIFT_MIN) {
+       else if (gamepad2.left_stick_y < 0 && robot.liftMotor.getCurrentPosition() > robot.LIFT_BOTTOM) {
            robot.liftMotor.setPower(gamepad2.left_stick_y);
        }
        else {
            robot.liftMotor.setPower(0 );
        }
-       telemetry.addData(">", "Lift tick count = " + robot.liftMotor.getCurrentPosition());
+*/
+        robot.liftMotor.setPower(gamepad2.left_stick_y);
+        telemetry.addData(">", "Lift tick count = " + robot.liftMotor.getCurrentPosition());
        //robot.liftServo.setPosition(robot.liftServo.getPosition() + (gamepad2.right_stick_y / 20));
 
         // If operator joystick is pushed upwards, move the lift arm outside the robot
@@ -132,13 +134,13 @@ public class MecaBotTeleOp extends LinearOpMode {
        //robot.clawRotate.setPosition(robot.clawRotate.getPosition() + (gamepad2.right_trigger / 20) - (gamepad2.left_trigger / 20));
 
         // If operator right trigger is pressed, rotate claw to Stone pickup position inside robot
-       if (gamepad2.right_trigger > 0) {
+       if (gamepad2.x) {
            robot.clawRotate.setPosition(robot.CLAW_PARALLEL);
            telemetry.addData(">", "right trigger pushed %5.2f", gamepad2.right_trigger);
 
        }
        // If operator left trigger is pressed, rotate claw perpendicular to Stone pickup position
-       else if (gamepad2.left_trigger > 0) {
+       else if (gamepad2.y) {
            robot.clawRotate.setPosition(robot.CLAW_PERPENDICULAR);
            telemetry.addData(">", "left trigger pushed %5.2f", gamepad2.left_trigger);
        }
@@ -155,15 +157,15 @@ public class MecaBotTeleOp extends LinearOpMode {
 
     public void intake() {
 
-        if (gamepad1.right_trigger > 0) {
-            robot.leftIntake.setPower(-gamepad1.right_trigger);
-            robot.rightIntake.setPower(-gamepad1.right_trigger);
+        if (gamepad2.right_trigger > 0) { // intake is sucking the stone in to the robot
+            robot.leftIntake.setPower(-gamepad2.right_trigger);
+            robot.rightIntake.setPower(-gamepad2.right_trigger);
         }
-        else if (gamepad1.left_trigger > 0) {
-            robot.leftIntake.setPower(gamepad1.left_trigger);
-            robot.rightIntake.setPower(gamepad1.left_trigger);
+        else if (gamepad2.left_trigger > 0) { // intake is ejecting the stone out of the robot
+            robot.leftIntake.setPower(gamepad2.left_trigger);
+            robot.rightIntake.setPower(gamepad2.left_trigger);
         }
-        else {
+        else { // stop intake motors
             robot.leftIntake.setPower(0);
             robot.rightIntake.setPower(0);
         }
@@ -171,12 +173,20 @@ public class MecaBotTeleOp extends LinearOpMode {
     }
 
     public void bumper() {
-        if (gamepad2.a) {
-            robot.bumperServo.setPosition(1.0); //open
+        if (gamepad2.b) {
+            robot.bumperServo.setPosition(robot.BUMPER_UP); // bumper up and free
         }
-        else if (gamepad2.b) {
-            robot.bumperServo.setPosition(0.5); //close
+        else if (gamepad2.a) {
+            robot.bumperServo.setPosition(robot.BUMPER_DOWN); // bumper down to engage the foundation
         }
     }
 
+    public void sidearm() {
+        if (gamepad1.b) {
+            robot.sideArmServo.setPosition(robot.SIDEARM_UP); // side arm up and free
+        }
+        else if (gamepad1.a) {
+            robot.sideArmServo.setPosition(robot.SIDEARM_DOWN); // side arm down to engage the stone
+        }
+    }
 }

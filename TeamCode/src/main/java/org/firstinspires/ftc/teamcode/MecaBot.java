@@ -66,16 +66,22 @@ public class MecaBot
     public Servo clawRotate = null;
     public Servo clawGrab = null;
     public Servo bumperServo = null;
+    public Servo sideArmServo = null;
 
     //constants here
-    public static final double ARM_INSIDE = 1.0;
+    public static final double LIFT_TOP = 4950;
+    public static final double LIFT_BOTTOM = 0;
+    public static final double ARM_INSIDE = 0.8;
     public static final double ARM_OUTSIDE = 0.0;
     public static final double CLAW_PARALLEL = 0.92;
     public static final double CLAW_PERPENDICULAR = 0.60;
     public static final double CLAW_OPEN = 0.45;
     public static final double CLAW_CLOSE = 0.40;
-    public static final double LIFT_MAX = 4950;
-    public static final double LIFT_MIN = 0;
+    public static final double BUMPER_UP = Servo.MAX_POSITION;
+    public static final double BUMPER_DOWN = Servo.MIN_POSITION;
+    public static final double SIDEARM_UP = Servo.MAX_POSITION;
+    public static final double SIDEARM_DOWN = Servo.MIN_POSITION;
+
 
     /* local OpMode members. */
     HardwareMap hwMap =  null;
@@ -103,6 +109,7 @@ public class MecaBot
         clawRotate = hwMap.get(Servo.class, "clawRotate");
         clawGrab = hwMap.get(Servo.class, "clawGrab");
         bumperServo = hwMap.get(Servo.class, "bumperServo");
+        sideArmServo = hwMap.get(Servo.class, "sideArmServo");
 
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
@@ -133,8 +140,6 @@ public class MecaBot
         leftIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-
-
         // Set all motors to zero power
         leftFrontDrive.setPower(0);
         leftBackDrive.setPower(0);
@@ -143,18 +148,14 @@ public class MecaBot
         liftMotor.setPower(0);
         leftIntake.setPower(0);
         rightIntake.setPower(0);
-        liftServo.setPosition(ARM_INSIDE);  // start at max clockwise position
-        clawRotate.setPosition(CLAW_PARALLEL); // start at max clockwise position
-        clawGrab.setPosition(CLAW_OPEN);   // claw closes by rotating anti-clockwise, start with open claw
 
+        // set all servos to their resting position
+        liftServo.setPosition(ARM_INSIDE);
+        clawRotate.setPosition(CLAW_PARALLEL);
+        clawGrab.setPosition(CLAW_OPEN);
+        bumperServo.setPosition(BUMPER_UP);
+        sideArmServo.setPosition(SIDEARM_UP);
 
-
-
-        // Define and initialize ALL installed servos.
- /*       leftClaw  = hwMap.get(Servo.class, "left_hand");
-        rightClaw = hwMap.get(Servo.class, "right_hand");
-        leftClaw.setPosition(MID_SERVO);
-        rightClaw.setPosition(MID_SERVO); */
     }
 }
 
