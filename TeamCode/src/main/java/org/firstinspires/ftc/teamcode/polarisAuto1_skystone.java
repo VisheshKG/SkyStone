@@ -45,14 +45,17 @@ public class polarisAuto1_skystone extends LinearOpMode {
         }
 
         // run until the end of the match (driver presses STOP)
-        robot.setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //robot.setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
         while (opModeIsActive()) {
+            nav.testMove();
+            /*
             moveToScanStone();
-            break;
+
             if (findSkyStone()) {
                 nav.grabTheStone();
                 break;
             }
+             */
             break;
         }
     }
@@ -61,6 +64,8 @@ public class polarisAuto1_skystone extends LinearOpMode {
     private void moveToScanStone(){
         double Ydistance = stonePlacementY-stoneOffset-robotLength/2;
         telemetry.addData("Wheel Forward Requested:",Ydistance);
+        telemetry.update();
+        sleep(1000);
         nav.moveBackward(Ydistance);
         double inchMoved = nav.getWheelMoveInches();
         telemetry.addData("Wheel Forward Actual:",inchMoved);
