@@ -67,8 +67,10 @@ public class MecaBotMove {
 
     //DEBUG: test any kinds of movements here. This is called by Auto1 opmode
     public void  testMove(){
-     testAllwheelsNoEncoder();
+     //testAllwheelsNoEncoder();
      //testOneMotorEncoder(1);
+        double testDistance=2* Math.PI * WHEEL_DIA;
+        moveBackward(testDistance);
     }
 
     //DEBUG: move all wheels with equal power
@@ -85,6 +87,7 @@ public class MecaBotMove {
     //test one motor with encoder
 private void testOneMotorEncoder(int numRotation){
     myOpMode.telemetry.addData(">>test one wheel:","Encoder");
+    robot.resetDriveEncoder();
     int driverEncoderTarget = MOTOR_TICK_COUNT * numRotation;
     robot.rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     robot.rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -102,7 +105,7 @@ private void testOneMotorEncoder(int numRotation){
         myOpMode.telemetry.update();
     }
     robot.stopDriving();
-    double rotActual=robot.rightBackDrive.getCurrentPosition() / MOTOR_TICK_COUNT
+    double rotActual=robot.rightBackDrive.getCurrentPosition() / MOTOR_TICK_COUNT;
     myOpMode.telemetry.addData("rightBackDrive actual rotation= ", rotActual);
     myOpMode.telemetry.update();
     myOpMode.sleep(2000);
@@ -110,7 +113,6 @@ private void testOneMotorEncoder(int numRotation){
 
 //2nd parameter: forward true, back false
     private void moveDistance(double mm, boolean goForwardOrRight, boolean mecanumSideways) {
-        mm=Math.PI * WHEEL_DIA;  //  DEBUG: test one wheel turn
 
         myOpMode.telemetry.addData(">>moveDistance:",mm);
         myOpMode.telemetry.update();
@@ -161,23 +163,25 @@ private void testOneMotorEncoder(int numRotation){
 
 
         /*
-        while (robot.leftFrontDrive.isBusy() || robot.rightFrontDrive.isBusy() || robot.leftBackDrive.isBusy() || robot.rightBackDrive.isBusy()) {
-
-            // no need to do any checks
-            // the documentation says that motors stop automatically in RUN_TO_POSITION mode and isBusy() will return false after that
-
-            double distanceToTarget = robot.leftBackDrive.getCurrentPosition() - robot.leftBackDrive.getTargetPosition();
+               double distanceToTarget = robot.leftBackDrive.getCurrentPosition() - robot.leftBackDrive.getTargetPosition();
             if (robot.leftBackDrive.getCurrentPosition() > robot.leftBackDrive.getTargetPosition() - 10 && robot.leftBackDrive.getCurrentPosition() < robot.leftBackDrive.getTargetPosition() + 10) {
                 if (robot.rightBackDrive.getCurrentPosition() > robot.rightBackDrive.getTargetPosition() - 10 && robot.rightBackDrive.getCurrentPosition() < robot.rightBackDrive.getCurrentPosition() + 10) {
                     break;
                 }
             }
+            */
+        /*
+        while (robot.leftFrontDrive.isBusy() || robot.rightFrontDrive.isBusy() || robot.leftBackDrive.isBusy() || robot.rightBackDrive.isBusy()) {
+
+            // no need to do any checks
+            // the documentation says that motors stop automatically in RUN_TO_POSITION mode and isBusy() will return false after that
 
             myOpMode.telemetry.addData("rightBackDrive position = ", robot.rightBackDrive.getCurrentPosition());
             myOpMode.telemetry.update();
             myOpMode.sleep(50);
         }
-*/
+        */
+
         //TODO: above code goes into infinite loop, so comment out and use below
         while (robot.rightBackDrive.isBusy()) {
             myOpMode.telemetry.addData("rightBackDrive position = ", robot.rightBackDrive.getCurrentPosition());
