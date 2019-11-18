@@ -74,7 +74,7 @@ public class MecaBotMove {
         // flip direction for reverse (this also applies for Left sideways when mecanumSideways is true)
         if (!goForwardOrRight) {
             driverEncoderTarget = -driverEncoderTarget;  // reverse the encoder target direction
-            myOpMode.telemetry.addData("Drive Reverse", "None");
+            myOpMode.telemetry.addData("Encoder Drive", "Target = %d", driverEncoderTarget);
         }
 
         // default is drive straight all wheels drive same direction (forward or backward depending on sign)
@@ -99,31 +99,24 @@ public class MecaBotMove {
         robot.rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         robot.rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        // Set the power of the motors to whatever speed is needed
-        robot.driveStraight(LOWSPEED);
-
-        // start moving to target position
+        // set target position for encoder Drive
         robot.leftFrontDrive.setTargetPosition(leftFront);
         robot.leftBackDrive.setTargetPosition(leftBack);
         robot.rightFrontDrive.setTargetPosition(rightFront);
         robot.rightBackDrive.setTargetPosition(rightBack);
 
-        // Loop until both motors are no longer busy.
-        myOpMode.telemetry.addData("Driving distance mm =", mm);
-        myOpMode.telemetry.update();
-        while (robot.leftFrontDrive.isBusy() || robot.rightFrontDrive.isBusy() || robot.leftBackDrive.isBusy() || robot.rightBackDrive.isBusy()) {
+        // Set the power of the motors to whatever speed is needed
+        robot.driveStraight(LOWSPEED);
 
+        // Loop until both motors are no longer busy.
+        myOpMode.telemetry.addData("Driving distance mm = ", mm);
+        myOpMode.telemetry.update();
+
+//        while (robot.leftFrontDrive.isBusy() || robot.rightFrontDrive.isBusy() || robot.leftBackDrive.isBusy() || robot.rightBackDrive.isBusy()) {
+          while (robot.rightBackDrive.isBusy()) {
             // no need to do any checks
-            // the documentation says that motors stop automatically in RUN_TO_POSITION mode and isBusy() will return false after that
-/*
-            double distanceToTarget = robot.leftBackDrive.getCurrentPosition() - robot.leftBackDrive.getTargetPosition();
-            if (robot.leftBackDrive.getCurrentPosition() > robot.leftBackDrive.getTargetPosition() - 10 && robot.leftBackDrive.getCurrentPosition() < robot.leftBackDrive.getTargetPosition() + 10) {
-                if (robot.rightBackDrive.getCurrentPosition() > robot.rightBackDrive.getTargetPosition() - 10 && robot.rightBackDrive.getCurrentPosition() < robot.rightBackDrive.getCurrentPosition() + 10) {
-                    break;
-                }
-            }
- */
-            myOpMode.telemetry.addData("Driving distance mm =", mm);
+            // the documentation says that motors stop automaticaqlly in RUN_TO_POSITION mode and isBusy() will return false after that
+            myOpMode.telemetry.addData("Encoder Drive", "Target = %d", driverEncoderTarget);
             myOpMode.telemetry.addData("rightBackDrive position = ", robot.rightBackDrive.getCurrentPosition());
             myOpMode.telemetry.update();
             myOpMode.sleep(50);
