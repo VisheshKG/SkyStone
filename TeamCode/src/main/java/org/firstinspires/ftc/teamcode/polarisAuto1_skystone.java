@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 @Autonomous(name = "Auto1_skystone")
 //@Disabled
@@ -23,7 +24,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
 
 
     MecaBot robot = new MecaBot();   // Use Omni-Directional drive system
-    MecaBotMove nav = new MecaBotMove(this, robot);  // Use Image Tracking library
+    MecaBotMove nav = new MecaBotMove(this, robot);
 
     @Override
     public void runOpMode() {
@@ -44,8 +45,10 @@ public class polarisAuto1_skystone extends LinearOpMode {
         }
 
         // run until the end of the match (driver presses STOP)
+        robot.setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
         while (opModeIsActive()) {
             moveToScanStone();
+            break;
             if (findSkyStone()) {
                 nav.grabTheStone();
                 break;
@@ -57,10 +60,10 @@ public class polarisAuto1_skystone extends LinearOpMode {
     //Assume to start on stone side
     private void moveToScanStone(){
         double Ydistance = stonePlacementY-stoneOffset-robotLength/2;
-        telemetry.addData("Wheel Moved Forward Requested:",Ydistance);
+        telemetry.addData("Wheel Forward Requested:",Ydistance);
         nav.moveBackward(Ydistance);
         double inchMoved = nav.getWheelMoveInches();
-        telemetry.addData("Wheel Moved Forward Actual:",inchMoved);
+        telemetry.addData("Wheel Forward Actual:",inchMoved);
         telemetry.update();
     }
 
