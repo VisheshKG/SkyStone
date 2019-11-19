@@ -8,12 +8,12 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 public class MecaBotMove {
 
     private final static double WHEEL_DIA = 75;  //in millimeter
-    private final static int    MOTOR_TICK_COUNT = 1120;
+    private final static int    MOTOR_TICK_COUNT = 560;  // 1120/2
     private static final float  mmPerInch        = 25.4f;
     private LinearOpMode  myOpMode;       // Access to the OpMode object
     private MecaBot       robot;        // Access to the Robot hardware
     private double speed=0.5;
-    private final double LOWSPEED = 0.1;
+    private final double LOWSPEED = 0.2   ;
     private final double HIGHSPEED = 0.8;
 
     /* Constructor */
@@ -61,16 +61,22 @@ public class MecaBotMove {
 
     // Move robot left or right
     public void moveLeftRight(double mm, boolean goRight) {
-        moveDistance(mm, goRight, true);
-
+        boolean reverseIt=!goRight;   //todo: workaround bug
+        moveDistance(mm, reverseIt, true);
     }
 
     //DEBUG: test any kinds of movements here. This is called by Auto1 opmode
     public void  testMove(){
      //testAllwheelsNoEncoder();
      //testOneMotorEncoder(1);
-        double testDistance=2* Math.PI * WHEEL_DIA;
-        moveBackward(testDistance);
+        //grabTheStone();
+
+        double testDistance=2* Math.PI * WHEEL_DIA/mmPerInch;
+        //testDistance=11.75;
+        testDistance=12.50;
+        moveRight(testDistance);
+        //moveLeft(testDistance);
+        //moveBackward(testDistance);
     }
 
     //DEBUG: move all wheels with equal power
@@ -84,14 +90,20 @@ public class MecaBotMove {
         myOpMode.telemetry.update();
     }
 
+    private void setWheelEncoder(DcMotor aWheelDrive, int targetTickCT){
+        aWheelDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        aWheelDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        aWheelDrive.setTargetPosition(targetTickCT);
+    }
     //test one motor with encoder
 private void testOneMotorEncoder(int numRotation){
     myOpMode.telemetry.addData(">>test one wheel:","Encoder");
     robot.resetDriveEncoder();
     int driverEncoderTarget = MOTOR_TICK_COUNT * numRotation;
-    robot.rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    robot.rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-    robot.rightBackDrive.setTargetPosition(driverEncoderTarget);
+    DcMotor aWheelDrive=robot.rightBackDrive;
+    setWheelEncoder(aWheelDrive, driverEncoderTarget);
+    aWheelDrive=robot.leftBackDrive;
+    setWheelEncoder(aWheelDrive, driverEncoderTarget);
     myOpMode.telemetry.addData("Start drive rightBack target rotation =", 1);
     myOpMode.telemetry.update();
     myOpMode.sleep(2000);
@@ -108,90 +120,8 @@ private void testOneMotorEncoder(int numRotation){
     double rotActual=robot.rightBackDrive.getCurrentPosition() / MOTOR_TICK_COUNT;
     myOpMode.telemetry.addData("rightBackDrive actual rotation= ", rotActual);
     myOpMode.telemetry.update();
-    myOpMode.sleep(2000);
+    myOpMode.sleep(10000);
 }
-
-//2nd parameter: forward true, back false
-    private void moveDistance(double mm, boolean goForwardOrRight, boolean mecanumSideways) {
-
-        myOpMode.telemetry.addData(">>moveDistance:",mm);
-        myOpMode.telemetry.update();
-        robot.resetDriveEncoder();    //set encoder reading to 0
-
-        //cw: convert millimeter to tick counts
-        double circumference = Math.PI * WHEEL_DIA;
-        double numRotation = mm/circumference;
-        int driverEncoderTarget = (int) (MOTOR_TICK_COUNT * numRotation);
-
-        myOpMode.telemetry.addData("Rotation needed:", "numRotation");
-
-        // Vishesh todo Multiply the distance we require by a determined constant to tell the motors how far to turn/set our target position
-
-        // flip direction for reverse (this also applies for Left sideways when mecanumSideways is true)
-        if (!goForwardOrRight) {
-            driverEncoderTarget = -driverEncoderTarget;  // reverse the encoder target direction
-            myOpMode.telemetry.addData("Drive Reverse:", "driverEncoderTarget");
-        }
-
-        // default is drive straight all wheels drive same direction (forward or backward depending on sign)
-        int leftFront = driverEncoderTarget;
-        int leftBack = driverEncoderTarget;
-        int rightFront = driverEncoderTarget;
-        int rightBack = driverEncoderTarget;
-
-        // for mecanum sideways movement, move Right when goForward is true
-        // Right wheels move inside, Left wheels move outside
-        //TODO:????? Does this move right????
-        if (mecanumSideways) {
-            leftFront = -driverEncoderTarget;
-            leftBack = driverEncoderTarget;
-            rightFront = driverEncoderTarget;
-            rightBack = -driverEncoderTarget;
-        }
-        // same code above works for mecanum move Left also. False value of goForwardOrRight already flipped the sign above
-        // Set the motors to run to the necessary target position
-        robot.leftBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        // start moving to target position
-        robot.leftFrontDrive.setTargetPosition(leftFront);
-        robot.leftBackDrive.setTargetPosition(leftBack);
-        robot.rightFrontDrive.setTargetPosition(rightFront);
-        robot.rightBackDrive.setTargetPosition(rightBack);
-
-
-        /*
-               double distanceToTarget = robot.leftBackDrive.getCurrentPosition() - robot.leftBackDrive.getTargetPosition();
-            if (robot.leftBackDrive.getCurrentPosition() > robot.leftBackDrive.getTargetPosition() - 10 && robot.leftBackDrive.getCurrentPosition() < robot.leftBackDrive.getTargetPosition() + 10) {
-                if (robot.rightBackDrive.getCurrentPosition() > robot.rightBackDrive.getTargetPosition() - 10 && robot.rightBackDrive.getCurrentPosition() < robot.rightBackDrive.getCurrentPosition() + 10) {
-                    break;
-                }
-            }
-            */
-        /*
-        while (robot.leftFrontDrive.isBusy() || robot.rightFrontDrive.isBusy() || robot.leftBackDrive.isBusy() || robot.rightBackDrive.isBusy()) {
-
-            // no need to do any checks
-            // the documentation says that motors stop automatically in RUN_TO_POSITION mode and isBusy() will return false after that
-
-            myOpMode.telemetry.addData("rightBackDrive position = ", robot.rightBackDrive.getCurrentPosition());
-            myOpMode.telemetry.update();
-            myOpMode.sleep(50);
-        }
-        */
-
-        //TODO: above code goes into infinite loop, so comment out and use below
-        while (robot.rightBackDrive.isBusy()) {
-            myOpMode.telemetry.addData("rightBackDrive position = ", robot.rightBackDrive.getCurrentPosition());
-            myOpMode.telemetry.update();
-        }
-        robot.stopDriving();
-
-        myOpMode.telemetry.addData("End of move tick count = ", robot.rightBackDrive.getCurrentPosition());
-        myOpMode.telemetry.update();
-    }
 
 
     private void setWheelSpeed(double speed) {
@@ -215,6 +145,8 @@ private void testOneMotorEncoder(int numRotation){
     // Claw and Damper movements
     public void grabTheStone(){
         robot.grabStoneWithSidearm();
+        //cwm
+        myOpMode.sleep(5000);
     }
 
     public void releaseTheStone(){
@@ -228,4 +160,82 @@ private void testOneMotorEncoder(int numRotation){
     public void releaseFoundation(){
         robot.releaseFoundation();
     }
+
+    private void moveDistance(double mm, boolean goForwardOrRight, boolean mecanumSideways) {
+
+        robot.resetDriveEncoder();
+
+        //cw: convert millimeter to tick counts
+        double circumference = Math.PI * WHEEL_DIA;
+        double numRotation = mm/circumference;
+        int driverEncoderTarget = (int) (MOTOR_TICK_COUNT * numRotation);
+        myOpMode.telemetry.addData("Encoder Drive", "Target = %d", driverEncoderTarget);
+        myOpMode.telemetry.addData("numRotation=",numRotation);
+        myOpMode.telemetry.update();
+        myOpMode.sleep(5000);
+
+        // Vishesh todo Multiply the distance we require by a determined constant to tell the motors how far to turn/set our target position
+
+        // flip direction for reverse (this also applies for Left sideways when mecanumSideways is true)
+        if (!goForwardOrRight) {
+            driverEncoderTarget = -driverEncoderTarget;  // reverse the encoder target direction
+            myOpMode.telemetry.addData("Encoder Drive", "Target = %d", driverEncoderTarget);
+        }
+
+        // default is drive straight all wheels drive same direction (forward or backward depending on sign)
+        int leftFront = driverEncoderTarget;
+        int leftBack = driverEncoderTarget;
+        int rightFront = driverEncoderTarget;
+        int rightBack = driverEncoderTarget;
+
+        // for mecanum sideways movement, move Right when goForward is true
+        // Right wheels move inside, Left wheels move outside
+        if (mecanumSideways) {
+            leftFront = -driverEncoderTarget;
+            leftBack = driverEncoderTarget;
+            rightFront = driverEncoderTarget;
+            rightBack = -driverEncoderTarget;
+        }
+        // same code above works for mecanum move Left also. False value of goForwardOrRight already flipped the sign above
+
+        // set target position for encoder Drive
+        robot.leftFrontDrive.setTargetPosition(leftFront);
+        robot.leftBackDrive.setTargetPosition(leftBack);
+        robot.rightFrontDrive.setTargetPosition(rightFront);
+        robot.rightBackDrive.setTargetPosition(rightBack);
+
+        // Set the motors to run to the necessary target position
+        robot.leftBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        robot.leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        robot.rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        robot.rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+
+
+        // Set the power of the motors to whatever speed is needed
+        robot.driveStraight(LOWSPEED);
+
+        // Loop until both motors are no longer busy.
+        myOpMode.telemetry.addData("Driving distance mm = ", mm);
+        myOpMode.telemetry.update();
+
+//        while (robot.leftFrontDrive.isBusy() || robot.rightFrontDrive.isBusy() || robot.leftBackDrive.isBusy() || robot.rightBackDrive.isBusy()) {
+        while (robot.rightBackDrive.isBusy()) {
+            // no need to do any checks
+            // the documentation says that motors stop automaticaqlly in RUN_TO_POSITION mode and isBusy() will return false after that
+            myOpMode.telemetry.addData("Encoder Drive", "Target = %d", driverEncoderTarget);
+            //myOpMode.telemetry.addData("rightBackDrive position = ", robot.rightBackDrive.getCurrentPosition());
+            myOpMode.telemetry.update();
+
+        }
+
+        // Stop powering the motors - robot has moved to intended position
+        robot.stopDriving();
+
+        myOpMode.telemetry.addData("Stopped at Target", "None");
+        myOpMode.telemetry.update();
+        myOpMode.sleep(5000);
+    }
+
+
 }
