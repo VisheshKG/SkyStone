@@ -29,33 +29,25 @@ public class MecaBotMove {
         return inchMoved;
     }
 
-    public void moveForward(double inches) {
-        moveForwardBack(inches, true);
+    /*
+     * Move robot forward or backward, +ve distance moves forward, -ve distance moves backward
+     */
+    private void moveForwardBack(double inches) {
+        moveDistance( inches, false);
     }
 
-    public void moveBackward(double inches) {
-        moveForwardBack(inches, false);
-    }
-
-    private void moveForwardBack(double inches, boolean goForward) {
-        moveDistance( inches, goForward, false);
-    }
-
-    public void moveRight(double inches) {
-        moveLeftRight(inches, true);
-    }
-
-    public void moveLeft(double inches) {
-        moveLeftRight(inches, false);
-    }
-
-    // Move robot left or right
-    public void moveLeftRight(double inches, boolean goRight) {
-        moveDistance(inches, goRight, true);
+   /*
+    * Move robot left or right, +ve distance moves right, -ve distance moves left
+    */
+    public void moveLeftRight(double inches) {
+        moveDistance(inches, true);
 
     }
 
-    private void moveDistance(double inches, boolean goForwardOrRight, boolean mecanumSideways) {
+    /*
+     * The movement direction is controlled by the sign of the first parameter, distance in inches to move
+     */
+    private void moveDistance(double inches, boolean mecanumSideways) {
 
         robot.resetDriveEncoder();
 
@@ -67,10 +59,7 @@ public class MecaBotMove {
         // Vishesh todo Multiply the distance we require by a determined constant to tell the motors how far to turn/set our target position
 
         // flip direction for reverse (this also applies for Left sideways when mecanumSideways is true)
-        if (!goForwardOrRight) {
-            driverEncoderTarget = -driverEncoderTarget;  // reverse the encoder target direction
-            myOpMode.telemetry.addData("Encoder Drive", "Target = %d encoder ticks", driverEncoderTarget);
-        }
+        driverEncoderTarget = -driverEncoderTarget;  // reverse the encoder target direction
 
         // default is drive straight all wheels drive same direction (forward or backward depending on sign)
         int leftFront = driverEncoderTarget;
@@ -105,23 +94,23 @@ public class MecaBotMove {
 
         // Loop until both motors are no longer busy.
         myOpMode.telemetry.addData("Encoder Drive", "Driving for %.2f inches", inches);
-        //myOpMode.telemetry.update();
+        myOpMode.telemetry.update();
 
 //        while (robot.leftFrontDrive.isBusy() || robot.rightFrontDrive.isBusy() || robot.leftBackDrive.isBusy() || robot.rightBackDrive.isBusy()) {
         while (robot.rightBackDrive.isBusy()) {
             // no need to do any checks
             // the documentation says that motors stop automaticaqlly in RUN_TO_POSITION mode and isBusy() will return false after that
-            //myOpMode.telemetry.addData("Encoder Drive", "Driving %.2f inches = %d encoder ticks", inches, driverEncoderTarget);
-            //myOpMode.telemetry.addData("rightBackDrive position = ", robot.rightBackDrive.getCurrentPosition());
-            //myOpMode.telemetry.update();
-            //myOpMode.sleep(50);
+            myOpMode.telemetry.addData("Encoder Drive", "Driving %.2f inches = %d encoder ticks", inches, driverEncoderTarget);
+            myOpMode.telemetry.addData("rightBackDrive position = ", robot.rightBackDrive.getCurrentPosition());
+            myOpMode.telemetry.update();
+            myOpMode.sleep(50);
         }
 
         // Stop powering the motors - robot has moved to intended position
         robot.stopDriving();
 
         myOpMode.telemetry.addData("Stopped at Target, rightBackDrive position = ", robot.rightBackDrive.getCurrentPosition());
-        //myOpMode.telemetry.update();
+        myOpMode.telemetry.update();
     }
 
     // Rotate
