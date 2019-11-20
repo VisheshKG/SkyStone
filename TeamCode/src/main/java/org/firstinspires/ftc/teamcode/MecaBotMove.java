@@ -13,7 +13,7 @@ public class MecaBotMove {
     private LinearOpMode  myOpMode;       // Access to the OpMode object
     private MecaBot       robot;        // Access to the Robot hardware
     private double speed=0.5;
-    private final double LOWSPEED = 0.2   ;
+    private final double LOWSPEED = 0.6   ;
     private final double HIGHSPEED = 0.8;
 
     /* Constructor */
@@ -32,16 +32,14 @@ public class MecaBotMove {
 
     public void moveForward(double inches) {
         double mm = inches * mmPerInch;
+        myOpMode.telemetry.addData(">>moveForward", "inches");
         moveForwardBack(mm, true);
     }
 
     public void moveBackward(double inches) {
         double mm = inches * mmPerInch;
-        myOpMode.telemetry.addData(">>moveBackward:",mm);
-        myOpMode.telemetry.update();
+        myOpMode.telemetry.addData(">>moveBackward", "inches");
         moveForwardBack(mm, false);
-        myOpMode.telemetry.addData("<<moveBackward:",mm);
-        myOpMode.telemetry.update();
     }
 
     private void moveForwardBack(double mm, boolean goForward) {
@@ -72,9 +70,14 @@ public class MecaBotMove {
         //grabTheStone();
 
         double testDistance=2* Math.PI * WHEEL_DIA/mmPerInch;
-        //testDistance=11.75;
-        testDistance=12.50;
-        moveRight(testDistance);
+        //testDistance=12.50;
+        testDistance=4;
+        while (testDistance < 16){
+            moveBackward(4);
+            testDistance=testDistance+4;
+        }
+
+        //moveRight(testDistance);
         //moveLeft(testDistance);
         //moveBackward(testDistance);
     }
@@ -163,6 +166,7 @@ private void testOneMotorEncoder(int numRotation){
 
     private void moveDistance(double mm, boolean goForwardOrRight, boolean mecanumSideways) {
 
+        myOpMode.telemetry.addData(">>moveDistance: mm=", mm);
         robot.resetDriveEncoder();
 
         //cw: convert millimeter to tick counts
@@ -171,15 +175,13 @@ private void testOneMotorEncoder(int numRotation){
         int driverEncoderTarget = (int) (MOTOR_TICK_COUNT * numRotation);
         myOpMode.telemetry.addData("Encoder Drive", "Target = %d", driverEncoderTarget);
         myOpMode.telemetry.addData("numRotation=",numRotation);
-        myOpMode.telemetry.update();
-        myOpMode.sleep(5000);
 
         // Vishesh todo Multiply the distance we require by a determined constant to tell the motors how far to turn/set our target position
 
         // flip direction for reverse (this also applies for Left sideways when mecanumSideways is true)
         if (!goForwardOrRight) {
             driverEncoderTarget = -driverEncoderTarget;  // reverse the encoder target direction
-            myOpMode.telemetry.addData("Encoder Drive", "Target = %d", driverEncoderTarget);
+            myOpMode.telemetry.addData("Not forward or right ", "none");
         }
 
         // default is drive straight all wheels drive same direction (forward or backward depending on sign)
@@ -217,24 +219,21 @@ private void testOneMotorEncoder(int numRotation){
 
         // Loop until both motors are no longer busy.
         myOpMode.telemetry.addData("Driving distance mm = ", mm);
-        myOpMode.telemetry.update();
 
 //        while (robot.leftFrontDrive.isBusy() || robot.rightFrontDrive.isBusy() || robot.leftBackDrive.isBusy() || robot.rightBackDrive.isBusy()) {
         while (robot.rightBackDrive.isBusy()) {
             // no need to do any checks
             // the documentation says that motors stop automaticaqlly in RUN_TO_POSITION mode and isBusy() will return false after that
-            myOpMode.telemetry.addData("Encoder Drive", "Target = %d", driverEncoderTarget);
+            //myOpMode.telemetry.addData("Encoder Drive", "Target = %d", driverEncoderTarget);
             //myOpMode.telemetry.addData("rightBackDrive position = ", robot.rightBackDrive.getCurrentPosition());
-            myOpMode.telemetry.update();
+            //myOpMode.telemetry.update();
 
         }
 
         // Stop powering the motors - robot has moved to intended position
         robot.stopDriving();
 
-        myOpMode.telemetry.addData("Stopped at Target", "None");
-        myOpMode.telemetry.update();
-        myOpMode.sleep(5000);
+        myOpMode.telemetry.addData("<<moveDistance:Stopped at Target", "None");
     }
 
 
