@@ -32,7 +32,7 @@ public class MecaBotMove {
     /*
      * Move robot forward or backward, +ve distance moves forward, -ve distance moves backward
      */
-    private void moveForwardBack(double inches) {
+    public void moveForwardBack(double inches) {
         moveDistance( inches, false);
     }
 
