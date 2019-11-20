@@ -48,7 +48,6 @@ public class polarisAuto1_skystone extends LinearOpMode {
         robot.setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
         while (opModeIsActive()) {
             moveToScanStone();
-            break;
             if (findSkyStone()) {
                 nav.grabTheStone();
                 break;
