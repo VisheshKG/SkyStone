@@ -145,7 +145,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
         //move close to stone
         //todo: nav.moveRightBlue or left Red by xinch-offset
         telemetry.addData("MoveToStone", xinch);
-        double adv=xinch-closeToStone;  //include vuforia overshot of 1 inch
+        double adv=Math.abs(xinch)-closeToStone;  //include vuforia overshot of 1 inch
         nav.moveRight(adv);
     }
 
