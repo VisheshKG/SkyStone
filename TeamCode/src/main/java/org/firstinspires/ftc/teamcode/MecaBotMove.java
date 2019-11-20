@@ -148,8 +148,6 @@ private void testOneMotorEncoder(int numRotation){
     // Claw and Damper movements
     public void grabTheStone(){
         robot.grabStoneWithSidearm();
-        //cwm
-        myOpMode.sleep(5000);
     }
 
     public void releaseTheStone(){

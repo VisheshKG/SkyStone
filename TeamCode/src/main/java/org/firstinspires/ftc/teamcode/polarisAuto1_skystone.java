@@ -65,11 +65,13 @@ public class polarisAuto1_skystone extends LinearOpMode {
         telemetry.addData(">Start Look for Sky Stone", "%.1f seconds", opmodeRunTime.seconds());
         if (findSkyStone()){
             moveToStone();
-            //grabStone and ship out
-        }else{  //todo: go parking
+            telemetry.addData("Grab Stone","none");
+            //todo: nav.grabStone
+        }else{
             telemetry.addData("<<Stone not found","NOOOOOOOOOOOO!");
         }
-
+        telemetry.addData("Go parking","none");
+        //todo: goParking(position);
         telemetry.addData("<End Look for Stone", "%.1f seconds", opmodeRunTime.seconds());
         telemetry.update();
         while (!isStopRequested()) {  //just loop
@@ -145,5 +147,12 @@ public class polarisAuto1_skystone extends LinearOpMode {
         telemetry.addData("MoveToStone", xinch);
         double adv=xinch-closeToStone;  //include vuforia overshot of 1 inch
         nav.moveRight(adv);
+    }
+
+    private void grabStoneNship(){
+        nav.grabTheStone();
+        nav.moveLeft(backDistToCtrBridge);  //back off from stone to location safe to cross bridge
+        //todo: move across bridge from x=72-5=67 to x=72-(49-4-7.5)=36
+        nav.releaseTheStone();
     }
 }
