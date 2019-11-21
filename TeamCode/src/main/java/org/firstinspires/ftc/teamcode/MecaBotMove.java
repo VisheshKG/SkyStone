@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -59,7 +60,7 @@ public class MecaBotMove {
         // Vishesh todo Multiply the distance we require by a determined constant to tell the motors how far to turn/set our target position
 
         // flip direction for reverse (this also applies for Left sideways when mecanumSideways is true)
-        driverEncoderTarget = -driverEncoderTarget;  // reverse the encoder target direction
+        //driverEncoderTarget = -driverEncoderTarget;  // reverse the encoder target direction
 
         // default is drive straight all wheels drive same direction (forward or backward depending on sign)
         int leftFront = driverEncoderTarget;
@@ -70,10 +71,16 @@ public class MecaBotMove {
         // for mecanum sideways movement, move Right when goForwardOrRight is true
         // Right wheels move inside, Left wheels move outside
         if (mecanumSideways) {
+            leftFront = -driverEncoderTarget;    // drive forward for outside
+            leftBack = driverEncoderTarget;    // drive backward for outside
+            rightFront = driverEncoderTarget;  // drive backward for inside
+            rightBack = -driverEncoderTarget;    // drive forward for inside
+            /*
             leftFront = driverEncoderTarget;    // drive forward for outside
             leftBack = -driverEncoderTarget;    // drive backward for outside
             rightFront = -driverEncoderTarget;  // drive backward for inside
             rightBack = driverEncoderTarget;    // drive forward for inside
+            */
         }
         // same code above works for mecanum move Left also. False value of goForwardOrRight already flipped the sign above
 
@@ -93,23 +100,28 @@ public class MecaBotMove {
         robot.driveStraight(HIGHSPEED);
 
         // Loop until both motors are no longer busy.
-        myOpMode.telemetry.addData("Encoder Drive", "Driving for %.2f inches", inches);
-        myOpMode.telemetry.update();
+        myOpMode.telemetry.addData("Encoder Drive", "Driving for %.2f inches",inches);
+        myOpMode.telemetry.addData("Encoder target ticks=", driverEncoderTarget);
+        //myOpMode.telemetry.update();
 
 //        while (robot.leftFrontDrive.isBusy() || robot.rightFrontDrive.isBusy() || robot.leftBackDrive.isBusy() || robot.rightBackDrive.isBusy()) {
         while (robot.rightBackDrive.isBusy()) {
             // no need to do any checks
             // the documentation says that motors stop automaticaqlly in RUN_TO_POSITION mode and isBusy() will return false after that
-            myOpMode.telemetry.addData("Encoder Drive", "Driving %.2f inches = %d encoder ticks", inches, driverEncoderTarget);
+            //myOpMode.telemetry.addData("Encoder Drive", "Driving %.2f inches = %d encoder ticks", inches, driverEncoderTarget);
             myOpMode.telemetry.addData("rightBackDrive position = ", robot.rightBackDrive.getCurrentPosition());
             myOpMode.telemetry.update();
+            //encoder reading a bit off target can keep us in this loop forever, so given an error margin here
+            if (Math.abs((Math.abs(robot.rightBackDrive.getCurrentPosition()) - Math.abs(driverEncoderTarget))) < 30 ){
+                break;
+            }
             myOpMode.sleep(50);
         }
 
         // Stop powering the motors - robot has moved to intended position
         robot.stopDriving();
 
-        myOpMode.telemetry.addData("Stopped at Target, rightBackDrive position = ", robot.rightBackDrive.getCurrentPosition());
+        myOpMode.telemetry.addData("--------Stopped at Target, rightBackDrive position = ", robot.rightBackDrive.getCurrentPosition());
         myOpMode.telemetry.update();
     }
 
@@ -132,5 +144,16 @@ public class MecaBotMove {
 
     public void releaseFoundation(){
         robot.releaseFoundation();
+    }
+
+    public boolean isUnderBridge(){
+        ColorSensor cs=robot.groundColorSensor;
+
+        int colorNum;
+        if (colorNum > 1 && colorNum < 4 ) {
+            //BLUE color strip detected
+            return true;
+        }else if (colorNum > 9){
+
     }
 }

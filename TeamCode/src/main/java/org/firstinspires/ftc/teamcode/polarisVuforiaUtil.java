@@ -132,9 +132,11 @@ public class polarisVuforiaUtil {
         rear2.setName("Rear Perimeter 2");
 
         // For convenience, gather together all the trackable objects in one easily-iterable collection */
-        //List<VuforiaTrackable> allTrackables = new ArrayList<VuforiaTrackable>();
         allTrackables = new ArrayList<VuforiaTrackable>();
-        allTrackables.addAll(targetsSkyStone);
+
+        //cw: just san sky stone for better performance
+        // allTrackables.addAll(targetsSkyStone);
+        allTrackables.add(stoneTarget);
 
         /**
          * In order for localization to work, we need to tell the system where each target is on the field, and

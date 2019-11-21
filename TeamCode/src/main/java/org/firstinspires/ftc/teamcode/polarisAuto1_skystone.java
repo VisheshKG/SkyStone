@@ -12,9 +12,11 @@ public class polarisAuto1_skystone extends LinearOpMode {
 
     // Blue Alliance or Red Alliance
     private static boolean BLUESIDE =true;
+    private static double robotStartX=49.0-12-2;
+    private static double robotStartY=17.25;
 
     // all in inches
-    private static double scanInterval=17;
+    private static double scanInterval=17;  //2 scan 17 apart; 3 scan
     //3" clearance on both side of robot between bridge poll and the parked robot
     // 4.5= 46-18-1/2 *22.25
     private static double backDistToCtrBridge=4.5;
@@ -22,14 +24,13 @@ public class polarisAuto1_skystone extends LinearOpMode {
     private static double inchClosetoScan=10.75;// 19" away from stone=47-17.25-19
 
 
-
     //eye placed 11 inch from far side of viewable stone
     // 18.5 inch off image means eye can see 3 stones 24 inches
-
-    private static int stoneOffset= 1;
-    private static int robotLength=18;
     private static int stonePlacementY=47;
-    private static int robotStartingX=36;
+    //current location: origin is at red/blue wall center with x pointing to stone side and y to center of field
+    private static double curX=robotStartX;
+    private static double curY=robotStartY;
+
 
     // ----------------
     private static final float mmPerInch = 25.4f;
@@ -47,21 +48,18 @@ public class polarisAuto1_skystone extends LinearOpMode {
         //todo: restore
         robot.init(this.hardwareMap);
 
-
         vUtil.initVuforia();
         vUtil.activateTracking();  //takes a few seconds
-
+        telemetry.setAutoClear(false);
 
         // Wait for the game to start (driver presses PLAY)
-        while (!isStarted()) {
-            // Prompt User
-            telemetry.addData(">", "Press start");
-            telemetry.update();
-        }
+        waitForStart();
 
         //nav.testMove();
         //todo: restore
-        //moveCloserToStone();
+        moveCloserToStone();
+        telemetry.addData("{curX, curY} =", "%.1f, %.1f",curX,curX);
+
         telemetry.addData(">Start Look for Sky Stone", "%.1f seconds", opmodeRunTime.seconds());
         if (findSkyStone()){
             moveToStone();
@@ -81,7 +79,15 @@ public class polarisAuto1_skystone extends LinearOpMode {
 
     //Assume to start on stone side
     private void moveCloserToStone(){
-        telemetry.addData("Move to within Vuforia Range:",inchClosetoScan);
+        double moveInches;
+        if (BLUESIDE){
+            //move right is negative
+            moveInches=-inchClosetoScan;
+        }else{
+            moveInches=inchClosetoScan;
+        }
+        curY=curY+inchClosetoScan;
+        telemetry.addData("Move to within Vuforia Range:",moveInches);
         nav.moveLeftRight(inchClosetoScan);
     }
 
@@ -108,7 +114,10 @@ public class polarisAuto1_skystone extends LinearOpMode {
                     break;
                 }else if (ct == numLooks) {
                     telemetry.addData("debug Move to new location and scan ct=",ct);
-                    nav.moveForwardBack(scanInterval);
+                    //move back in negative
+                    double inchMove=BLUESIDE?-scanInterval:scanInterval;
+                    nav.moveForwardBack(inchMove);
+                    curX=curX+scanInterval;
                 }
             }
         }
@@ -121,6 +130,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
         float x;
         float y;
 
+        //Vuforia x, y: x is point out screen y pointing to right of screen in landscape;
         x=vUtil.getRobotX();
         y=vUtil.getRobotY();
         float xinch=x/mmPerInch;
@@ -132,12 +142,13 @@ public class polarisAuto1_skystone extends LinearOpMode {
             telemetry.addData("Too off center=", yinch);
             if (y < 0) {
                 telemetry.addData("<<<<<Stone on Left-Move Left", yinch);
-                //todo: blue side left is forward
-                nav.moveForwardBack(yinch);
+                //todo: blue side left is forward, pass positive inch
+                nav.moveForwardBack(-yinch);
             } else {   //NOTE: This is where you grab the stone and move to load.
                 telemetry.addData(">>>>>Stone on Right-Move Right", yinch);
-                nav.moveForwardBack(yinch);
+                nav.moveForwardBack(-yinch);
             }
+            curX=curX+y;
         } else {
             telemetry.addData("Stone is Centered", yinch);
             //vishesh_move("STOP","SLOW");

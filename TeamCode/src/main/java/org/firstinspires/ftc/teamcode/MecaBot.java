@@ -29,7 +29,9 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -68,6 +70,9 @@ public class MecaBot
     public Servo clawGrab = null;
     public Servo bumperServo = null;
     public Servo sideArmServo = null;
+ //   public ModernRoboticsI2cColorSensor groundColorSensor = null;
+    public ColorSensor groundColorSensor = null;
+
 
     //constants here
     public static final double LIFT_TOP = 4950;
@@ -112,6 +117,8 @@ public class MecaBot
         clawGrab = hwMap.get(Servo.class, "clawGrab");
         bumperServo = hwMap.get(Servo.class, "bumperServo");
         sideArmServo = hwMap.get(Servo.class, "sideArmServo");
+        //todo: cwm get exact name
+        groundColorSensor = hwMap.get(ColorSensor.class, "groundColorSensor");
 
         // Set motor direction
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
@@ -254,6 +261,11 @@ public class MecaBot
     }
     public void releaseStoneWithSidearm() {
         sideArmServo.setPosition(SIDEARM_UP); // side arm up and free
+    }
+
+    public int getColorNumber(){
+        //return groundColorSensor.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER);
+
     }
 }
 
