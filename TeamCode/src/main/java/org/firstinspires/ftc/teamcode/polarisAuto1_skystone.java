@@ -20,7 +20,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
     //3" clearance on both side of robot between bridge poll and the parked robot
     // 4.5= 46-18-1/2 *22.25
     private static double backDistToCtrBridge=4.5;
-    private static double closeToStone=1.0;
+    private static double closeToStone=2.0;
     private static double inchClosetoScan=10.75;// 19" away from stone=47-17.25-19
 
 
@@ -158,7 +158,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
         telemetry.addData("MoveToStone", xinch);
         double adv=Math.abs(xinch)-closeToStone;  //include vuforia overshot of 1 inch
         telemetry.addData("******Move closer to stone by: moveLeftRight=",adv);
-        nav.moveLeftRight(adv);
+        nav.moveLeftRight(-adv);
     }
 
     private void grabStoneNship(){

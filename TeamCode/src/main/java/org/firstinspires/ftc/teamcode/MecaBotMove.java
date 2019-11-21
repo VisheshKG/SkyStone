@@ -72,6 +72,8 @@ public class MecaBotMove {
             rightFront = -driverEncoderTarget;  // drive backward for inside
             rightBack = driverEncoderTarget;    // drive forward for inside
             */
+
+            //When driverEncoderTarget is positive, left side drive into each other, robot move left
             leftFront = -driverEncoderTarget;
             leftBack = driverEncoderTarget;
             rightFront = driverEncoderTarget;
@@ -96,22 +98,26 @@ public class MecaBotMove {
 
         // Loop until both motors are no longer busy.
         myOpMode.telemetry.addData("Encoder Drive", "Driving for %.2f inches",inches);
-        myOpMode.telemetry.addData("Encoder target ticks=", driverEncoderTarget);
+        myOpMode.telemetry.addData("=======Encoder target ticks=", rightBack);
         //myOpMode.telemetry.update();
 
-//        while (robot.leftFrontDrive.isBusy() || robot.rightFrontDrive.isBusy() || robot.leftBackDrive.isBusy() || robot.rightBackDrive.isBusy()) {
-        while (robot.rightBackDrive.isBusy()) {
+        while (robot.leftFrontDrive.isBusy() || robot.rightFrontDrive.isBusy() || robot.leftBackDrive.isBusy() || robot.rightBackDrive.isBusy()) {
+        //while (robot.rightBackDrive.isBusy()) {
+            //CWMMMMMMMMMMMMMMMMMMM test if saved
             // no need to do any checks
-            // the documentation says that motors stop automaticaqlly in RUN_TO_POSITION mode and isBusy() will return false after that
+            // the documentation says that motors stop automatically in RUN_TO_POSITION mode and isBusy() will return false after that
             //myOpMode.telemetry.addData("Encoder Drive", "Driving %.2f inches = %d encoder ticks", inches, driverEncoderTarget);
             myOpMode.telemetry.addData("rightBackDrive position = ", robot.rightBackDrive.getCurrentPosition());
             myOpMode.telemetry.update();
             //encoder reading a bit off target can keep us in this loop forever, so given an error margin here
             int errMargin=30;
-            if (Math.abs(robot.rightBackDrive.getCurrentPosition()) > (Math.abs(driverEncoderTarget)-errMargin) ){
+            if (Math.abs(robot.leftFrontDrive.getCurrentPosition() - leftFront) < errMargin &&
+                    Math.abs(robot.leftBackDrive.getCurrentPosition() - leftBack) < errMargin &&
+                    Math.abs(robot.rightFrontDrive.getCurrentPosition() - rightFront) < errMargin &&
+                    Math.abs(robot.rightBackDrive.getCurrentPosition() - rightBack) < errMargin ){
                 break;
             }
-            myOpMode.sleep(10);
+            //myOpMode.sleep(10);
         }
 
         // Stop powering the motors - robot has moved to intended position
