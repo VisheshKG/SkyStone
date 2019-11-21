@@ -32,7 +32,7 @@ public class MecaBotMove {
     /*
      * Move robot forward or backward, +ve distance moves forward, -ve distance moves backward
      */
-    private void moveForwardBack(double inches) {
+    public void moveForwardBack(double inches) {
         moveDistance( inches, false);
     }
 
@@ -55,11 +55,6 @@ public class MecaBotMove {
         double circumference = Math.PI * WHEEL_DIA;
         double numRotation = inches/circumference;
         int driverEncoderTarget = (int) (MOTOR_TICK_COUNT * numRotation);
-
-        // Vishesh todo Multiply the distance we require by a determined constant to tell the motors how far to turn/set our target position
-
-        // flip direction for reverse (this also applies for Left sideways when mecanumSideways is true)
-        driverEncoderTarget = -driverEncoderTarget;  // reverse the encoder target direction
 
         // default is drive straight all wheels drive same direction (forward or backward depending on sign)
         int leftFront = driverEncoderTarget;

@@ -66,8 +66,9 @@ public class MecaBot
     public Servo liftServo = null;
     public Servo clawRotate = null;
     public Servo clawGrab = null;
-    public Servo bumperServo = null;
     public Servo sideArmServo = null;
+    public Servo leftClamp = null;
+    public Servo rightClamp = null;
 
     //constants here
     public static final double LIFT_TOP = 4950;
@@ -110,8 +111,9 @@ public class MecaBot
         liftServo = hwMap.get(Servo.class, "liftServo");
         clawRotate = hwMap.get(Servo.class, "clawRotate");
         clawGrab = hwMap.get(Servo.class, "clawGrab");
-        bumperServo = hwMap.get(Servo.class, "bumperServo");
         sideArmServo = hwMap.get(Servo.class, "sideArmServo");
+        leftClamp = hwMap.get(Servo.class, "leftClamp");
+        rightClamp = hwMap.get(Servo.class, "rightClamp");
 
         // Set motor direction
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
@@ -152,9 +154,9 @@ public class MecaBot
         liftServo.setPosition(ARM_INSIDE);
         clawRotate.setPosition(CLAW_PARALLEL);
         clawGrab.setPosition(CLAW_OPEN);
-        bumperServo.setPosition(BUMPER_UP);
         sideArmServo.setPosition(SIDEARM_UP);
-
+        leftClamp.setPosition(Servo.MAX_POSITION);
+        rightClamp.setPosition(Servo.MIN_POSITION);
     }
 
     public void setDriveMode(DcMotor.RunMode runMode) {
@@ -244,10 +246,12 @@ public class MecaBot
     }
 
     public void grabFoundation() {
-        bumperServo.setPosition(BUMPER_DOWN); // bumper down to engage the foundation
+        leftClamp.setPosition(Servo.MAX_POSITION); // clamp down to engage the foundation
+        rightClamp.setPosition(Servo.MIN_POSITION);
     }
     public void releaseFoundation() {
-        bumperServo.setPosition(BUMPER_UP); // bumper down to engage the foundation
+        leftClamp.setPosition(Servo.MIN_POSITION); // clamp up to release the foundation
+        rightClamp.setPosition(Servo.MAX_POSITION);
     }
     public void grabStoneWithSidearm() {
         sideArmServo.setPosition(SIDEARM_DOWN); // side arm down to engage the stone

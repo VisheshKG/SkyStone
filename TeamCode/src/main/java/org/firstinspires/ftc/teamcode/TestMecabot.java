@@ -59,7 +59,8 @@ public class TestMecabot extends LinearOpMode {
     private DcMotor rightDrive = null;
 
     /* Declare OpMode members. */
-    MecaBot robot = new MecaBot();   // Use a Pushbot's hardware
+    MecaBot robot = new MecaBot();   // Use a Mecabot's hardware
+    MecaBotMove nav = new MecaBotMove(this, robot);
 
     @Override
     public void runOpMode() {
@@ -83,8 +84,14 @@ public class TestMecabot extends LinearOpMode {
                 robot.resetDriveEncoder();
                 robot.setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
             }
+            else if (gamepad1.a) {
+                nav.moveForwardBack(12);
+                nav.moveLeftRight(12);
+                nav.moveForwardBack(-12);
+                nav.moveLeftRight(-12);
+            }
             else {
-                robot.driveStraight(-gamepad1.left_stick_y);
+                robot.driveTank(-gamepad1.left_stick_y, gamepad1.right_stick_x);
             }
 /*
             // Setup a variable for each drive wheel to save power level for telemetry

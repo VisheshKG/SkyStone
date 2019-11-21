@@ -82,7 +82,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
     //Assume to start on stone side
     private void moveCloserToStone(){
         telemetry.addData("Move to within Vuforia Range:",inchClosetoScan);
-        nav.moveRight(inchClosetoScan);
+        nav.moveLeftRight(inchClosetoScan);
     }
 
     float stoneDistanceMargin = 25; //in mm
@@ -108,7 +108,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
                     break;
                 }else if (ct == numLooks) {
                     telemetry.addData("debug Move to new location and scan ct=",ct);
-                    nav.moveForward(scanInterval);
+                    nav.moveForwardBack(scanInterval);
                 }
             }
         }
@@ -133,10 +133,10 @@ public class polarisAuto1_skystone extends LinearOpMode {
             if (y < 0) {
                 telemetry.addData("<<<<<Stone on Left-Move Left", yinch);
                 //todo: blue side left is forward
-                nav.moveForward(yinch);
+                nav.moveForwardBack(yinch);
             } else {   //NOTE: This is where you grab the stone and move to load.
                 telemetry.addData(">>>>>Stone on Right-Move Right", yinch);
-                nav.moveBackward(yinch);
+                nav.moveForwardBack(yinch);
             }
         } else {
             telemetry.addData("Stone is Centered", yinch);
@@ -146,12 +146,12 @@ public class polarisAuto1_skystone extends LinearOpMode {
         //todo: nav.moveRightBlue or left Red by xinch-offset
         telemetry.addData("MoveToStone", xinch);
         double adv=Math.abs(xinch)-closeToStone;  //include vuforia overshot of 1 inch
-        nav.moveRight(adv);
+        nav.moveLeftRight(adv);
     }
 
     private void grabStoneNship(){
         nav.grabTheStone();
-        nav.moveLeft(backDistToCtrBridge);  //back off from stone to location safe to cross bridge
+        nav.moveLeftRight(backDistToCtrBridge);  //back off from stone to location safe to cross bridge
         //todo: move across bridge from x=72-5=67 to x=72-(49-4-7.5)=36
         nav.releaseTheStone();
     }
