@@ -22,12 +22,13 @@ public class testMoveMecaBot extends LinearOpMode {
 
         waitForStart();
 
-        while (opModeIsActive()) {
-            testColorSensor();
-        }
-        double aInch=-10;
-        //nav.moveForwardBack(aInch);
-        //nav.moveLeftRight(aInch);
+        double aInch=10;
+        nav.moveForwardBack(aInch);
+        nav.moveLeftRight(aInch);
+        aInch=-10;
+        nav.moveForwardBack(aInch);
+        nav.moveLeftRight(aInch);
+
     }
 
     public void testColorSensor(){

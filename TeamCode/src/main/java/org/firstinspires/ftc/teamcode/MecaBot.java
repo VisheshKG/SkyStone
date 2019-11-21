@@ -263,9 +263,5 @@ public class MecaBot
         sideArmServo.setPosition(SIDEARM_UP); // side arm up and free
     }
 
-    public int getColorNumber(){
-        //return groundColorSensor.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER);
-
-    }
 }
 

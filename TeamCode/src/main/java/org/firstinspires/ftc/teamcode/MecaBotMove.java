@@ -57,11 +57,6 @@ public class MecaBotMove {
         double numRotation = inches/circumference;
         int driverEncoderTarget = (int) (MOTOR_TICK_COUNT * numRotation);
 
-        // Vishesh todo Multiply the distance we require by a determined constant to tell the motors how far to turn/set our target position
-
-        // flip direction for reverse (this also applies for Left sideways when mecanumSideways is true)
-        //driverEncoderTarget = -driverEncoderTarget;  // reverse the encoder target direction
-
         // default is drive straight all wheels drive same direction (forward or backward depending on sign)
         int leftFront = driverEncoderTarget;
         int leftBack = driverEncoderTarget;
@@ -71,16 +66,16 @@ public class MecaBotMove {
         // for mecanum sideways movement, move Right when goForwardOrRight is true
         // Right wheels move inside, Left wheels move outside
         if (mecanumSideways) {
-            leftFront = -driverEncoderTarget;    // drive forward for outside
-            leftBack = driverEncoderTarget;    // drive backward for outside
-            rightFront = driverEncoderTarget;  // drive backward for inside
-            rightBack = -driverEncoderTarget;    // drive forward for inside
-            /*
+/*
             leftFront = driverEncoderTarget;    // drive forward for outside
             leftBack = -driverEncoderTarget;    // drive backward for outside
             rightFront = -driverEncoderTarget;  // drive backward for inside
             rightBack = driverEncoderTarget;    // drive forward for inside
             */
+            leftFront = -driverEncoderTarget;
+            leftBack = driverEncoderTarget;
+            rightFront = driverEncoderTarget;
+            rightBack = -driverEncoderTarget;
         }
         // same code above works for mecanum move Left also. False value of goForwardOrRight already flipped the sign above
 
@@ -112,10 +107,11 @@ public class MecaBotMove {
             myOpMode.telemetry.addData("rightBackDrive position = ", robot.rightBackDrive.getCurrentPosition());
             myOpMode.telemetry.update();
             //encoder reading a bit off target can keep us in this loop forever, so given an error margin here
-            if (Math.abs((Math.abs(robot.rightBackDrive.getCurrentPosition()) - Math.abs(driverEncoderTarget))) < 30 ){
+            int errMargin=30;
+            if (Math.abs(robot.rightBackDrive.getCurrentPosition()) > (Math.abs(driverEncoderTarget)-errMargin) ){
                 break;
             }
-            myOpMode.sleep(50);
+            myOpMode.sleep(10);
         }
 
         // Stop powering the motors - robot has moved to intended position
@@ -147,13 +143,23 @@ public class MecaBotMove {
     }
 
     public boolean isUnderBridge(){
-        ColorSensor cs=robot.groundColorSensor;
+        ColorSensor cs = robot.groundColorSensor;
 
-        int colorNum;
-        if (colorNum > 1 && colorNum < 4 ) {
-            //BLUE color strip detected
+        myOpMode.telemetry.addData("Blue Reading=", cs.blue());
+        myOpMode.telemetry.addData("Red Reading=", cs.red());
+        myOpMode.telemetry.addData("Alpha Reading=", cs.alpha());
+        myOpMode.telemetry.update();
+
+        if (cs.blue() > 1000) {
+            myOpMode.telemetry.addData("Ground is BLUE--Bridge reached", cs.blue());
             return true;
-        }else if (colorNum > 9){
+        }
+        if (cs.red() > 1000){
+            myOpMode.telemetry.addData("Ground is RED--Bridge reached", cs.blue());
+            return true;
+        }
 
+        return false;
     }
+
 }

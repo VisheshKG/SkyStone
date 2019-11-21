@@ -57,7 +57,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
 
         //nav.testMove();
         //todo: restore
-        moveCloserToStone();
+        //moveCloserToStone();
         telemetry.addData("{curX, curY} =", "%.1f, %.1f",curX,curX);
 
         telemetry.addData(">Start Look for Sky Stone", "%.1f seconds", opmodeRunTime.seconds());
@@ -135,8 +135,8 @@ public class polarisAuto1_skystone extends LinearOpMode {
         y=vUtil.getRobotY();
         float xinch=x/mmPerInch;
         float yinch=y/mmPerInch;
-        //telemetry.addData("Pos (in)", "{X, Y, Z} = %.1f, %.1f, %.1f",x,y,z);
-        //telemetry.update();
+        telemetry.addData("Pos (in)", "{X, Y} = %.1f, %.1f",x,y);
+        telemetry.update();
 
         if (Math.abs(y) > stoneDistanceMargin) {
             telemetry.addData("Too off center=", yinch);
@@ -157,6 +157,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
         //todo: nav.moveRightBlue or left Red by xinch-offset
         telemetry.addData("MoveToStone", xinch);
         double adv=Math.abs(xinch)-closeToStone;  //include vuforia overshot of 1 inch
+        telemetry.addData("******Move closer to stone by: moveLeftRight=",adv);
         nav.moveLeftRight(adv);
     }
 
