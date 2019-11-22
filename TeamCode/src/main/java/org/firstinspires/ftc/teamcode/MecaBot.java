@@ -30,6 +30,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -67,6 +68,9 @@ public class MecaBot
     public Servo clawRotate = null;
     public Servo clawGrab = null;
     public Servo sideArmServo = null;
+
+ //   public ModernRoboticsI2cColorSensor groundColorSensor = null;
+    public ColorSensor groundColorSensor = null;
     public Servo leftClamp = null;
     public Servo rightClamp = null;
 
@@ -112,6 +116,7 @@ public class MecaBot
         clawRotate = hwMap.get(Servo.class, "clawRotate");
         clawGrab = hwMap.get(Servo.class, "clawGrab");
         sideArmServo = hwMap.get(Servo.class, "sideArmServo");
+        groundColorSensor = hwMap.get(ColorSensor.class, "groundColorSensor");
         leftClamp = hwMap.get(Servo.class, "leftClamp");
         rightClamp = hwMap.get(Servo.class, "rightClamp");
 
@@ -270,5 +275,6 @@ public class MecaBot
     public void releaseStoneWithSidearm() {
         sideArmServo.setPosition(SIDEARM_UP); // side arm up and free
     }
+
 }
 
