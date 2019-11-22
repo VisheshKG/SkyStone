@@ -142,21 +142,16 @@ public class MecaBot
         rightIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Set all motors to zero power
-        leftFrontDrive.setPower(0);
-        leftBackDrive.setPower(0);
-        rightFrontDrive.setPower(0);
-        rightBackDrive.setPower(0);
+        stopDriving();
+        stopIntake();
         liftMotor.setPower(0);
-        leftIntake.setPower(0);
-        rightIntake.setPower(0);
 
         // set all servos to their resting position
         liftServo.setPosition(ARM_INSIDE);
         clawRotate.setPosition(CLAW_PARALLEL);
-        clawGrab.setPosition(CLAW_OPEN);
-        sideArmServo.setPosition(SIDEARM_UP);
-        leftClamp.setPosition(Servo.MAX_POSITION);
-        rightClamp.setPosition(Servo.MIN_POSITION);
+        releaseStoneWithClaw();
+        releaseStoneWithSidearm();
+        releaseFoundation();
     }
 
     public void setDriveMode(DcMotor.RunMode runMode) {
@@ -173,7 +168,7 @@ public class MecaBot
         rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
-    public void driveForwardBackStop(double speed) {
+    public void driveStraight(double speed) {
 
         speed = Range.clip( speed, -1.0, 1.0);
         leftFrontDrive.setPower(speed);
@@ -182,12 +177,8 @@ public class MecaBot
         rightBackDrive.setPower(speed);
     }
 
-    public void driveStraight(double speed) {
-        this.driveForwardBackStop(speed);
-    }
-
     public void stopDriving() {
-        this.driveForwardBackStop(0);
+        this.driveStraight(0);
     }
 
     public void driveTank(double driveSpeed, double turnSpeed) {
@@ -245,6 +236,26 @@ public class MecaBot
         rightBackDrive.setPower(rightBack);
     }
 
+    public void runIntake(double speed) {
+        leftIntake.setPower(speed);
+        rightIntake.setPower(speed);
+    }
+    public void stopIntake() {
+        leftIntake.setPower(0);
+        rightIntake.setPower(0);
+    }
+    public void moveLiftArmInside() {
+
+    }
+    public void moveLiftArmOutside() {
+
+    }
+    public void grabStoneWithClaw() {
+        clawGrab.setPosition(CLAW_CLOSE);
+    }
+    public void releaseStoneWithClaw() {
+        clawGrab.setPosition(CLAW_OPEN);
+    }
     public void grabFoundation() {
         leftClamp.setPosition(Servo.MAX_POSITION); // clamp down to engage the foundation
         rightClamp.setPosition(Servo.MIN_POSITION);
