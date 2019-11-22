@@ -22,14 +22,6 @@ public class testMoveMecaBot extends LinearOpMode {
 
         waitForStart();
 
-        //draw a box by moving with robot start of heading in positive X direction
-        //     move forward,right
-        nav.moveYX(10,10,0,0,true);
-        //     move back, left
-        nav.moveYX(0,0,10,10,true);
-
-
-        /*
         double aInch=10;
         nav.moveForwardBack(aInch);
         nav.moveLeftRight(aInch);
@@ -37,10 +29,22 @@ public class testMoveMecaBot extends LinearOpMode {
         nav.moveForwardBack(aInch);
         nav.moveLeftRight(aInch);
 
-         */
+        nav.grabTheStone();
+        sleep(5000 );
+        nav.releaseTheStone();
+
+        //testMoveYX();
 
     }
 
+    private void testMoveYX(){
+        //draw a box by moving with robot start of heading in positive X direction
+        //     move forward,right
+        nav.moveYX(10,10,0,0,true);
+        //     move back, left
+        nav.moveYX(0,0,10,10,true);
+
+    }
     public void testColorSensor(){
         ColorSensor cs=robot.groundColorSensor;
         telemetry.addData("Blue Reading=", cs.blue());

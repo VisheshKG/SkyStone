@@ -209,4 +209,17 @@ public class MecaBotMove {
         }
     }
 
+    //Use only coordinates to park
+    public void goPark(double curX, double curY, boolean parkInside, boolean headXpositive){
+        double yParkInside=46-4;   //park 4 inches off bridge
+        double toY;
+        double toX;
+        if (parkInside){
+            toY=yParkInside;
+        }else{
+            toY=22;
+        }
+        moveYX(0,toY,curX,curY,headXpositive);
+    }
+
 }
