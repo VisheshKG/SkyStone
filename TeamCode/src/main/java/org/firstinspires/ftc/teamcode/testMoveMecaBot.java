@@ -22,12 +22,19 @@ public class testMoveMecaBot extends LinearOpMode {
 
         waitForStart();
 
+        nav.moveYX(10,10,0,0,true);
+        nav.moveYX(0,0,10,10,true);
+
+
+        /*
         double aInch=10;
         nav.moveForwardBack(aInch);
         nav.moveLeftRight(aInch);
         aInch=-10;
         nav.moveForwardBack(aInch);
         nav.moveLeftRight(aInch);
+
+         */
 
     }
 

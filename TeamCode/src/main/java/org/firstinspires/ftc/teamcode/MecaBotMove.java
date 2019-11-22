@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 
@@ -16,6 +15,12 @@ public class MecaBotMove {
     private double speed=0.5;
     private final double LOWSPEED = 0.2;
     private final double HIGHSPEED = 0.6;
+    //current location: origin is at red/blue wall center with x pointing to stone side and y to center of field
+    private static double curX=0;
+    private static double curY=0;
+
+    private static double wheelPower=0.6;  //default wheel speed
+
 
     /* Constructor */
     public MecaBotMove(LinearOpMode opMode, MecaBot aRobot) {
@@ -26,10 +31,18 @@ public class MecaBotMove {
 
     public double getWheelMoveInches(){
         int tickMoved=robot.rightBackDrive.getCurrentPosition();
-        double inchMoved= tickMoved/MOTOR_TICK_COUNT * WHEEL_DIA;
+        double inchMoved= tickMoved/MOTOR_TICK_COUNT / WHEEL_DIA;
         return inchMoved;
     }
 
+    public void setSpeedWheel(double speed) {
+        wheelPower=speed;
+    }
+
+    public double getCurX(){ return curX;}
+    public double getCurY(){ return curY;}
+    public void setCurX(double x){curX=x;}
+    public void setCurY(double y){curY=y;}
     /*
      * Move robot forward or backward, +ve distance moves forward, -ve distance moves backward
      */
@@ -42,7 +55,6 @@ public class MecaBotMove {
     */
     public void moveLeftRight(double inches) {
         moveDistance(inches, true);
-
     }
 
     /*
@@ -94,7 +106,7 @@ public class MecaBotMove {
         robot.rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // Set the power of the motors to whatever speed is needed
-        robot.driveStraight(HIGHSPEED);
+        robot.driveStraight(wheelPower);
 
         // Loop until both motors are no longer busy.
         myOpMode.telemetry.addData("Encoder Drive", "Driving for %.2f inches",inches);
@@ -102,15 +114,13 @@ public class MecaBotMove {
         //myOpMode.telemetry.update();
 
         while (robot.leftFrontDrive.isBusy() || robot.rightFrontDrive.isBusy() || robot.leftBackDrive.isBusy() || robot.rightBackDrive.isBusy()) {
-        //while (robot.rightBackDrive.isBusy()) {
-            //CWMMMMMMMMMMMMMMMMMMM test if saved
             // no need to do any checks
             // the documentation says that motors stop automatically in RUN_TO_POSITION mode and isBusy() will return false after that
             //myOpMode.telemetry.addData("Encoder Drive", "Driving %.2f inches = %d encoder ticks", inches, driverEncoderTarget);
             myOpMode.telemetry.addData("rightBackDrive position = ", robot.rightBackDrive.getCurrentPosition());
             myOpMode.telemetry.update();
             //encoder reading a bit off target can keep us in this loop forever, so given an error margin here
-            int errMargin=30;
+            int errMargin=50;
             if (Math.abs(robot.leftFrontDrive.getCurrentPosition() - leftFront) < errMargin &&
                     Math.abs(robot.leftBackDrive.getCurrentPosition() - leftBack) < errMargin &&
                     Math.abs(robot.rightFrontDrive.getCurrentPosition() - rightFront) < errMargin &&
@@ -153,7 +163,7 @@ public class MecaBotMove {
 
         myOpMode.telemetry.addData("Blue Reading=", cs.blue());
         myOpMode.telemetry.addData("Red Reading=", cs.red());
-        myOpMode.telemetry.addData("Alpha Reading=", cs.alpha());
+        //myOpMode.telemetry.addData("Alpha Reading=", cs.alpha());
         myOpMode.telemetry.update();
 
         if (cs.blue() > 1000) {
@@ -161,11 +171,33 @@ public class MecaBotMove {
             return true;
         }
         if (cs.red() > 1000){
-            myOpMode.telemetry.addData("Ground is RED--Bridge reached", cs.blue());
+            myOpMode.telemetry.addData("Ground is RED--Bridge reached", cs.red());
             return true;
         }
 
         return false;
+    }
+
+    // headXpositive is true when robot forward position is along positive X axis
+    //               true for RED alliance, false for BLUE alliance
+    // Move in Y direction first followed by X
+    double distanceMarginInch=0.1;
+    public void moveYX(double targetX, double targetY, double curX, double curY, boolean headXpositive){
+        double xdist=targetX-curX;
+        double ydist=targetY-curY;
+        if (!headXpositive){
+            //blue side: negative x require robot to go forward
+            xdist=-xdist;
+        }
+        ydist=-ydist;  //both side: positive y movement require robot to go right
+
+        if (Math.abs(ydist) > distanceMarginInch){
+            moveLeftRight(ydist);
+        }
+        if (Math.abs(xdist) > distanceMarginInch) {
+            moveForwardBack(xdist);
+        }
+
     }
 
 }
