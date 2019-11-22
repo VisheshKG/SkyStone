@@ -22,7 +22,10 @@ public class testMoveMecaBot extends LinearOpMode {
 
         waitForStart();
 
+        //draw a box by moving with robot start of heading in positive X direction
+        //     move forward,right
         nav.moveYX(10,10,0,0,true);
+        //     move back, left
         nav.moveYX(0,0,10,10,true);
 
 

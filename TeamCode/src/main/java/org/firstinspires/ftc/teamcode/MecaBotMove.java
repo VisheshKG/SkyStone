@@ -178,11 +178,21 @@ public class MecaBotMove {
         return false;
     }
 
-    // headXpositive is true when robot forward position is along positive X axis
-    //               true for RED alliance, false for BLUE alliance
-    // Move in Y direction first followed by X
-    double distanceMarginInch=0.1;
+/**
+ *  Method to drive the robot from one point marked by coordinate curX, curY to another targetX, target Y.
+ *  The coordinate origin is assumed to be at the alliance wall center (where bridge touch the wall)
+ *  with Y pointing to the middle of the field and X pointing to the stone side.
+ *  Robot move in Y direction first followed by X.
+ *    @param targetX  target X coordinate value
+ *    @param targetY  target Y coordinate value
+ *    @param curX     start X coordinate value
+ *    @param curY     start Y coordinate value
+ *    @param headXpositive   true when robot forward heading is along positive X axis
+ *                           set this to true for RED alliance, false for BLUE alliance
+ */
+
     public void moveYX(double targetX, double targetY, double curX, double curY, boolean headXpositive){
+        double distanceMarginInch=0.1;    //minimum required distance to invoke the move
         double xdist=targetX-curX;
         double ydist=targetY-curY;
         if (!headXpositive){
@@ -197,7 +207,6 @@ public class MecaBotMove {
         if (Math.abs(xdist) > distanceMarginInch) {
             moveForwardBack(xdist);
         }
-
     }
 
 }
