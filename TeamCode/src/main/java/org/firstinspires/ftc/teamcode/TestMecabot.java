@@ -79,16 +79,41 @@ public class TestMecabot extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
-            if (gamepad1.y) {
+            if (gamepad1.a && gamepad1.b) {
                 robot.stopDriving();
                 robot.resetDriveEncoder();
                 robot.setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
             }
+            else if (gamepad1.b) {
+                robot.releaseFoundation();
+            }
             else if (gamepad1.a) {
+                robot.grabFoundation();
+            }
+            else if (gamepad1.left_bumper) {
+                nav.setSpeedWheel(1.0);
+                nav.encoderTurn(55, true);
+                nav.setSpeedWheel(nav.DEFAULT_SPEED);
+            }
+            else if (gamepad1.right_bumper) {
+                nav.setSpeedWheel(1.0);
+                nav.encoderTurn(55, false);
+                nav.setSpeedWheel(nav.DEFAULT_SPEED);
+            }
+            else if (gamepad1.x) {
+                nav.encoderRotate(26, true);
+            }
+            else if (gamepad1.y) {
+                nav.encoderRotate(26, false);
+            }
+            else if (gamepad2.a) {
                 nav.moveForwardBack(12);
-                nav.moveLeftRight(12);
+                sleep(500);
+                nav.moveRightLeft(12);
+                sleep(500);
                 nav.moveForwardBack(-12);
-                nav.moveLeftRight(-12);
+                sleep(500);
+                nav.moveRightLeft(-12);
             }
             else {
                 robot.driveTank(-gamepad1.left_stick_y, gamepad1.right_stick_x);

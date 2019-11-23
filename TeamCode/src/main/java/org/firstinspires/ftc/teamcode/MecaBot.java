@@ -161,6 +161,13 @@ public class MecaBot
         releaseFoundation();
     }
 
+    public void setTargetPosition(int leftFront, int leftBack, int rightFront, int rightBack) {
+        leftFrontDrive.setTargetPosition(leftFront);
+        leftBackDrive.setTargetPosition(leftBack);
+        rightFrontDrive.setTargetPosition(rightFront);
+        rightBackDrive.setTargetPosition(rightBack);
+    }
+
     public void setDriveMode(DcMotor.RunMode runMode) {
         leftBackDrive.setMode(runMode);
         leftFrontDrive.setMode(runMode);

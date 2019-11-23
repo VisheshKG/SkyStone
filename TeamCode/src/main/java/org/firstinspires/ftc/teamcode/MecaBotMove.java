@@ -4,23 +4,32 @@ import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
+import org.firstinspires.ftc.robotcore.external.Func;
+
 
 public class MecaBotMove {
 
-    private final static int    MOTOR_TICK_COUNT = 560; // we are using REV HD Hex Planetary 20:1 for drive train
-    private static final float  mmPerInch        = 25.4f;
-    private final static double WHEEL_DIA = 75 / mmPerInch;  //in millimeter
-    private LinearOpMode  myOpMode;       // Access to the OpMode object
-    private MecaBot       robot;        // Access to the Robot hardware
-    private double speed=0.5;
-    private final double LOWSPEED = 0.2;
-    private final double HIGHSPEED = 0.6;
+    static final int    MOTOR_TICK_COUNT    = 560; // we are using REV HD Hex Planetary 20:1 for drive train
+    static final float  mmPerInch           = 25.4f;
+    static final double WHEEL_DIA           = 75 / mmPerInch;  // REV mecanum wheels have 75 millimeter diameter
+    static final double WHEEL_CIRCUMFERENCE = Math.PI * WHEEL_DIA;
+    static final double ENCODER_TICKS_PER_INCH      = (int)(MOTOR_TICK_COUNT / WHEEL_CIRCUMFERENCE);
+    static final int    ENCODER_TICKS_ERR_MARGIN    = 20;
+    static final double DEFAULT_SPEED       = 0.6;  //default wheel speed, same as motor power
+    static final double OUTER_TURN_RADIUS   = 22.75; // arbitrary choice to turn robot inside a tile of 24 inches
+    static final double INNER_TURN_RADIUS   = 7.25;  // OUTER_TURN_RAIDUS - Robot Wheelbase (15.5 inches)
+    static final double OUTER_TO_INNER_TURN_SPEED_RATIO = 5.0;
+
+    static final double Y_PARK_INNER        = 46.0;
+    static final double Y_PARK_OUTER        = 22.0;
+    static final double X_PARK_INNER_OUTER  = 9.0;
+
+    private LinearOpMode        myOpMode;       // Access to the OpMode object
+    private MecaBot             robot;        // Access to the Robot hardware
     //current location: origin is at red/blue wall center with x pointing to stone side and y to center of field
-    private static double curX=0;
-    private static double curY=0;
-
-    private static double wheelPower=0.6;  //default wheel speed
-
+    private static double       curX=0;
+    private static double       curY=0;
+    private static double       wheelPower=DEFAULT_SPEED;
 
     /* Constructor */
     public MecaBotMove(LinearOpMode opMode, MecaBot aRobot) {
@@ -53,8 +62,14 @@ public class MecaBotMove {
    /*
     * Move robot left or right, +ve distance moves right, -ve distance moves left
     */
-    public void moveLeftRight(double inches) {
+    public void moveRightLeft(double inches) {
         moveDistance(inches, true);
+    }
+    /*
+     * Move robot left or right, +ve distance moves LEFT, -ve distance moves RIGHT
+     */
+    public void moveLeftRight(double inches) {
+        moveDistance(inches * -1.0, true);
     }
 
     /*
@@ -62,12 +77,8 @@ public class MecaBotMove {
      */
     private void moveDistance(double inches, boolean mecanumSideways) {
 
-        robot.resetDriveEncoder();
-
-        //cw: convert millimeter to tick counts
-        double circumference = Math.PI * WHEEL_DIA;
-        double numRotation = inches/circumference;
-        int driverEncoderTarget = (int) (MOTOR_TICK_COUNT * numRotation);
+        //convert inches to tick counts
+        int driverEncoderTarget = (int) (ENCODER_TICKS_PER_INCH * inches);
 
         // default is drive straight all wheels drive same direction (forward or backward depending on sign)
         int leftFront = driverEncoderTarget;
@@ -78,67 +89,130 @@ public class MecaBotMove {
         // for mecanum sideways movement, move Right when goForwardOrRight is true
         // Right wheels move inside, Left wheels move outside
         if (mecanumSideways) {
-/*
-            leftFront = driverEncoderTarget;    // drive forward for outside
-            leftBack = -driverEncoderTarget;    // drive backward for outside
             rightFront = -driverEncoderTarget;  // drive backward for inside
             rightBack = driverEncoderTarget;    // drive forward for inside
-            */
-
-            //When driverEncoderTarget is positive, left side drive into each other, robot move left
-            leftFront = -driverEncoderTarget;
-            leftBack = driverEncoderTarget;
-            rightFront = driverEncoderTarget;
-            rightBack = -driverEncoderTarget;
+            leftFront = driverEncoderTarget;    // drive forward for outside
+            leftBack = -driverEncoderTarget;    // drive backward for outside
         }
         // same code above works for mecanum move Left also. False value of goForwardOrRight already flipped the sign above
 
         // set target position for encoder Drive
-        robot.leftFrontDrive.setTargetPosition(leftFront);
-        robot.leftBackDrive.setTargetPosition(leftBack);
-        robot.rightFrontDrive.setTargetPosition(rightFront);
-        robot.rightBackDrive.setTargetPosition(rightBack);
+        robot.resetDriveEncoder();
+        robot.setTargetPosition(leftFront, leftBack, rightFront, rightBack);
 
         // Set the motors to run to the necessary target position
-        robot.leftBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        robot.setDriveMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // Set the power of the motors to whatever speed is needed
         robot.driveStraight(wheelPower);
 
-        // Loop until both motors are no longer busy.
-        myOpMode.telemetry.addData("Encoder Drive", "Driving for %.2f inches",inches);
-        myOpMode.telemetry.addData("=======Encoder target ticks=", rightBack);
-        //myOpMode.telemetry.update();
+        myOpMode.telemetry.addLine("Driving inches | ").addData("outer", inches).addData("inner", inches);
 
+        // loop until motors are busy driving, update current position on driver station using telemetry
+        waitToReachTargetPosition(leftFront, leftBack, rightFront, rightBack);
+
+    }
+
+    // Rotate around Robot own center
+
+    public void encoderRotate(double inches, boolean counterClockwise) {
+
+        // Green intake wheels is front of robot,
+        // counterClockwise means Right wheels turning forward, Left wheels turning backwards
+
+        int ticks = (int) (ENCODER_TICKS_PER_INCH * inches);
+
+        int leftFront = counterClockwise ? -ticks : +ticks;
+        int leftBack = leftFront;
+        int rightFront = counterClockwise ? +ticks : -ticks;
+        int rightBack = rightFront;
+
+        // set target position for encoder Drive
+        robot.resetDriveEncoder();
+        robot.setTargetPosition(leftFront, leftBack, rightFront, rightBack);
+
+        // Set the motors to run to the necessary target position
+        robot.setDriveMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        robot.driveWheels(wheelPower, wheelPower, wheelPower, wheelPower);
+
+        myOpMode.telemetry.addLine("Driving inches | ").addData("outer", inches).addData("inner", inches);
+
+        // loop until motors are busy driving, update current position on driver station using telemetry
+        waitToReachTargetPosition(leftFront, leftBack, rightFront, rightBack);
+
+    }
+
+    // Turn in an arc
+    // Assume robot is touching the outer edge of a tile and we want to rotate it in a circular arc
+    // This is not rotating around its center axis but an arc with center of circle outside the robot where the tiles meet
+    // Outer wheels run along outer circle and inner wheels run along an inner circle
+    // Robot wheel base is 15.5 inches, our turning circle center is at tiles intersection
+    // Outer circle radius = 22.75 inches, circumference = 142.94, quarter circle arc = 35.74
+    // Inner cicle radius = 7.25 inches, circumference = 45.55, quarter circle arc = 11.39
+
+    public void encoderTurn(double inches, boolean counterClockwise) {
+
+        // Green intake wheels is front of robot, counterClockwise means Right wheels on outer circle
+        double outerWheelInches = inches;
+        double innerWheelInches = inches / OUTER_TO_INNER_TURN_SPEED_RATIO;
+
+        int outerWheelTicks = (int) (ENCODER_TICKS_PER_INCH * outerWheelInches);
+        int innerWheelTicks = (int) (ENCODER_TICKS_PER_INCH * innerWheelInches);
+
+        int leftFront = counterClockwise ? innerWheelTicks : outerWheelTicks;
+        int leftBack = leftFront;
+        int rightFront = counterClockwise ? outerWheelTicks : innerWheelTicks;
+        int rightBack = rightFront;
+
+        // set target position for encoder Drive
+        robot.resetDriveEncoder();
+        robot.setTargetPosition(leftFront, leftBack, rightFront, rightBack);
+
+        // Set the motors to run to the necessary target position
+        robot.setDriveMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        double insideWheelPower = wheelPower * INNER_TURN_RADIUS / OUTER_TURN_RADIUS;
+        if (counterClockwise) {
+            robot.driveWheels(insideWheelPower, insideWheelPower, wheelPower, wheelPower);
+        } else {
+            robot.driveWheels(wheelPower, wheelPower, insideWheelPower, insideWheelPower);
+        }
+
+        myOpMode.telemetry.addLine("Driving inches | ").addData("outer", outerWheelInches).addData("inner", innerWheelInches);
+
+        // loop until motors are busy driving, update current position on driver station using telemetry
+        waitToReachTargetPosition(leftFront, leftBack, rightFront, rightBack);
+
+    }
+
+    public void waitToReachTargetPosition(int leftFront, int leftBack, int rightFront, int rightBack) {
+
+        // Loop until motors are no longer busy.
         while (robot.leftFrontDrive.isBusy() || robot.rightFrontDrive.isBusy() || robot.leftBackDrive.isBusy() || robot.rightBackDrive.isBusy()) {
-            // no need to do any checks
-            // the documentation says that motors stop automatically in RUN_TO_POSITION mode and isBusy() will return false after that
-            //myOpMode.telemetry.addData("Encoder Drive", "Driving %.2f inches = %d encoder ticks", inches, driverEncoderTarget);
-            myOpMode.telemetry.addData("rightBackDrive position = ", robot.rightBackDrive.getCurrentPosition());
+
+            myOpMode.telemetry.addLine("Target position").addData("LF", leftFront).addData("RF", rightFront);
+            myOpMode.telemetry.addLine("Target position").addData("LB", leftBack).addData("RB", rightBack);
+            myOpMode.telemetry.addLine("Current position").addData("LF", robot.leftFrontDrive.getCurrentPosition()).addData("RF", robot.rightFrontDrive.getCurrentPosition());
+            myOpMode.telemetry.addLine("Current position").addData("LB", robot.leftBackDrive.getCurrentPosition()).addData("RB", robot.rightBackDrive.getCurrentPosition());
             myOpMode.telemetry.update();
+
             //encoder reading a bit off target can keep us in this loop forever, so given an error margin here
-            int errMargin=50;
-            if (Math.abs(robot.leftFrontDrive.getCurrentPosition() - leftFront) < errMargin &&
-                    Math.abs(robot.leftBackDrive.getCurrentPosition() - leftBack) < errMargin &&
-                    Math.abs(robot.rightFrontDrive.getCurrentPosition() - rightFront) < errMargin &&
-                    Math.abs(robot.rightBackDrive.getCurrentPosition() - rightBack) < errMargin ){
+            if (Math.abs(robot.leftFrontDrive.getCurrentPosition() - leftFront) < ENCODER_TICKS_ERR_MARGIN ||
+                    Math.abs(robot.leftBackDrive.getCurrentPosition() - leftBack) < ENCODER_TICKS_ERR_MARGIN ||
+                    Math.abs(robot.rightFrontDrive.getCurrentPosition() - rightFront) < ENCODER_TICKS_ERR_MARGIN ||
+                    Math.abs(robot.rightBackDrive.getCurrentPosition() - rightBack) < ENCODER_TICKS_ERR_MARGIN) {
                 break;
             }
-            //myOpMode.sleep(10);
         }
 
         // Stop powering the motors - robot has moved to intended position
         robot.stopDriving();
+        // Turn off RUN_TO_POSITION
+        robot.setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        myOpMode.telemetry.addData("--------Stopped at Target, rightBackDrive position = ", robot.rightBackDrive.getCurrentPosition());
-        myOpMode.telemetry.update();
-    }
+        myOpMode.sleep(250);
 
-    // Rotate
-    public void turn(int degrees, boolean counterClockwise) {
     }
 
     // Claw and Damper movements
@@ -209,17 +283,20 @@ public class MecaBotMove {
         }
     }
 
-    //Use only coordinates to park
+    /**
+     *  Method to park the robot under the bridge. It used the method moveYX() method
+     *  The coordinate origin is assumed to be at the alliance wall center (where bridge touch the wall)
+     *  with Y pointing to the middle of the field and X pointing to the stone side.
+     *    @param curX     start X coordinate value
+     *    @param curY     start Y coordinate value
+     *    @param parkInside      park under the bridge on inside tile towards center of field (or outside tile towards perimeter)
+     *    @param headXpositive   true when robot forward heading is along positive X axis
+     *                           set this to true for RED alliance, false for BLUE alliance
+     */
     public void goPark(double curX, double curY, boolean parkInside, boolean headXpositive){
-        double yParkInside=46-4;   //park 4 inches off bridge
-        double toY;
-        double toX;
-        if (parkInside){
-            toY=yParkInside;
-        }else{
-            toY=22;
-        }
-        moveYX(0,toY,curX,curY,headXpositive);
+
+        double toY = parkInside ? Y_PARK_INNER-4 : Y_PARK_OUTER;  //park 4 inches away from bridge in INNER position
+        moveYX(X_PARK_INNER_OUTER,toY,curX,curY,headXpositive);
     }
 
 }
