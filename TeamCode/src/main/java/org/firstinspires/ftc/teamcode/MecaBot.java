@@ -77,15 +77,17 @@ public class MecaBot
     //constants here
     public static final double LIFT_TOP = 4950;
     public static final double LIFT_BOTTOM = 0;
-    public static final double ARM_INSIDE = Servo.MAX_POSITION * 0.87;
-    public static final double ARM_OUTSIDE = Servo.MIN_POSITION;
+    public static final double ARM_INSIDE = Servo.MIN_POSITION;
+    public static final double ARM_OUTSIDE = Servo.MAX_POSITION;
     public static final double ARM_STEP = 0.02;
     public static final double CLAW_PARALLEL = 0.92;
     public static final double CLAW_PERPENDICULAR = 0.60;
-    public static final double CLAW_OPEN = 0.50;
-    public static final double CLAW_CLOSE = 0.40;
-    public static final double BUMPER_UP = Servo.MAX_POSITION;
-    public static final double BUMPER_DOWN = Servo.MIN_POSITION;
+    public static final double CLAW_OPEN = Servo.MAX_POSITION;
+    public static final double CLAW_CLOSE = Servo.MIN_POSITION;
+    public static final double RT_BUMPER_UP = Servo.MAX_POSITION;
+    public static final double RT_BUMPER_DOWN = Servo.MIN_POSITION;
+    public static final double LT_BUMPER_UP = Servo.MIN_POSITION;
+    public static final double LT_BUMPER_DOWN = Servo.MAX_POSITION;
     public static final double SIDEARM_UP = Servo.MAX_POSITION;
     public static final double SIDEARM_DOWN = Servo.MIN_POSITION;
 
@@ -262,12 +264,12 @@ public class MecaBot
         clawGrab.setPosition(CLAW_OPEN);
     }
     public void grabFoundation() {
-        leftClamp.setPosition(Servo.MAX_POSITION); // clamp down to engage the foundation
-        rightClamp.setPosition(Servo.MIN_POSITION);
+        leftClamp.setPosition(LT_BUMPER_DOWN); // clamp down to engage the foundation
+        rightClamp.setPosition(RT_BUMPER_DOWN);
     }
     public void releaseFoundation() {
-        leftClamp.setPosition(Servo.MIN_POSITION); // clamp up to release the foundation
-        rightClamp.setPosition(Servo.MAX_POSITION);
+        leftClamp.setPosition(LT_BUMPER_UP); // clamp up to release the foundation
+        rightClamp.setPosition(RT_BUMPER_UP);
     }
     public void grabStoneWithSidearm() {
         sideArmServo.setPosition(SIDEARM_DOWN); // side arm down to engage the stone
