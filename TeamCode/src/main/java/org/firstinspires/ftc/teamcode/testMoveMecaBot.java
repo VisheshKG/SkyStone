@@ -36,7 +36,7 @@ public class testMoveMecaBot extends LinearOpMode {
 
         //nav.moveLeftRight(-12);
 
-        nav.goPark(24,24, false,true);
+        //nav.goPark(24,24, false,true);
         sleep(5000);
       //  nav.goPark(0,24, true,true);
 

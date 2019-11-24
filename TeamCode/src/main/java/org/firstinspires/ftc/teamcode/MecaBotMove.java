@@ -67,6 +67,8 @@ public class MecaBotMove {
      * Move robot left or right, +ve distance moves LEFT, -ve distance moves RIGHT
      */
     public void moveLeftRight(double inches) {
+        // maybe needed to compensate for weak movements
+        //inches=inches * fieldConfiguration.leftRightMultiple;
         moveDistance(inches * -1.0, true);
     }
 

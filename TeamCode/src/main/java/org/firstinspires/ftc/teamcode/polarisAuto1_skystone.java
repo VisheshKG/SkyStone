@@ -33,7 +33,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
     //3" clearance on both side of robot between bridge poll and the parked robot
     // 4.5= 46-18-1/2 *22.25
     private static double backDistToCtrBridge=4.5;
-    private static double closeToStone=1.0;
+
     private static double inchClosetoScan=fieldConfiguration.inchClosetoScan;
 
     //eye placed 11 inch from far side of viewable stone
@@ -97,7 +97,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
         telemetry.addData("Go parking","none");
         telemetry.addData("{curX, curY} =", "%.2f, %.2f",curX,curY);
         telemetry.update();
-        //nav.goPark(curX,curY,PARK_INSIDE,!BLUESIDE);
+        nav.goPark(curX,curY,PARK_INSIDE,!BLUESIDE);
         telemetry.update();
         vUtil.stopTracking();
         while (!isStopRequested()) {  //just loop
@@ -140,10 +140,10 @@ public class polarisAuto1_skystone extends LinearOpMode {
         double limitX=2;
         if (BLUESIDE){
             maxCt=3;
-            limitX=62.0;  //half field - space from wall=72-10
+            limitX=52.0;  //half field - space from wall=72-10
         }else{
             maxCt=2;
-            limitX=58;  //half field - 2.5 stone over=72-20
+            limitX=48;  //half field - 3 stone over=72-20
         }
         double scanInterval=fieldConfiguration.scanIntervalDistance;
 
@@ -239,7 +239,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
         }
         //advance to move close to stone for grabbing
         telemetry.addData("MoveToStone", xinch);
-        double adv=Math.abs(xinch)-closeToStone;  //include vuforia overshot of 1 inch
+        double adv=Math.abs(xinch)-fieldConfiguration.closeToStone;  //include vuforia overshot of 1 inch
         nav.moveLeftRight(-adv);
         curY=curY+adv;
         telemetry.addData("Field Current Position {x y}=","%.2f  %.2f", curX,curY);
@@ -263,11 +263,8 @@ public class polarisAuto1_skystone extends LinearOpMode {
         //with stone robot width is 22.25", bridge is 46" wide, 27" space to pass
         double margin=3;
         double targetY=stonePlacementY-margin;  //need to clear the bridge
-        double targetX=BLUESIDE?-3:-3-17.25;
+        double targetX=BLUESIDE?-6:-6-17.25;   //6 inch over bridge
 
-        //todo: test
-        targetX=-18;
-        targetY=0;
         boolean headingX=!BLUESIDE;
         telemetry.addData("Before Drop-----{x y}=","%.2f  %.2f", curX,curY);
         nav.moveYX(targetX,targetY,curX,curY,headingX);

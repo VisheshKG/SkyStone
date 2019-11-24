@@ -18,16 +18,18 @@ public class fieldConfiguration {
     public static final double scanIntervalDistance=8;
     public static final double maxTimeViewStone=10;
     public static final double maxTimeViewOneStone=2;
-    public static final double inchClosetoScan=13.75; // 16" away from stone=47-17.25-19
-    public static final float errForwardAdjust=4; //adjust due to over or under drive
+    public static final double inchClosetoScan=14.75; //*** 15" away from stone;increase to close in
+    public static final float errForwardAdjust=6;  //***left/right adjust due to over or under drive
     //red side drift right by 5 inches including eye offset; move forward to compensate
+    public static final double leftRightMultiple=1.1;  //multiply this by left right movements
+    public static final double closeToStone=-1;  //distance from skystone for grabbing, negative means over drive
 
     //parking
     public static final double delayParkingBySeconds = 0;
     public static final double driveToPark=32;
 
     public static final double parkingMarginL=1;   //leave space on left side of robot at parking
-    public static final double parkingMarginR=4;   //leave space on right/arm side of robot at parking
+    public static final double parkingMarginR=2;   //leave space on right/arm side of robot at parking
     public static final double bridgeY=46;
 
     //Robot measures
