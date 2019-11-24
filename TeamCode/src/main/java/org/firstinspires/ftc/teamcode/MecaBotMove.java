@@ -9,6 +9,8 @@ import org.firstinspires.ftc.robotcore.external.Func;
 
 public class MecaBotMove {
 
+    enum WheelPosition { LEFT_FRONT, LEFT_BACK, RIGHT_FRONT, RIGHT_BACK }
+
     static final int    MOTOR_TICK_COUNT    = 560; // we are using REV HD Hex Planetary 20:1 for drive train
     static final float  mmPerInch           = 25.4f;
     static final double WHEEL_DIA           = 75 / mmPerInch;  // REV mecanum wheels have 75 millimeter diameter
@@ -36,12 +38,6 @@ public class MecaBotMove {
         // Save reference to OpMode and Hardware map
         myOpMode = opMode;
         robot = aRobot;
-    }
-
-    public double getWheelMoveInches(){
-        int tickMoved=robot.rightBackDrive.getCurrentPosition();
-        double inchMoved= tickMoved/MOTOR_TICK_COUNT / WHEEL_DIA;
-        return inchMoved;
     }
 
     public void setSpeedWheel(double speed) {
@@ -109,7 +105,7 @@ public class MecaBotMove {
         myOpMode.telemetry.addLine("Driving inches | ").addData("outer", inches).addData("inner", inches);
 
         // loop until motors are busy driving, update current position on driver station using telemetry
-        waitToReachTargetPosition(leftFront, leftBack, rightFront, rightBack);
+        waitToReachTargetPosition(WheelPosition.RIGHT_BACK, leftFront, leftBack, rightFront, rightBack);
 
     }
 
@@ -139,7 +135,8 @@ public class MecaBotMove {
         myOpMode.telemetry.addLine("Driving inches | ").addData("outer", inches).addData("inner", inches);
 
         // loop until motors are busy driving, update current position on driver station using telemetry
-        waitToReachTargetPosition(leftFront, leftBack, rightFront, rightBack);
+        waitToReachTargetPosition(counterClockwise ? WheelPosition.RIGHT_FRONT : WheelPosition.LEFT_FRONT,
+                leftFront, leftBack, rightFront, rightBack);
 
     }
 
@@ -182,11 +179,12 @@ public class MecaBotMove {
         myOpMode.telemetry.addLine("Driving inches | ").addData("outer", outerWheelInches).addData("inner", innerWheelInches);
 
         // loop until motors are busy driving, update current position on driver station using telemetry
-        waitToReachTargetPosition(leftFront, leftBack, rightFront, rightBack);
+        waitToReachTargetPosition(counterClockwise ? WheelPosition.RIGHT_FRONT : WheelPosition.LEFT_FRONT,
+                leftFront, leftBack, rightFront, rightBack);
 
     }
 
-    public void waitToReachTargetPosition(int leftFront, int leftBack, int rightFront, int rightBack) {
+    public void waitToReachTargetPosition(WheelPosition dominantWheel, int leftFront, int leftBack, int rightFront, int rightBack) {
 
         // Loop until motors are no longer busy.
         while (robot.leftFrontDrive.isBusy() || robot.rightFrontDrive.isBusy() || robot.leftBackDrive.isBusy() || robot.rightBackDrive.isBusy()) {
@@ -198,10 +196,16 @@ public class MecaBotMove {
             myOpMode.telemetry.update();
 
             //encoder reading a bit off target can keep us in this loop forever, so given an error margin here
-            if (Math.abs(robot.leftFrontDrive.getCurrentPosition() - leftFront) < ENCODER_TICKS_ERR_MARGIN ||
-                    Math.abs(robot.leftBackDrive.getCurrentPosition() - leftBack) < ENCODER_TICKS_ERR_MARGIN ||
-                    Math.abs(robot.rightFrontDrive.getCurrentPosition() - rightFront) < ENCODER_TICKS_ERR_MARGIN ||
-                    Math.abs(robot.rightBackDrive.getCurrentPosition() - rightBack) < ENCODER_TICKS_ERR_MARGIN) {
+            if ((dominantWheel == WheelPosition.LEFT_FRONT) && Math.abs(robot.leftFrontDrive.getCurrentPosition() - leftFront) < ENCODER_TICKS_ERR_MARGIN) {
+                break;
+            }
+            else if ((dominantWheel == WheelPosition.LEFT_BACK) && Math.abs(robot.leftBackDrive.getCurrentPosition() - leftBack) < ENCODER_TICKS_ERR_MARGIN) {
+                break;
+            }
+            else if ((dominantWheel == WheelPosition.RIGHT_FRONT) && Math.abs(robot.rightFrontDrive.getCurrentPosition() - rightFront) < ENCODER_TICKS_ERR_MARGIN) {
+                break;
+            }
+            else if ((dominantWheel == WheelPosition.RIGHT_BACK) && Math.abs(robot.rightBackDrive.getCurrentPosition() - rightBack) < ENCODER_TICKS_ERR_MARGIN) {
                 break;
             }
         }
