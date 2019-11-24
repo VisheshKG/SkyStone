@@ -64,9 +64,13 @@ public class polarisAuto1_skystone extends LinearOpMode {
         vUtil.initVuforia();
         vUtil.activateTracking();  //takes a few seconds
         telemetry.setAutoClear(false);
+        curX=fieldConfiguration.robotStartX;
+        curY=fieldConfiguration.robotStartY;
         String side="RED";
         if (BLUESIDE){ side="BLUE"; }
         telemetry.addData(" ",side);
+        telemetry.addData("{curX, curY} =", "%.2f, %.2f",curX,curY);
+        telemetry.update();
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -90,6 +94,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
         telemetry.addData("<End Look for Stone", "%.1f seconds", opmodeRunTime.seconds());
         telemetry.update();
         telemetry.addData("Go parking","none");
+        telemetry.addData("{curX, curY} =", "%.2f, %.2f",curX,curY);
         //nav.goPark(curX,curY,PARK_INSIDE,!BLUESIDE);
         vUtil.stopTracking();
         while (!isStopRequested()) {  //just loop
@@ -115,7 +120,6 @@ public class polarisAuto1_skystone extends LinearOpMode {
         nav.moveLeftRight(moveInches);
     }
 
-    float stoneDistanceMargin = 25; //Vuforia stone center margin in millimeter
 
     private boolean findSkyStone(){
         boolean stonefound=false;
@@ -130,23 +134,21 @@ public class polarisAuto1_skystone extends LinearOpMode {
         double deltaTime;
 
         int maxCt;
-        double maxX=2;
+        double limitX=2;
         if (BLUESIDE){
             maxCt=3;
-            maxX=72-10;  //half field - space from wall
+            limitX=62.0;  //half field - space from wall=72-10
         }else{
             maxCt=2;
-            maxX=72-24;  //half field - 3 stone over
+            limitX=58;  //half field - 2.5 stone over=72-20
         }
+        double scanInterval=fieldConfiguration.scanIntervalDistance;
 
         int ct=0;  //Count # moves
-
         while (!stonefound){   //todo: need to time out
-            telemetry.addData("before view stone", ct);
             if (vUtil.skystoneIsVisible()){
                 stonefound=true;
             } else {
-
                 //ct=ct+1;
                 curSeconds = opmodeRunTime.seconds(); //update current time
                 if (curSeconds > maxTimeViewStone){
@@ -163,27 +165,32 @@ public class polarisAuto1_skystone extends LinearOpMode {
 
                  */
                 if (deltaTime > maxTimeViewOneStone){
-                    telemetry.addData("====Move to new location to scan ct (seconds)","%d %.1f", ct,curSeconds);
-                    double scanInterval=fieldConfiguration.scanIntervalDistance;
-                    double inchMove=BLUESIDE?-scanInterval:scanInterval;
-
-                    nav.moveForwardBack(inchMove);   //Move
-                    curX=curX+scanInterval;  //track coordinate
-                    lastSeconds=curSeconds;   //reset per stone view time
-                    telemetry.addData("222 Field Current Position {x y}=","%.2f  %.2f", curX,curY);
-                    telemetry.update();
                     ct=ct+1;
-
-                    if (ct >= maxCt) {
+                    /*
+                    if (ct > maxCt) {
                         telemetry.addData("Max Scan Count Reached", ct);
                         telemetry.update();
                         break;
                     }
-                    if (curX + scanInterval > maxX){
-                        telemetry.addData("Max X Reached maxX=", maxX);
+                     */
+                    double nextX=curX+scanInterval;
+                    telemetry.addData("Ready to Move to next view point curX=", nextX);
+                    if (nextX > limitX){
+                        telemetry.addData("Max X Reached limitX=", limitX);
                         telemetry.update();
                         break;
+                    }else {
+                        telemetry.addData("====Move to new location to scan ct (seconds)", "%d %.1f", ct, curSeconds);
+                        telemetry.update();
+                        double inchMove = BLUESIDE ? -scanInterval : scanInterval;
+                        nav.moveForwardBack(inchMove);   //Move
+                        curX = curX + scanInterval;  //track coordinate
+                        lastSeconds = curSeconds;   //reset per stone view time
+                        telemetry.addData("----Field Current Position {x y}=", "%.2f  %.2f", curX, curY);
+                        telemetry.addData("111111 view stone", ct);
+                        telemetry.update();
                     }
+
                 }
             }
         }
@@ -206,8 +213,13 @@ public class polarisAuto1_skystone extends LinearOpMode {
         telemetry.update();
 
         //nav.setSpeedWheel(LOW_SPEED);
-
-        if (Math.abs(y) > stoneDistanceMargin) {
+        if (y>0){     //test shows a drift to right of stone
+            yinch=yinch-fieldConfiguration.errForwardAdjust;  //move less to right stone
+        }else{
+            yinch=yinch-fieldConfiguration.errForwardAdjust;
+        }
+        float stoneDistanceMargin = 1; //Vuforia stone center margin
+        if (Math.abs(yinch) > stoneDistanceMargin) {
             telemetry.addData("Too off center=", yinch);
             if (y < 0) {
                 telemetry.addData("<<<<<Stone on Left-Move Left", yinch);

@@ -18,7 +18,7 @@ public class MecaBotMove {
     static final double WHEEL_DIA           = 75 / mmPerInch;  // REV mecanum wheels have 75 millimeter diameter
     static final double WHEEL_CIRCUMFERENCE = Math.PI * WHEEL_DIA;
     static final double ENCODER_TICKS_PER_INCH      = MOTOR_TICK_COUNT / WHEEL_CIRCUMFERENCE;
-    static final int    ENCODER_TICKS_ERR_MARGIN    = 30;
+    static final int    ENCODER_TICKS_ERR_MARGIN    = 50;
     static final double DEFAULT_SPEED       = 0.6;  //default wheel speed, same as motor power
     static final double OUTER_TURN_RADIUS   = 22.75; // arbitrary choice to turn robot inside a tile of 24 inches
     static final double INNER_TURN_RADIUS   = 7.25;  // OUTER_TURN_RAIDUS - Robot Wheelbase (15.5 inches)
@@ -189,13 +189,16 @@ public class MecaBotMove {
     public void waitToReachTargetPosition(WheelPosition dominantWheel, int leftFront, int leftBack, int rightFront, int rightBack) {
 
         // Loop until motors are no longer busy.
-        while (robot.leftFrontDrive.isBusy() || robot.rightFrontDrive.isBusy() || robot.leftBackDrive.isBusy() || robot.rightBackDrive.isBusy()) {
-
+        //while (robot.leftFrontDrive.isBusy() || robot.rightFrontDrive.isBusy() || robot.leftBackDrive.isBusy() || robot.rightBackDrive.isBusy()) {
+        while (robot.rightFrontDrive.isBusy() ){
+            /*
             myOpMode.telemetry.addLine("Target position").addData("LF", leftFront).addData("RF", rightFront);
             myOpMode.telemetry.addLine("Target position").addData("LB", leftBack).addData("RB", rightBack);
             myOpMode.telemetry.addLine("Current position").addData("LF", robot.leftFrontDrive.getCurrentPosition()).addData("RF", robot.rightFrontDrive.getCurrentPosition());
             myOpMode.telemetry.addLine("Current position").addData("LB", robot.leftBackDrive.getCurrentPosition()).addData("RB", robot.rightBackDrive.getCurrentPosition());
             myOpMode.telemetry.update();
+
+             */
 
             //encoder reading a bit off target can keep us in this loop forever, so given an error margin here
             if ((dominantWheel == WheelPosition.LEFT_FRONT) && Math.abs(robot.leftFrontDrive.getCurrentPosition() - leftFront) < ENCODER_TICKS_ERR_MARGIN) {
@@ -214,6 +217,7 @@ public class MecaBotMove {
 
         // Stop powering the motors - robot has moved to intended position
         robot.stopDriving();
+        myOpMode.telemetry.addData("DONE driving LF position=",robot.leftFrontDrive.getCurrentPosition());
         // Turn off RUN_TO_POSITION
         robot.setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
@@ -305,7 +309,7 @@ public class MecaBotMove {
         double toY = parkInside ? fieldConfiguration.bridgeY-fieldConfiguration.parkingMarginR:
                  fieldConfiguration.robotWidth+fieldConfiguration.parkingMarginL;
         double toX = headXpositive? -X_PARK_INNER_OUTER:X_PARK_INNER_OUTER;
-        myOpMode.telemetry.addData("target X Y", "%.1f %.1f", toX,toY);
+        myOpMode.telemetry.addData("Parking target X Y", "%.1f %.1f", toX,toY);
         moveYX(toX,toY,curX,curY,headXpositive);
     }
 

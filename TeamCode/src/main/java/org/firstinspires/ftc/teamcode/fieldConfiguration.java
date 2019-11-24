@@ -9,16 +9,18 @@ package org.firstinspires.ftc.teamcode;
 public class fieldConfiguration {
     public static final boolean BLUESIDE =false;      //if red side, set it to false
     public static final boolean PARK_INSIDE =false;   //false for parking along wall
-    public static final boolean START_STONE_SIDE=false;  //true if start at stone side
+    public static final boolean START_STONE_SIDE=true;  //true if start at stone side
 
     public static double robotStartX= 41;      // robot origin aline with image right
     public static double robotStartY=17.25;       //right back corner of robot
 
     //Vuforia setting
-    public static final double scanIntervalDistance=10;
-    public static final double maxTimeViewStone=5;
+    public static final double scanIntervalDistance=8;
+    public static final double maxTimeViewStone=10;
     public static final double maxTimeViewOneStone=2;
-    public static final double inchClosetoScan=12.75; // 17" away from stone=47-17.25-19
+    public static final double inchClosetoScan=13.75; // 16" away from stone=47-17.25-19
+    public static final float errForwardAdjust=5;
+    //red side drift right by 5 inches including eye offset; move forward to compensate
 
     //parking
     public static final double delayParkingBySeconds = 0;
@@ -43,7 +45,7 @@ public class fieldConfiguration {
             if (BLUESIDE) {
                 robotStartX = -24;   //blue foundation side: align tile
             } else {
-                robotStartX = -24-17;   //red foundation side: align with tile edge
+                robotStartX = -41;   //red foundation side: align with tile edge
             }
         }
     }
