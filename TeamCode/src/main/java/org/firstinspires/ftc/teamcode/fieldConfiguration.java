@@ -14,6 +14,11 @@ public class fieldConfiguration {
 
     public static final double delayParkingBySeconds = 0;
 
+    //Vuforia setting
+    public static final double scanIntervalDistance=10;
+    public static final double maxTimeViewStone=5;
+    public static final double maxTimeViewOneStone=2;
+
     //parking
     public static final double parkingMargin=1;   //leave space on side of robot at parking
     public static final double bridgeY=46;

@@ -29,7 +29,6 @@
 
 package org.firstinspires.ftc.teamcode;
 
-//cwm: debug line
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -78,15 +77,17 @@ public class MecaBot
     //constants here
     public static final double LIFT_TOP = 4950;
     public static final double LIFT_BOTTOM = 0;
-    public static final double ARM_INSIDE = Servo.MAX_POSITION * 0.87;
-    public static final double ARM_OUTSIDE = Servo.MIN_POSITION;
+    public static final double ARM_INSIDE = Servo.MIN_POSITION;
+    public static final double ARM_OUTSIDE = Servo.MAX_POSITION;
     public static final double ARM_STEP = 0.02;
     public static final double CLAW_PARALLEL = 0.92;
     public static final double CLAW_PERPENDICULAR = 0.60;
-    public static final double CLAW_OPEN = 0.50;
-    public static final double CLAW_CLOSE = 0.40;
-    public static final double BUMPER_UP = Servo.MAX_POSITION;
-    public static final double BUMPER_DOWN = Servo.MIN_POSITION;
+    public static final double CLAW_OPEN = Servo.MAX_POSITION;
+    public static final double CLAW_CLOSE = Servo.MIN_POSITION;
+    public static final double RT_BUMPER_UP = Servo.MAX_POSITION;
+    public static final double RT_BUMPER_DOWN = Servo.MIN_POSITION;
+    public static final double LT_BUMPER_UP = Servo.MIN_POSITION;
+    public static final double LT_BUMPER_DOWN = Servo.MAX_POSITION;
     public static final double SIDEARM_UP = Servo.MAX_POSITION;
     public static final double SIDEARM_DOWN = Servo.MIN_POSITION;
 
@@ -148,21 +149,23 @@ public class MecaBot
         rightIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Set all motors to zero power
-        leftFrontDrive.setPower(0);
-        leftBackDrive.setPower(0);
-        rightFrontDrive.setPower(0);
-        rightBackDrive.setPower(0);
+        stopDriving();
+        stopIntake();
         liftMotor.setPower(0);
-        leftIntake.setPower(0);
-        rightIntake.setPower(0);
 
         // set all servos to their resting position
         liftServo.setPosition(ARM_INSIDE);
         clawRotate.setPosition(CLAW_PARALLEL);
-        clawGrab.setPosition(CLAW_OPEN);
-        sideArmServo.setPosition(SIDEARM_UP);
-        leftClamp.setPosition(Servo.MAX_POSITION);
-        rightClamp.setPosition(Servo.MIN_POSITION);
+        releaseStoneWithClaw();
+        releaseStoneWithSidearm();
+        releaseFoundation();
+    }
+
+    public void setTargetPosition(int leftFront, int leftBack, int rightFront, int rightBack) {
+        leftFrontDrive.setTargetPosition(leftFront);
+        leftBackDrive.setTargetPosition(leftBack);
+        rightFrontDrive.setTargetPosition(rightFront);
+        rightBackDrive.setTargetPosition(rightBack);
     }
 
     public void setDriveMode(DcMotor.RunMode runMode) {
@@ -179,7 +182,7 @@ public class MecaBot
         rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
-    public void driveForwardBackStop(double speed) {
+    public void driveStraight(double speed) {
 
         speed = Range.clip( speed, -1.0, 1.0);
         leftFrontDrive.setPower(speed);
@@ -188,12 +191,8 @@ public class MecaBot
         rightBackDrive.setPower(speed);
     }
 
-    public void driveStraight(double speed) {
-        this.driveForwardBackStop(speed);
-    }
-
     public void stopDriving() {
-        this.driveForwardBackStop(0);
+        this.driveStraight(0);
     }
 
     public void driveTank(double driveSpeed, double turnSpeed) {
@@ -251,13 +250,33 @@ public class MecaBot
         rightBackDrive.setPower(rightBack);
     }
 
+    public void runIntake(double speed) {
+        leftIntake.setPower(speed);
+        rightIntake.setPower(speed);
+    }
+    public void stopIntake() {
+        leftIntake.setPower(0);
+        rightIntake.setPower(0);
+    }
+    public void moveLiftArmInside() {
+
+    }
+    public void moveLiftArmOutside() {
+
+    }
+    public void grabStoneWithClaw() {
+        clawGrab.setPosition(CLAW_CLOSE);
+    }
+    public void releaseStoneWithClaw() {
+        clawGrab.setPosition(CLAW_OPEN);
+    }
     public void grabFoundation() {
-        leftClamp.setPosition(Servo.MAX_POSITION); // clamp down to engage the foundation
-        rightClamp.setPosition(Servo.MIN_POSITION);
+        leftClamp.setPosition(LT_BUMPER_DOWN); // clamp down to engage the foundation
+        rightClamp.setPosition(RT_BUMPER_DOWN);
     }
     public void releaseFoundation() {
-        leftClamp.setPosition(Servo.MIN_POSITION); // clamp up to release the foundation
-        rightClamp.setPosition(Servo.MAX_POSITION);
+        leftClamp.setPosition(LT_BUMPER_UP); // clamp up to release the foundation
+        rightClamp.setPosition(RT_BUMPER_UP);
     }
     public void grabStoneWithSidearm() {
         sideArmServo.setPosition(SIDEARM_DOWN); // side arm down to engage the stone

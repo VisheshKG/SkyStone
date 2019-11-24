@@ -30,7 +30,6 @@ public class polarisAuto1_skystone extends LinearOpMode {
     //robot start position: put the eye at center of 2nd stone
     private static double robotStartX= 18;
     private static double robotStartY=17.25;       //right back corner of robot
-    private static double scanInterval=10;  //2 scan 17 apart; 3 scan
     //3" clearance on both side of robot between bridge poll and the parked robot
     // 4.5= 46-18-1/2 *22.25
     private static double backDistToCtrBridge=4.5;
@@ -79,6 +78,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
         telemetry.addData("{curX, curY} =", "%.2f, %.2f",curX,curY);
 
         telemetry.addData(">Start Look for Sky Stone", "%.1f seconds", opmodeRunTime.seconds());
+        telemetry.update();
         if (findSkyStone()){
             moveToStone();
             telemetry.addData("Grab Stone!!!!!!!","none");
@@ -91,9 +91,10 @@ public class polarisAuto1_skystone extends LinearOpMode {
         telemetry.update();
         telemetry.addData("Go parking","none");
         //nav.goPark(curX,curY,PARK_INSIDE,!BLUESIDE);
+        vUtil.stopTracking();
         while (!isStopRequested()) {  //just loop
         }
-        vUtil.stopTracking();
+
     }
 
     //Assume to start on stone side, move to scan range
@@ -119,21 +120,31 @@ public class polarisAuto1_skystone extends LinearOpMode {
         //double xdistance=49-robotStartingX;   //stone placed at 49 inches; robot starting 36
         //call vuforia to find stone, start scanning from bridge end to wall
         // if robot on blue side, it moves left first. 2nd parameter, true to move robot left
-        double maxTimeViewStone=5;
-        double maxTimeViewOneStone=2;
+        double maxTimeViewStone=fieldConfiguration.maxTimeViewStone;
+        double maxTimeViewOneStone=fieldConfiguration.maxTimeViewOneStone;
         double curSeconds = opmodeRunTime.seconds();
         double lastSeconds = curSeconds;
         double deltaTime;
 
-        int ct=0;
-        int numLooks=50;  //controls how long robot looks for target at each location
+        int maxCt;
+        double maxX=2;
+        if (BLUESIDE){
+            maxCt=3;
+            maxX=72-10;  //half field - space from wall
+        }else{
+            maxCt=2;
+            maxX=72-24;  //half field - 3 stone over
+        }
+
+        int ct=0;  //Count # moves
+
         while (!stonefound){   //todo: need to time out
             if (vUtil.skystoneIsVisible()){
                 stonefound=true;
             } else {
-                //sleep(300);
-                ct=ct+1;
-                curSeconds = opmodeRunTime.seconds();
+
+                //ct=ct+1;
+                curSeconds = opmodeRunTime.seconds(); //update current time
                 if (curSeconds > maxTimeViewStone){
                     telemetry.addData("Max time stone scan reached ", "%.1f seconds", opmodeRunTime.seconds());
                     telemetry.update();
@@ -149,13 +160,26 @@ public class polarisAuto1_skystone extends LinearOpMode {
                  */
                 if (deltaTime > maxTimeViewOneStone){
                     telemetry.addData("====Move to new location to scan ct (seconds)","%d %.1f", ct,curSeconds);
-                    //move back in negative
+                    double scanInterval=fieldConfiguration.scanIntervalDistance;
                     double inchMove=BLUESIDE?-scanInterval:scanInterval;
+
                     nav.moveForwardBack(inchMove);
-                    curX=curX+scanInterval;
+                    curX=curX+scanInterval;  //track coordinate
                     lastSeconds=curSeconds;   //reset per stone view time
                     telemetry.addData("222 Field Current Position {x y}=","%.2f  %.2f", curX,curY);
                     telemetry.update();
+                    ct=ct+1;
+
+                    if (ct >= maxCt) {
+                        telemetry.addData("Max Scan Count Reached", ct);
+                        telemetry.update();
+                        break;
+                    }
+                    if (curX + scanInterval > maxX){
+                        telemetry.addData("Max X Reached maxX=", maxX);
+                        telemetry.update();
+                        break;
+                    }
                 }
             }
         }
