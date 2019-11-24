@@ -91,20 +91,16 @@ public class TestMecaBotTeleOp extends LinearOpMode {
                 robot.grabFoundation();
             }
             else if (gamepad1.left_bumper) {
-                nav.setSpeedWheel(1.0);
-                nav.encoderTurn(55, true);
-                nav.setSpeedWheel(MecaBotMove.DEFAULT_SPEED);
+                nav.encoderTurn(55, true, 1.0);
             }
             else if (gamepad1.right_bumper) {
-                nav.setSpeedWheel(1.0);
-                nav.encoderTurn(55, false);
-                nav.setSpeedWheel(MecaBotMove.DEFAULT_SPEED);
+                nav.encoderTurn(55, false, 1.0);
             }
             else if (gamepad1.x) {
-                nav.encoderRotate(26, true);
+                nav.encoderRotate(26, true, MecaBotMove.DEFAULT_SPEED);
             }
             else if (gamepad1.y) {
-                nav.encoderRotate(26, false);
+                nav.encoderRotate(26, false, MecaBotMove.DEFAULT_SPEED);
             }
             else if (gamepad2.a) {
                 nav.moveForwardBack(12);

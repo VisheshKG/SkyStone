@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothA2dp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Func;
 
@@ -17,7 +18,7 @@ public class MecaBotMove {
     static final float  mmPerInch           = 25.4f;
     static final double WHEEL_DIA           = 75 / mmPerInch;  // REV mecanum wheels have 75 millimeter diameter
     static final double WHEEL_CIRCUMFERENCE = Math.PI * WHEEL_DIA;
-    static final double ENCODER_TICKS_PER_INCH      = (int)(MOTOR_TICK_COUNT / WHEEL_CIRCUMFERENCE);
+    static final double ENCODER_TICKS_PER_INCH      = MOTOR_TICK_COUNT / WHEEL_CIRCUMFERENCE;
     static final int    ENCODER_TICKS_ERR_MARGIN    = 20;
     static final double DEFAULT_SPEED       = 0.6;  //default wheel speed, same as motor power
     static final double OUTER_TURN_RADIUS   = 22.75; // arbitrary choice to turn robot inside a tile of 24 inches
@@ -57,17 +58,36 @@ public class MecaBotMove {
         moveDistance( inches, false);
     }
 
-   /*
+    public void moveForwardBack(double inches, double speed) {
+        wheelPower = Range.clip(speed, 0.0, 1.0);
+        moveDistance( inches, false);
+        wheelPower = DEFAULT_SPEED;
+    }
+
+    /*
     * Move robot left or right, +ve distance moves right, -ve distance moves left
     */
     public void moveRightLeft(double inches) {
         moveDistance(inches, true);
     }
+
+    public void moveRightLeft(double inches, double speed) {
+        wheelPower = Range.clip(speed, 0.0, 1.0);
+        moveDistance(inches, true);
+        wheelPower = DEFAULT_SPEED;
+    }
+
     /*
      * Move robot left or right, +ve distance moves LEFT, -ve distance moves RIGHT
      */
     public void moveLeftRight(double inches) {
         moveDistance(inches * -1.0, true);
+    }
+
+    public void moveLeftRight(double inches, double speed) {
+        wheelPower = Range.clip(speed, 0.0, 1.0);
+        moveDistance(inches * -1.0, true);
+        wheelPower = DEFAULT_SPEED;
     }
 
     /*
@@ -107,13 +127,15 @@ public class MecaBotMove {
         myOpMode.telemetry.addLine("Driving inches | ").addData("outer", inches).addData("inner", inches);
 
         // loop until motors are busy driving, update current position on driver station using telemetry
-        waitToReachTargetPosition(WheelPosition.RIGHT_BACK, leftFront, leftBack, rightFront, rightBack);
+        waitToReachTargetPosition(WheelPosition.RIGHT_FRONT, leftFront, leftBack, rightFront, rightBack);
 
     }
 
     // Rotate around Robot own center
 
-    public void encoderRotate(double inches, boolean counterClockwise) {
+    public void encoderRotate(double inches, boolean counterClockwise, double speed) {
+
+        wheelPower = Range.clip(speed, 0.0, 1.0);
 
         // Green intake wheels is front of robot,
         // counterClockwise means Right wheels turning forward, Left wheels turning backwards
@@ -140,17 +162,17 @@ public class MecaBotMove {
         waitToReachTargetPosition(counterClockwise ? WheelPosition.RIGHT_FRONT : WheelPosition.LEFT_FRONT,
                 leftFront, leftBack, rightFront, rightBack);
 
+        wheelPower = DEFAULT_SPEED;
     }
 
     // Turn in an arc
     // Assume robot is touching the outer edge of a tile and we want to rotate it in a circular arc
     // This is not rotating around its center axis but an arc with center of circle outside the robot where the tiles meet
     // Outer wheels run along outer circle and inner wheels run along an inner circle
-    // Robot wheel base is 15.5 inches, our turning circle center is at tiles intersection
-    // Outer circle radius = 22.75 inches, circumference = 142.94, quarter circle arc = 35.74
-    // Inner cicle radius = 7.25 inches, circumference = 45.55, quarter circle arc = 11.39
 
-    public void encoderTurn(double inches, boolean counterClockwise) {
+    public void encoderTurn(double inches, boolean counterClockwise, double speed) {
+
+        wheelPower = Range.clip(speed, 0.0, 1.0);
 
         // Green intake wheels is front of robot, counterClockwise means Right wheels on outer circle
         double outerWheelInches = inches;
@@ -171,7 +193,7 @@ public class MecaBotMove {
         // Set the motors to run to the necessary target position
         robot.setDriveMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        double insideWheelPower = wheelPower * INNER_TURN_RADIUS / OUTER_TURN_RADIUS;
+        double insideWheelPower = wheelPower / OUTER_TO_INNER_TURN_SPEED_RATIO;
         if (counterClockwise) {
             robot.driveWheels(insideWheelPower, insideWheelPower, wheelPower, wheelPower);
         } else {
@@ -184,6 +206,7 @@ public class MecaBotMove {
         waitToReachTargetPosition(counterClockwise ? WheelPosition.RIGHT_FRONT : WheelPosition.LEFT_FRONT,
                 leftFront, leftBack, rightFront, rightBack);
 
+        wheelPower = DEFAULT_SPEED;
     }
 
     public void waitToReachTargetPosition(WheelPosition dominantWheel, int leftFront, int leftBack, int rightFront, int rightBack) {
@@ -191,10 +214,10 @@ public class MecaBotMove {
         // Loop until motors are no longer busy.
         while (robot.leftFrontDrive.isBusy() || robot.rightFrontDrive.isBusy() || robot.leftBackDrive.isBusy() || robot.rightBackDrive.isBusy()) {
 
-            myOpMode.telemetry.addLine("Target position").addData("LF", leftFront).addData("RF", rightFront);
-            myOpMode.telemetry.addLine("Target position").addData("LB", leftBack).addData("RB", rightBack);
-            myOpMode.telemetry.addLine("Current position").addData("LF", robot.leftFrontDrive.getCurrentPosition()).addData("RF", robot.rightFrontDrive.getCurrentPosition());
-            myOpMode.telemetry.addLine("Current position").addData("LB", robot.leftBackDrive.getCurrentPosition()).addData("RB", robot.rightBackDrive.getCurrentPosition());
+            myOpMode.telemetry.addLine("Target position | ").addData("LF", leftFront).addData("RF", rightFront);
+            myOpMode.telemetry.addLine("Target position | ").addData("LB", leftBack).addData("RB", rightBack);
+            myOpMode.telemetry.addLine("Current position | ").addData("LF", robot.leftFrontDrive.getCurrentPosition()).addData("RF", robot.rightFrontDrive.getCurrentPosition());
+            myOpMode.telemetry.addLine("Current position | ").addData("LB", robot.leftBackDrive.getCurrentPosition()).addData("RB", robot.rightBackDrive.getCurrentPosition());
             myOpMode.telemetry.update();
 
             //encoder reading a bit off target can keep us in this loop forever, so given an error margin here

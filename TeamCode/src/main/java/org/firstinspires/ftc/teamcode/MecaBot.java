@@ -75,6 +75,11 @@ public class MecaBot
     public Servo rightClamp = null;
 
     //constants here
+    static final double     LENGTH_WITH_INTAKE = 23.0;
+    static final double     LENGTH          = 17.0;
+    static final double     WIDTH           = 18.0;
+    static final double     HALF_WIDTH      = WIDTH / 2;
+
     public static final double LIFT_TOP = 4950;
     public static final double LIFT_BOTTOM = 0;
     public static final double ARM_INSIDE = Servo.MIN_POSITION;
