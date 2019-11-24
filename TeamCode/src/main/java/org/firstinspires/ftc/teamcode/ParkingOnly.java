@@ -29,14 +29,16 @@ public class ParkingOnly extends LinearOpMode {
         telemetry.addData("start X Y", "%.1f %.1f", curX,curY);
         telemetry.update();
 
-        //nav.moveForwardBack(fieldConfiguration.driveToPark);
-
+        nav.moveForwardBack(fieldConfiguration.driveToPark);
+/*
         boolean headXpositive=!fieldConfiguration.BLUESIDE;
         nav.goPark(curX,curY,fieldConfiguration.PARK_INSIDE,headXpositive);
 
         while (opModeIsActive()){
 
         }
+
+ */
     }
 
 }

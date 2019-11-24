@@ -95,7 +95,9 @@ public class polarisAuto1_skystone extends LinearOpMode {
         telemetry.update();
         telemetry.addData("Go parking","none");
         telemetry.addData("{curX, curY} =", "%.2f, %.2f",curX,curY);
+        telemetry.update();
         //nav.goPark(curX,curY,PARK_INSIDE,!BLUESIDE);
+        telemetry.update();
         vUtil.stopTracking();
         while (!isStopRequested()) {  //just loop
         }
@@ -243,12 +245,15 @@ public class polarisAuto1_skystone extends LinearOpMode {
     }
 
     private void grabStoneNship(){
-        telemetry.addData("Debug:GRABBBBBBBBBBB", "None");
-        //nav.grabTheStone();
+        telemetry.addData("GRAB STONE", "None");
+        nav.grabTheStone();
+        sleep(500);
+        nav.setSpeedWheel(LOW_SPEED);
         nav.moveLeftRight(backDistToCtrBridge);  //back off from stone to location safe to cross bridge
         curY=curY-backDistToCtrBridge;
         // move across bridge from x=72-5=67 to x=72-(49-4-7.5)=36
-        //deliverStone();
+        nav.setSpeedWheel(HIGH_SPEED);
+        deliverStone();
         nav.releaseTheStone();
     }
 
@@ -265,6 +270,8 @@ public class polarisAuto1_skystone extends LinearOpMode {
         boolean headingX=!BLUESIDE;
         telemetry.addData("Before Drop-----{x y}=","%.2f  %.2f", curX,curY);
         nav.moveYX(targetX,targetY,curX,curY,headingX);
+        curX=targetX;
+        curY=targetY;
         telemetry.addData("Stone Drop-----{x y}=","%.2f  %.2f", curX,curY);
     }
 }
