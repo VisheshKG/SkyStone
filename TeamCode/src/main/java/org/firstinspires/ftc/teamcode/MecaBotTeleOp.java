@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
 
@@ -106,13 +107,13 @@ public class MecaBotTeleOp extends LinearOpMode {
         if (gamepad2.right_stick_y != 0) {
             double newpos;
             // forwared press on joystick is negative, backward press (towards human) is positive
-            // If operator joystick is pushed forwards/upwards, move the lift arm outside the robot
+            // If operator joystick is pushed forwards/upwards, move the lift arm inside the robot
             if (gamepad2.right_stick_y < 0) {
-                newpos = robot.liftServo.getPosition() - robot.ARM_STEP;
+                newpos = robot.liftServo.getPosition() - MecaBot.ARM_STEP; // outside to inside is counter-clockwise
             } else {
-                newpos = robot.liftServo.getPosition() + robot.ARM_STEP;
+                newpos = robot.liftServo.getPosition() + MecaBot.ARM_STEP; // inside to outside is clockwise
             }
-            newpos = Range.clip(newpos, robot.ARM_OUTSIDE, robot.ARM_INSIDE);
+            newpos = Range.clip(newpos, Servo.MIN_POSITION, Servo.MAX_POSITION);
             robot.liftServo.setPosition(newpos);
             telemetry.addData(">", "lift servo new pos %5.2f", newpos);
             telemetry.addData(">", "right joystick pushed %5.2f", gamepad2.right_stick_y);
@@ -133,11 +134,11 @@ public class MecaBotTeleOp extends LinearOpMode {
         }
 
         if (gamepad2.right_bumper) {
-            robot.clawGrab.setPosition(robot.CLAW_CLOSE); // right is grab the stone, claw closed
+            robot.grabStoneWithClaw(); // right is grab the stone, claw closed
             telemetry.addData(">", "right bumper pushed");
         }
         else if (gamepad2.left_bumper) {
-            robot.clawGrab.setPosition(robot.CLAW_OPEN); // left is release the stone, claw open
+            robot.releaseStoneWithClaw(); // left is release the stone, claw open
             telemetry.addData(">", "left bumper pushed");
         }
     }
@@ -169,10 +170,10 @@ public class MecaBotTeleOp extends LinearOpMode {
     }
 
     public void sidearm() {
-        if (gamepad1.b) {
+        if (gamepad1.a) {
             robot.releaseStoneWithSidearm();
         }
-        else if (gamepad1.a) {
+        else if (gamepad1.b) {
             robot.grabStoneWithSidearm();
         }
     }
