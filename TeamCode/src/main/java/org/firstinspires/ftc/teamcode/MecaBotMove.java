@@ -68,7 +68,9 @@ public class MecaBotMove {
      */
     public void moveLeftRight(double inches) {
         // maybe needed to compensate for weak movements
-        //inches=inches * fieldConfiguration.leftRightMultiple;
+        if (inches < 0){    //right over drive by a multiple
+            inches=inches * fieldConfiguration.rightMultiple;
+        }
         moveDistance(inches * -1.0, true);
     }
 

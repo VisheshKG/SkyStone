@@ -21,7 +21,8 @@ public class fieldConfiguration {
     public static final double inchClosetoScan=14.75; //*** 15" away from stone;increase to close in
     public static final float errForwardAdjust=6;  //***left/right adjust due to over or under drive
     //red side drift right by 5 inches including eye offset; move forward to compensate
-    public static final double leftRightMultiple=1.1;  //multiply this by left right movements
+    public static final double rightMultiple=1.15;  //multiply this to right movements
+
     public static final double closeToStone=-1;  //distance from skystone for grabbing, negative means over drive
 
     //parking
