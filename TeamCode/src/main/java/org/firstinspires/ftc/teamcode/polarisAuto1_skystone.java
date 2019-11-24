@@ -142,6 +142,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
         int ct=0;  //Count # moves
 
         while (!stonefound){   //todo: need to time out
+            telemetry.addData("before view stone", ct);
             if (vUtil.skystoneIsVisible()){
                 stonefound=true;
             } else {
@@ -149,7 +150,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
                 //ct=ct+1;
                 curSeconds = opmodeRunTime.seconds(); //update current time
                 if (curSeconds > maxTimeViewStone){
-                    telemetry.addData("Max time stone scan reached ", "%.1f seconds", opmodeRunTime.seconds());
+                    telemetry.addData("Max time stone scan reached ", "%.1f", opmodeRunTime.seconds());
                     telemetry.update();
                     break;
                 }
@@ -166,7 +167,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
                     double scanInterval=fieldConfiguration.scanIntervalDistance;
                     double inchMove=BLUESIDE?-scanInterval:scanInterval;
 
-                    nav.moveForwardBack(inchMove);
+                    nav.moveForwardBack(inchMove);   //Move
                     curX=curX+scanInterval;  //track coordinate
                     lastSeconds=curSeconds;   //reset per stone view time
                     telemetry.addData("222 Field Current Position {x y}=","%.2f  %.2f", curX,curY);

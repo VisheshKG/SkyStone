@@ -22,7 +22,7 @@ public class fieldConfiguration {
 
     //parking
     public static final double delayParkingBySeconds = 0;
-    public static final double driveToPark=36;
+    public static final double driveToPark=32;
 
     public static final double parkingMarginL=1;   //leave space on left side of robot at parking
     public static final double parkingMarginR=4;   //leave space on right/arm side of robot at parking
