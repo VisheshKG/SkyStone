@@ -231,7 +231,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
                 telemetry.addData(">>>>>Stone on Right-Move Right", yinch);
                 nav.moveForwardBack(-yinch);
             }
-            curX=curX+yinch;
+            curX=curX-yinch;     //fixed the bug on sign
         } else {
             telemetry.addData("Stone is Centered", yinch);
             //vishesh_move("STOP","SLOW");
