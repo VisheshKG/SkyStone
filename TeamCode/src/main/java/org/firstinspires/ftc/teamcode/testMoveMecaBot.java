@@ -21,29 +21,55 @@ public class testMoveMecaBot extends LinearOpMode {
         telemetry.setAutoClear(false);
 
         waitForStart();
+        telemetry.addData("Test MecaBotMove:", 2222);
+        telemetry.update();
 
-        double aInch=10;
-        nav.moveForwardBack(aInch);
-        nav.moveLeftRight(aInch);
-        aInch=-10;
-        nav.moveForwardBack(aInch);
-        nav.moveLeftRight(aInch);
+        //nav.moveLeftRight(-12);
+        /*
+        nav.goPark(0,22, false,false);
+        sleep(5000);
+        nav.goPark(0,22, true,false);
 
+         */
+
+        testMoveYX();
+        double inchMove=10;  //2 scan 17 apart; 3 scan
+        nav.moveForwardBack(inchMove);
+        sleep(2000);
+        nav.moveForwardBack(inchMove);
+        sleep(2000);
+/*
         nav.grabTheStone();
-        sleep(5000 );
+        sleep(2000 );
         nav.releaseTheStone();
+*/
 
-        //testMoveYX();
+
+        while (opModeIsActive()){
+
+        }
 
     }
 
     private void testMoveYX(){
         //draw a box by moving with robot start of heading in positive X direction
         //     move forward,right
-        nav.moveYX(10,10,0,0,true);
+        nav.moveYX(10,10,0,0,false);
         //     move back, left
-        nav.moveYX(0,0,10,10,true);
+        nav.moveYX(0,0,10,10,false);
+        sleep(3000);
+        nav.moveYX(-10,0,0,0,false);
+        nav.moveYX(0,-10,0,0,false);
 
+    }
+
+    private void testDrawBox(){
+        double aInch=10;
+        nav.moveForwardBack(aInch);
+        nav.moveLeftRight(aInch);
+        aInch=-10;
+        nav.moveForwardBack(aInch);
+        nav.moveLeftRight(aInch);
     }
     public void testColorSensor(){
         ColorSensor cs=robot.groundColorSensor;

@@ -271,7 +271,7 @@ public class polarisVuforiaUtil {
 
 
     public boolean targetIsVisible(VuforiaTrackable target) {
-        myOpMode.telemetry.addData(">>targetIsVisible", "----");
+        //myOpMode.telemetry.addData(">>targetIsVisible", "----");
 
         boolean targetFound = false;
         String targetName;
@@ -281,9 +281,7 @@ public class polarisVuforiaUtil {
         // if we have a target, look for an updated robot position
         if ((target != null) && (listener != null) && listener.isVisible()) {
             targetName = target.getName();
-            //cwm
-            myOpMode.telemetry.addData("Visible Target", targetName);
-
+            //myOpMode.telemetry.addData("Visible Target", targetName);
 
             // If we have an updated robot location, update all the relevant tracking information
             location  = listener.getUpdatedRobotLocation();
@@ -307,7 +305,7 @@ public class polarisVuforiaUtil {
             targetFound = true;
         } else  {
             targetFound = false;
-            myOpMode.telemetry.addData("<<TargetIsVisible:stone not found!!!","none");
+            //myOpMode.telemetry.addData("<<TargetIsVisible:stone not found!!!","none");
             //myOpMode.telemetry.update();
         }
 
