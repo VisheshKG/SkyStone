@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode;
 
-import android.bluetooth.BluetoothA2dp;
-
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -19,7 +17,7 @@ public class MecaBotMove {
     static final double WHEEL_DIA           = 75 / mmPerInch;  // REV mecanum wheels have 75 millimeter diameter
     static final double WHEEL_CIRCUMFERENCE = Math.PI * WHEEL_DIA;
     static final double ENCODER_TICKS_PER_INCH      = MOTOR_TICK_COUNT / WHEEL_CIRCUMFERENCE;
-    static final int    ENCODER_TICKS_ERR_MARGIN    = 20;
+    static final int    ENCODER_TICKS_ERR_MARGIN    = 50;
     static final double DEFAULT_SPEED       = 0.6;  //default wheel speed, same as motor power
     static final double OUTER_TURN_RADIUS   = 22.75; // arbitrary choice to turn robot inside a tile of 24 inches
     static final double INNER_TURN_RADIUS   = 7.25;  // OUTER_TURN_RAIDUS - Robot Wheelbase (15.5 inches)
@@ -64,7 +62,7 @@ public class MecaBotMove {
         wheelPower = DEFAULT_SPEED;
     }
 
-    /*
+   /*
     * Move robot left or right, +ve distance moves right, -ve distance moves left
     */
     public void moveRightLeft(double inches) {
@@ -81,6 +79,8 @@ public class MecaBotMove {
      * Move robot left or right, +ve distance moves LEFT, -ve distance moves RIGHT
      */
     public void moveLeftRight(double inches) {
+        // maybe needed to compensate for weak movements
+        //inches=inches * fieldConfiguration.leftRightMultiple;
         moveDistance(inches * -1.0, true);
     }
 
@@ -237,6 +237,7 @@ public class MecaBotMove {
 
         // Stop powering the motors - robot has moved to intended position
         robot.stopDriving();
+        myOpMode.telemetry.addData("DONE driving LF position=",robot.leftFrontDrive.getCurrentPosition());
         // Turn off RUN_TO_POSITION
         robot.setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
@@ -304,6 +305,7 @@ public class MecaBotMove {
         }
         ydist=-ydist;  //both side: positive y movement require robot to go right
 
+        myOpMode.telemetry.addData(" Xdist Ydist", "%.1f %.1f", xdist,ydist);
         if (Math.abs(ydist) > distanceMarginInch){
             moveLeftRight(ydist);
         }
@@ -324,8 +326,10 @@ public class MecaBotMove {
      */
     public void goPark(double curX, double curY, boolean parkInside, boolean headXpositive){
 
-        double toY = parkInside ? Y_PARK_INNER-4 : Y_PARK_OUTER;  //park 4 inches away from bridge in INNER position
-        double toX = headXpositive? X_PARK_INNER_OUTER:-X_PARK_INNER_OUTER;
+        double toY = parkInside ? fieldConfiguration.bridgeY-fieldConfiguration.parkingMarginR:
+                 fieldConfiguration.robotWidth+fieldConfiguration.parkingMarginL;
+        double toX = headXpositive? -X_PARK_INNER_OUTER:X_PARK_INNER_OUTER;
+        myOpMode.telemetry.addData("Parking target X Y", "%.1f %.1f", toX,toY);
         moveYX(toX,toY,curX,curY,headXpositive);
     }
 

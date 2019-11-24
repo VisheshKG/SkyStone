@@ -27,17 +27,21 @@ public class testMoveMecaBot extends LinearOpMode {
 
         robot.init(this.hardwareMap);
         waitForStart();
-        testDrawBox();
+        //testDrawBox();
+        testMoveYX();
+
+        nav.grabTheStone();
+        sleep(2000 );
+        nav.releaseTheStone();
 
         //nav.moveLeftRight(-12);
-        /*
-        nav.goPark(0,22, false,false);
+
+        //nav.goPark(24,24, false,true);
         sleep(5000);
-        nav.goPark(0,22, true,false);
+      //  nav.goPark(0,24, true,true);
 
-         */
 
-        //testMoveYX();
+
         /*
         double inchMove=10;  //2 scan 17 apart; 3 scan
         nav.moveForwardBack(inchMove);
@@ -58,22 +62,23 @@ public class testMoveMecaBot extends LinearOpMode {
     }
 
     private void testMoveYX(){
+        double dist=24;
         //draw a box by moving with robot start of heading in positive X direction
         //     move forward,right
-        nav.moveYX(10,10,0,0,false);
+        nav.moveYX(dist,dist,0,0,false);
         //     move back, left
-        nav.moveYX(0,0,10,10,false);
+        nav.moveYX(0,0,dist,dist,false);
         sleep(3000);
-        nav.moveYX(-10,0,0,0,false);
-        nav.moveYX(0,-10,0,0,false);
+        //nav.moveYX(-10,0,0,0,false);
+        //nav.moveYX(0,-10,0,0,false);
 
     }
 
     private void testDrawBox(){
-        double aInch=10;
+        double aInch=24;
         nav.moveForwardBack(aInch);
         nav.moveLeftRight(aInch);
-        aInch=-10;
+        aInch=-24;
         nav.moveForwardBack(aInch);
         nav.moveLeftRight(aInch);
     }

@@ -21,15 +21,22 @@ public class fieldConfiguration {
     public static double robotStartX= 41;      // robot origin aline with image right
     public static double robotStartY=17.25;       //right back corner of robot
 
-    public static final double delayParkingBySeconds = 0;
-
     //Vuforia setting
-    public static final double scanIntervalDistance=10;
-    public static final double maxTimeViewStone=5;
+    public static final double scanIntervalDistance=8;
+    public static final double maxTimeViewStone=10;
     public static final double maxTimeViewOneStone=2;
+    public static final double inchClosetoScan=14.75; //*** 15" away from stone;increase to close in
+    public static final float errForwardAdjust=6;  //***left/right adjust due to over or under drive
+    //red side drift right by 5 inches including eye offset; move forward to compensate
+    public static final double leftRightMultiple=1.1;  //multiply this by left right movements
+    public static final double closeToStone=-1;  //distance from skystone for grabbing, negative means over drive
 
     //parking
-    public static final double parkingMargin=1;   //leave space on side of robot at parking
+    public static final double delayParkingBySeconds = 0;
+    public static final double driveToPark=32;
+
+    public static final double parkingMarginL=1;   //leave space on left side of robot at parking
+    public static final double parkingMarginR=2;   //leave space on right/arm side of robot at parking
     public static final double bridgeY=46;
 
     //Robot measures
@@ -45,10 +52,9 @@ public class fieldConfiguration {
             }
         }else{     //foundation side
             if (BLUESIDE) {
-                robotStartX = -48;   //blue foundation side: align tile
-                robotStartY = 0;
+                robotStartX = -24;   //blue foundation side: align tile
             } else {
-                robotStartX = -48;   //red foundation side: align with tile edge
+                robotStartX = -41;   //red foundation side: align with tile edge
             }
         }
     }
