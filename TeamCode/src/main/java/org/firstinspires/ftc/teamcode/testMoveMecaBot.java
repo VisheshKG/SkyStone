@@ -65,9 +65,9 @@ public class testMoveMecaBot extends LinearOpMode {
         double dist=24;
         //draw a box by moving with robot start of heading in positive X direction
         //     move forward,right
-        nav.moveYX(dist,dist,0,0,false);
+        nav.moveYX(dist,dist,0,0,true);
         //     move back, left
-        nav.moveYX(0,0,dist,dist,false);
+        nav.moveYX(0,0,dist,dist,true);
         sleep(3000);
         //nav.moveYX(-10,0,0,0,false);
         //nav.moveYX(0,-10,0,0,false);

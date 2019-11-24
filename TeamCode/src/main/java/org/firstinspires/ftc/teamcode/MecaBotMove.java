@@ -310,9 +310,11 @@ public class MecaBotMove {
      */
     public void goPark(double curX, double curY, boolean parkInside, boolean headXpositive){
 
+        //adjusted temporarily for Red Alliance Parking
         double toY = parkInside ? fieldConfiguration.bridgeY-fieldConfiguration.parkingMarginR:
                  fieldConfiguration.robotWidth+fieldConfiguration.parkingMarginL;
-        double toX = headXpositive? -X_PARK_INNER_OUTER:X_PARK_INNER_OUTER;
+        double toX = headXpositive? -5:X_PARK_INNER_OUTER;
+
         myOpMode.telemetry.addData("Parking target X Y", "%.1f %.1f", toX,toY);
         moveYX(toX,toY,curX,curY,headXpositive);
     }
