@@ -17,12 +17,17 @@ public class testMoveMecaBot extends LinearOpMode {
     @Override
     public void runOpMode() {
         ElapsedTime opmodeRunTime = new ElapsedTime();
-        robot.init(this.hardwareMap);
         telemetry.setAutoClear(false);
 
-        waitForStart();
-        telemetry.addData("Test MecaBotMove:", 2222);
+        fieldConfiguration.initRobotStartX();
+        telemetry.addData("Test MecaBotMove Time:", opmodeRunTime.seconds());
+        telemetry.addData("robotStartX:", fieldConfiguration.robotStartX);
+        telemetry.addData("robotStartY:", fieldConfiguration.robotStartY);
         telemetry.update();
+
+        robot.init(this.hardwareMap);
+        waitForStart();
+        testDrawBox();
 
         //nav.moveLeftRight(-12);
         /*
@@ -32,13 +37,14 @@ public class testMoveMecaBot extends LinearOpMode {
 
          */
 
-        testMoveYX();
+        //testMoveYX();
+        /*
         double inchMove=10;  //2 scan 17 apart; 3 scan
         nav.moveForwardBack(inchMove);
         sleep(2000);
         nav.moveForwardBack(inchMove);
         sleep(2000);
-/*
+
         nav.grabTheStone();
         sleep(2000 );
         nav.releaseTheStone();

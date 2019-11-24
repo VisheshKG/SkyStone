@@ -24,12 +24,11 @@ public class polarisAuto1_skystone extends LinearOpMode {
     private static final double eyeFromRBorigin=9.0;  //distance from camera eye to robot right back corner
     private static final double sideArmFromRBorigin = 7.0;
     private static final double eyeFromArm=2.0;
-    private static final double robotFBlength=23.0;
 
     //robot origin is right back corner of robot
     //robot start position: put the eye at center of 2nd stone
-    private static double robotStartX= 18;
-    private static double robotStartY=17.25;       //right back corner of robot
+    private static double robotStartX= fieldConfiguration.robotStartX;
+    private static double robotStartY= fieldConfiguration.robotStartY;       //right back corner of robot
     //3" clearance on both side of robot between bridge poll and the parked robot
     // 4.5= 46-18-1/2 *22.25
     private static double backDistToCtrBridge=4.5;

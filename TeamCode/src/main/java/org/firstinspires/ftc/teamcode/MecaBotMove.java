@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import android.bluetooth.BluetoothA2dp;
+
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -300,7 +302,8 @@ public class MecaBotMove {
     public void goPark(double curX, double curY, boolean parkInside, boolean headXpositive){
 
         double toY = parkInside ? Y_PARK_INNER-4 : Y_PARK_OUTER;  //park 4 inches away from bridge in INNER position
-        moveYX(X_PARK_INNER_OUTER,toY,curX,curY,headXpositive);
+        double toX = headXpositive? X_PARK_INNER_OUTER:-X_PARK_INNER_OUTER;
+        moveYX(toX,toY,curX,curY,headXpositive);
     }
 
 }
