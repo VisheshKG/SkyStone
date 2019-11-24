@@ -50,8 +50,8 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Test: Mecabot Linear OpMode", group="Linear Opmode")
-public class TestMecabot extends LinearOpMode {
+@TeleOp(name="Test MecaBot Move")
+public class TestMecaBotTeleOp extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
@@ -59,8 +59,8 @@ public class TestMecabot extends LinearOpMode {
     private DcMotor rightDrive = null;
 
     /* Declare OpMode members. */
-    MecaBot robot = new MecaBot();   // Use a Mecabot's hardware
-    MecaBotMove nav = new MecaBotMove(this, robot);
+    private MecaBot robot = new MecaBot();   // Use a Mecabot's hardware
+    private MecaBotMove nav = new MecaBotMove(this, robot);
 
     @Override
     public void runOpMode() {
@@ -93,12 +93,12 @@ public class TestMecabot extends LinearOpMode {
             else if (gamepad1.left_bumper) {
                 nav.setSpeedWheel(1.0);
                 nav.encoderTurn(55, true);
-                nav.setSpeedWheel(nav.DEFAULT_SPEED);
+                nav.setSpeedWheel(MecaBotMove.DEFAULT_SPEED);
             }
             else if (gamepad1.right_bumper) {
                 nav.setSpeedWheel(1.0);
                 nav.encoderTurn(55, false);
-                nav.setSpeedWheel(nav.DEFAULT_SPEED);
+                nav.setSpeedWheel(MecaBotMove.DEFAULT_SPEED);
             }
             else if (gamepad1.x) {
                 nav.encoderRotate(26, true);
