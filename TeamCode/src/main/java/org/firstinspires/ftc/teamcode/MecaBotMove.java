@@ -17,8 +17,8 @@ public class MecaBotMove {
     static final float  mmPerInch           = 25.4f;
     static final double WHEEL_DIA           = 75 / mmPerInch;  // REV mecanum wheels have 75 millimeter diameter
     static final double WHEEL_CIRCUMFERENCE = Math.PI * WHEEL_DIA;
-    static final double ENCODER_TICKS_PER_INCH      = (int)(MOTOR_TICK_COUNT / WHEEL_CIRCUMFERENCE);
-    static final int    ENCODER_TICKS_ERR_MARGIN    = 20;
+    static final double ENCODER_TICKS_PER_INCH      = MOTOR_TICK_COUNT / WHEEL_CIRCUMFERENCE;
+    static final int    ENCODER_TICKS_ERR_MARGIN    = 30;
     static final double DEFAULT_SPEED       = 0.6;  //default wheel speed, same as motor power
     static final double OUTER_TURN_RADIUS   = 22.75; // arbitrary choice to turn robot inside a tile of 24 inches
     static final double INNER_TURN_RADIUS   = 7.25;  // OUTER_TURN_RAIDUS - Robot Wheelbase (15.5 inches)
@@ -107,7 +107,7 @@ public class MecaBotMove {
         myOpMode.telemetry.addLine("Driving inches | ").addData("outer", inches).addData("inner", inches);
 
         // loop until motors are busy driving, update current position on driver station using telemetry
-        waitToReachTargetPosition(WheelPosition.RIGHT_BACK, leftFront, leftBack, rightFront, rightBack);
+        waitToReachTargetPosition(WheelPosition.RIGHT_FRONT, leftFront, leftBack, rightFront, rightBack);
 
     }
 
@@ -281,6 +281,7 @@ public class MecaBotMove {
         }
         ydist=-ydist;  //both side: positive y movement require robot to go right
 
+        myOpMode.telemetry.addData(" Xdist Ydist", "%.1f %.1f", xdist,ydist);
         if (Math.abs(ydist) > distanceMarginInch){
             moveLeftRight(ydist);
         }
@@ -301,8 +302,10 @@ public class MecaBotMove {
      */
     public void goPark(double curX, double curY, boolean parkInside, boolean headXpositive){
 
-        double toY = parkInside ? Y_PARK_INNER-4 : Y_PARK_OUTER;  //park 4 inches away from bridge in INNER position
-        double toX = headXpositive? X_PARK_INNER_OUTER:-X_PARK_INNER_OUTER;
+        double toY = parkInside ? fieldConfiguration.bridgeY-fieldConfiguration.parkingMarginR:
+                 fieldConfiguration.robotWidth+fieldConfiguration.parkingMarginL;
+        double toX = headXpositive? -X_PARK_INNER_OUTER:X_PARK_INNER_OUTER;
+        myOpMode.telemetry.addData("target X Y", "%.1f %.1f", toX,toY);
         moveYX(toX,toY,curX,curY,headXpositive);
     }
 

@@ -16,6 +16,8 @@ public class ParkingOnly extends LinearOpMode {
         double curX=fieldConfiguration.robotStartX;
         double curY=fieldConfiguration.robotStartY;
 
+        telemetry.setAutoClear(false);
+        fieldConfiguration.initRobotStartX();
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         ElapsedTime opmodeRunTime = new ElapsedTime();
@@ -24,8 +26,17 @@ public class ParkingOnly extends LinearOpMode {
             sleep(500);
             telemetry.addData("Waiting Time (seconds)", "%.1f seconds", opmodeRunTime.seconds());
         }
+        telemetry.addData("start X Y", "%.1f %.1f", curX,curY);
+
+        nav.moveForwardBack(fieldConfiguration.driveToPark);
+        /*
         boolean headXpositive=!fieldConfiguration.BLUESIDE;
         nav.goPark(curX,curY,fieldConfiguration.PARK_INSIDE,headXpositive);
+
+         */
+        while (opModeIsActive()){
+
+        }
     }
 
 }

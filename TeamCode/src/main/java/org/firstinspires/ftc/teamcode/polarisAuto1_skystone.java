@@ -32,8 +32,8 @@ public class polarisAuto1_skystone extends LinearOpMode {
     //3" clearance on both side of robot between bridge poll and the parked robot
     // 4.5= 46-18-1/2 *22.25
     private static double backDistToCtrBridge=4.5;
-    private static double closeToStone=2.0;
-    private static double inchClosetoScan=10.75; // 19" away from stone=47-17.25-19
+    private static double closeToStone=1.0;
+    private static double inchClosetoScan=fieldConfiguration.inchClosetoScan;
 
     //eye placed 11 inch from far side of viewable stone
     // 18.5 inch off image means eye can see 3 stones 24 inches
@@ -59,6 +59,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
         // Initialize the robot and navigation
         //todo: restore
         robot.init(this.hardwareMap);
+        fieldConfiguration.initRobotStartX();
 
         vUtil.initVuforia();
         vUtil.activateTracking();  //takes a few seconds
@@ -81,7 +82,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
         if (findSkyStone()){
             moveToStone();
             telemetry.addData("Grab Stone!!!!!!!","none");
-            //grabStoneNship();
+            grabStoneNship();
             //todo: nav.grabStone
         }else{
             telemetry.addData("<<Stone not found","NOOOOOOOOOOOO!");
@@ -99,12 +100,15 @@ public class polarisAuto1_skystone extends LinearOpMode {
     //Assume to start on stone side, move to scan range
     private void moveToScanRange(){
         double moveInches;
+        moveInches=-inchClosetoScan;   //advance to arm side
+        /*
         if (BLUESIDE){
             //move right is negative
             moveInches=-inchClosetoScan;
         }else{
             moveInches=inchClosetoScan;
         }
+         */
         curY=curY+inchClosetoScan;
         telemetry.addData("Move to within Vuforia Range:",moveInches);
         nav.setSpeedWheel(HIGH_SPEED);
@@ -200,7 +204,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
         telemetry.addData("Pos (in)", "{X, Y} = %.1f, %.1f",x,y);
         telemetry.update();
 
-        nav.setSpeedWheel(LOW_SPEED);
+        //nav.setSpeedWheel(LOW_SPEED);
 
         if (Math.abs(y) > stoneDistanceMargin) {
             telemetry.addData("Too off center=", yinch);
@@ -231,8 +235,8 @@ public class polarisAuto1_skystone extends LinearOpMode {
         nav.moveLeftRight(backDistToCtrBridge);  //back off from stone to location safe to cross bridge
         curY=curY-backDistToCtrBridge;
         // move across bridge from x=72-5=67 to x=72-(49-4-7.5)=36
-        deliverStone();
-        //nav.releaseTheStone();
+        //deliverStone();
+        nav.releaseTheStone();
     }
 
     //robot right back wheel corner is the dot for robot location
