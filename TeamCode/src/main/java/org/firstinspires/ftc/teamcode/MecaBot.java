@@ -85,8 +85,8 @@ public class MecaBot
     public static final double ARM_INSIDE = Servo.MIN_POSITION;
     public static final double ARM_OUTSIDE = Servo.MAX_POSITION;
     public static final double ARM_STEP = 0.05;
-    public static final double CLAW_PARALLEL = 0.92;
-    public static final double CLAW_PERPENDICULAR = 0.60;
+    public static final double CLAW_PARALLEL = Servo.MAX_POSITION;
+    public static final double CLAW_PERPENDICULAR = Servo.MIN_POSITION;
     public static final double CLAW_OPEN = Servo.MAX_POSITION;
     public static final double CLAW_CLOSE = Servo.MIN_POSITION;
     public static final double RT_BUMPER_UP = Servo.MAX_POSITION;

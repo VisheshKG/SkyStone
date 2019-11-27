@@ -64,10 +64,10 @@ import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name="Blue Auto Foundation", group="Mecabot Auto")
-public class MecabotAutoDrive extends LinearOpMode {
+@Autonomous(name="Red Auto Foundation", group="Mecabot Auto")
+public class MecaBotAutoRed extends LinearOpMode {
 
-    static final boolean BLUE = true;
+    static final boolean BLUE = false;
 
     /* Declare OpMode members. */
     static final double     DRIVE_SPEED             = 0.8;
@@ -99,8 +99,8 @@ public class MecabotAutoDrive extends LinearOpMode {
 
         // Send telemetry message to indicate successful Encoder reset
         telemetry.addData("Path0",  "Starting at %7d :%7d",
-                          robot.leftFrontDrive.getCurrentPosition(),
-                          robot.rightFrontDrive.getCurrentPosition());
+                robot.leftFrontDrive.getCurrentPosition(),
+                robot.rightFrontDrive.getCurrentPosition());
         telemetry.update();
 
         // Wait for the game to start (driver presses PLAY)
@@ -138,20 +138,22 @@ public class MecabotAutoDrive extends LinearOpMode {
         // Allow the servo some time to move
         sleep(1000);
 
-//        nav.moveForwardBack(24);
+        nav.moveForwardBack(24);
 
+        double turnDistance = BLUE ? TURN_FOUNDATION_DISTANCE : 130;
         // turn the foundation so that long edge if parallel to the build zone wall
-        nav.encoderTurn(TURN_FOUNDATION_DISTANCE, BLUE ? true : false, SLOW_SPEED);
+//        nav.encoderTurn(turnDistance, BLUE ? true : false, SLOW_SPEED);
+        nav.encoderRotate(40, BLUE ? true : false, SLOW_SPEED);
 
         // drive the robot in reverse to push the foundation to the build zone wall
-        nav.moveForwardBack(-30);
+        nav.moveForwardBack(-20);
 
         robot.releaseFoundation();
         // Allow the servo some time to move
         sleep(1000);
 
         // Move towards the wall so that we allow space for alliance partner to park
-        nav.moveRightLeft(BLUE ? +12 : -12);
+        nav.moveRightLeft(BLUE ? -12 : -18);
 
         // now go park under the bridge
         nav.moveForwardBack(42);
