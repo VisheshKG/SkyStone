@@ -42,20 +42,10 @@ import com.qualcomm.robotcore.util.Range;
  * This is NOT an opmode.
  *
  * This class can be used to define all the specific hardware for a single robot.
- * In this case that robot is a Pushbot.
- * See PushbotTeleopTank_Iterative and others classes starting with "Pushbot" for usage examples.
- *
- * This hardware class assumes the following device names have been configured on the robot:
- * Note:  All names are lower case and some have single spaces between words.
- *
- * Motor channel:  Left  drive motor:        "left_drive"
- * Motor channel:  Right drive motor:        "right_drive"
- * Motor channel:  Manipulator drive motor:  "left_arm"
- * Servo channel:  Servo to open left claw:  "left_hand"
- * Servo channel:  Servo to open right claw: "right_hand"
+ * In this case that robot is a PureBot.
  */
-public class MecaBot
-{
+public class PureBot {
+
     /* Public OpMode members. */
     public DcMotor leftFrontDrive = null;
     public DcMotor leftBackDrive = null;
@@ -69,7 +59,7 @@ public class MecaBot
     public Servo clawGrab = null;
     public Servo sideArmServo = null;
 
- //   public ModernRoboticsI2cColorSensor groundColorSensor = null;
+    //   public ModernRoboticsI2cColorSensor groundColorSensor = null;
     public ColorSensor groundColorSensor = null;
     public Servo leftClamp = null;
     public Servo rightClamp = null;
@@ -97,12 +87,26 @@ public class MecaBot
     public static final double SIDEARM_DOWN = Servo.MIN_POSITION;
 
 
+    // Robot speed (actual speed it is moving at)
+    public static double xSpeed = 0;
+    public static double ySpeed = 0;
+    public static double turnSpeed = 0;
+
+    // Robot positions
+    public static double worldXPosition = 0;
+    public static double worldYPosition = 0;
+    public static double worldAngle = 0;
+
+    // Time since the last update
+    private long lastUpdateTime = 0;
+
+
     /* local OpMode members. */
     HardwareMap hwMap =  null;
     private ElapsedTime period = new ElapsedTime();
 
     /* Constructor */
-    public MecaBot() {
+    public PureBot() {
 
     }
 
@@ -288,6 +292,50 @@ public class MecaBot
     }
     public void releaseStoneWithSidearm() {
         sideArmServo.setPosition(SIDEARM_UP); // side arm up and free
+    }
+
+    /**
+     * Calculates a change in the robot's position
+     */
+    public void update(){
+        //get the current time
+        long currentTimeMillis = System.currentTimeMillis();
+        //get the elapsed time in seconds
+        double elapsedTime = (currentTimeMillis - lastUpdateTime)/1000.0;
+        //remember the lastUpdateTime
+        lastUpdateTime = currentTimeMillis;
+        // ??? why is this line needed ???
+        // if(elapsedTime > 1){return;}
+
+
+
+        //increment the positions
+        double totalSpeed = Math.hypot(xSpeed,ySpeed);
+        double angle = Math.atan2(ySpeed,xSpeed);
+        double outputAngle = worldAngle + angle;
+        worldXPosition += totalSpeed * Math.cos(outputAngle) * elapsedTime * 1000 * 0.2;
+        worldYPosition += totalSpeed * Math.sin(outputAngle) * elapsedTime * 1000 * 0.2;
+
+        worldAngle += MovementVars.movement_turn * elapsedTime * 20 / (2 * Math.PI);
+
+
+        xSpeed += Range.clip((MovementVars.movement_x-xSpeed)/0.2,-1,1) * elapsedTime;
+        ySpeed += Range.clip((MovementVars.movement_y-ySpeed)/0.2,-1,1) * elapsedTime;
+        turnSpeed += Range.clip((MovementVars.movement_turn-turnSpeed)/0.2,-1,1) * elapsedTime;
+
+
+//        SpeedOmeter.yDistTraveled += ySpeed * elapsedTime * 1000;
+//        SpeedOmeter.xDistTraveled += xSpeed * elapsedTime * 1000;
+
+//        SpeedOmeter.update();
+
+
+        xSpeed *= 1.0 - (elapsedTime);
+        ySpeed *= 1.0 - (elapsedTime);
+        turnSpeed *= 1.0 - (elapsedTime);
+
+
+
     }
 
 }

@@ -34,7 +34,7 @@ public class fieldConfiguration {
 
     //parking
     public static final double delayParkingBySeconds = 0;
-    public static final double driveToPark=32;
+    public static final double driveToPark=-32;
 
     //value adjust for RED side stone pick up and return to parking
     public static final double parkingMarginL=1;   //leave space on left side of robot at parking

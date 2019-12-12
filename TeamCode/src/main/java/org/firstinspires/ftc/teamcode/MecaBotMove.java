@@ -21,7 +21,7 @@ public class MecaBotMove {
     static final double DEFAULT_SPEED       = 0.6;  //default wheel speed, same as motor power
     static final double OUTER_TURN_RADIUS   = 22.75; // arbitrary choice to turn robot inside a tile of 24 inches
     static final double INNER_TURN_RADIUS   = 7.25;  // OUTER_TURN_RAIDUS - Robot Wheelbase (15.5 inches)
-    static final double OUTER_TO_INNER_TURN_SPEED_RATIO = 5.0;
+    static final double OUTER_TO_INNER_TURN_SPEED_RATIO = 6.0;
 
     static final double Y_PARK_INNER        = 46.0;
     static final double Y_PARK_OUTER        = 22.0;
