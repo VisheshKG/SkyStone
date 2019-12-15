@@ -65,9 +65,9 @@ import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
  */
 
 @Autonomous(name="Blue Auto Foundation", group="Mecabot Auto")
-public class MecabotAutoDrive extends LinearOpMode {
+public class MecabotAutoBlue extends LinearOpMode {
 
-    static final boolean BLUE = true;
+    private static final boolean BLUE = true;
 
     /* Declare OpMode members. */
     static final double     DRIVE_SPEED             = 0.8;
@@ -141,7 +141,7 @@ public class MecabotAutoDrive extends LinearOpMode {
 //        nav.moveForwardBack(24);
 
         // turn the foundation so that long edge if parallel to the build zone wall
-        nav.encoderTurn(TURN_FOUNDATION_DISTANCE, BLUE ? true : false, SLOW_SPEED);
+        nav.encoderTurn(TURN_FOUNDATION_DISTANCE, BLUE, SLOW_SPEED);
 
         // drive the robot in reverse to push the foundation to the build zone wall
         nav.moveForwardBack(-30);
