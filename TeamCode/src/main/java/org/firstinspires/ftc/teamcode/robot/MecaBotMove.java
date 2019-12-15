@@ -1,11 +1,11 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.robot;
 
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.robotcore.external.Func;
+import org.firstinspires.ftc.teamcode.skystone.FieldSkystone;
 
 
 public class MecaBotMove {
@@ -28,7 +28,7 @@ public class MecaBotMove {
     static final double X_PARK_INNER_OUTER  = 9.0;
 
     private LinearOpMode        myOpMode;       // Access to the OpMode object
-    private MecaBot             robot;        // Access to the Robot hardware
+    private MecaBot robot;        // Access to the Robot hardware
     //current location: origin is at red/blue wall center with x pointing to stone side and y to center of field
     private static double       curX=0;
     private static double       curY=0;
@@ -81,7 +81,7 @@ public class MecaBotMove {
     public void moveLeftRight(double inches) {
         // maybe needed to compensate for weak movements
         if (inches < 0){    //right over drive by a multiple
-            inches=inches * fieldConfiguration.rightMultiple;
+            inches=inches * FieldSkystone.rightMultiple;
         }
         moveDistance(inches * -1.0, true);
     }
@@ -134,7 +134,6 @@ public class MecaBotMove {
     }
 
     // Rotate around Robot own center
-
     public void encoderRotate(double inches, boolean counterClockwise, double speed) {
 
         wheelPower = Range.clip(speed, 0.0, 1.0);
@@ -165,6 +164,10 @@ public class MecaBotMove {
                 leftFront, leftBack, rightFront, rightBack);
 
         wheelPower = DEFAULT_SPEED;
+    }
+
+    public void encoderRotate(double inches, boolean counterClockwise) {
+        encoderRotate(inches, counterClockwise, DEFAULT_SPEED);
     }
 
     // Turn in an arc
@@ -209,6 +212,10 @@ public class MecaBotMove {
                 leftFront, leftBack, rightFront, rightBack);
 
         wheelPower = DEFAULT_SPEED;
+    }
+
+    public void encoderTurn(double inches, boolean counterClockwise) {
+        encoderTurn(inches, counterClockwise, DEFAULT_SPEED);
     }
 
     public void waitToReachTargetPosition(WheelPosition dominantWheel, int leftFront, int leftBack, int rightFront, int rightBack) {
@@ -329,8 +336,8 @@ public class MecaBotMove {
     public void goPark(double curX, double curY, boolean parkInside, boolean headXpositive){
 
         //adjusted temporarily for Red Alliance Parking
-        double toY = parkInside ? fieldConfiguration.bridgeY-fieldConfiguration.parkingMarginR:
-                 fieldConfiguration.robotWidth+fieldConfiguration.parkingMarginL;
+        double toY = parkInside ? FieldSkystone.bridgeY- FieldSkystone.parkingMarginR:
+                 FieldSkystone.robotWidth+ FieldSkystone.parkingMarginL;
         double toX = headXpositive? -5:X_PARK_INNER_OUTER;
 
         myOpMode.telemetry.addData("Parking target X Y", "%.1f %.1f", toX,toY);

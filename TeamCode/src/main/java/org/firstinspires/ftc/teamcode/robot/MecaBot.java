@@ -27,7 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.robot;
 
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -75,10 +75,10 @@ public class MecaBot
     public Servo rightClamp = null;
 
     //constants here
-    static final double     LENGTH_WITH_INTAKE = 23.0;
-    static final double     LENGTH          = 17.0;
-    static final double     WIDTH           = 18.0;
-    static final double     HALF_WIDTH      = WIDTH / 2;
+    public static final double     LENGTH_WITH_INTAKE = 23.0;
+    public static final double     LENGTH          = 17.0;
+    public static final double     WIDTH           = 18.0;
+    public static final double     HALF_WIDTH      = WIDTH / 2;
 
     public static final double LIFT_TOP = 4950;
     public static final double LIFT_BOTTOM = 0;

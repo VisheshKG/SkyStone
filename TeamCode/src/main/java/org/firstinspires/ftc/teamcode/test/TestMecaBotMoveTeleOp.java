@@ -27,14 +27,16 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.test;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
+
+import org.firstinspires.ftc.teamcode.robot.MecaBot;
+import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
 
 
 /**
@@ -50,8 +52,9 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Test MecaBot Move")
-public class TestMecaBotTeleOp extends LinearOpMode {
+@TeleOp(name="Test MecaBotMove functions", group="Test")
+@Disabled
+public class TestMecaBotMoveTeleOp extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
@@ -97,10 +100,10 @@ public class TestMecaBotTeleOp extends LinearOpMode {
                 nav.encoderTurn(55, false, 1.0);
             }
             else if (gamepad1.x) {
-                nav.encoderRotate(26, true, MecaBotMove.DEFAULT_SPEED);
+                nav.encoderRotate(26, true);
             }
             else if (gamepad1.y) {
-                nav.encoderRotate(26, false, MecaBotMove.DEFAULT_SPEED);
+                nav.encoderRotate(26, false);
             }
             else if (gamepad2.a) {
                 nav.moveForwardBack(12);

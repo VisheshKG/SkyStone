@@ -1,10 +1,10 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.purepursuit;
 
 import com.qualcomm.robotcore.util.Range;
 
-import static org.firstinspires.ftc.teamcode.PureBot.*;
-import static org.firstinspires.ftc.teamcode.MovementVars.*;
-import static org.firstinspires.ftc.teamcode.MathFunctions.angleWrap;
+import static org.firstinspires.ftc.teamcode.purepursuit.PureBot.*;
+import static org.firstinspires.ftc.teamcode.purepursuit.MovementVars.*;
+import static org.firstinspires.ftc.teamcode.purepursuit.MathFunctions.angleWrap;
 
 public class PureMovement {
 

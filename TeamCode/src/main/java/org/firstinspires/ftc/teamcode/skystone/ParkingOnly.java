@@ -1,8 +1,11 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.skystone;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.teamcode.robot.MecaBot;
+import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
 
 @Autonomous(name = "Parking Only")
 //@Disabled
@@ -14,25 +17,25 @@ public class ParkingOnly extends LinearOpMode {
     public void runOpMode() {
         robot.init(this.hardwareMap);
         telemetry.setAutoClear(false);
-        fieldConfiguration.initRobotStartX();
-        double curX=fieldConfiguration.robotStartX;
-        double curY=fieldConfiguration.robotStartY;
+        FieldSkystone.initRobotStartX();
+        double curX= FieldSkystone.robotStartX;
+        double curY= FieldSkystone.robotStartY;
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         ElapsedTime opmodeRunTime = new ElapsedTime();
 
-        while (opmodeRunTime.seconds() < fieldConfiguration.delayParkingBySeconds){
+        while (opmodeRunTime.seconds() < FieldSkystone.delayParkingBySeconds){
             sleep(500);
             telemetry.addData("Waiting Time (seconds)", "%.1f seconds", opmodeRunTime.seconds());
         }
         telemetry.addData("start X Y", "%.1f %.1f", curX,curY);
         telemetry.update();
 
-        nav.moveForwardBack(fieldConfiguration.driveToPark);
+        nav.moveForwardBack(FieldSkystone.driveToPark);
 /*
-        boolean headXpositive=!fieldConfiguration.BLUESIDE;
-        nav.goPark(curX,curY,fieldConfiguration.PARK_INSIDE,headXpositive);
+        boolean headXpositive=!FieldSkystone.BLUESIDE;
+        nav.goPark(curX,curY,FieldSkystone.PARK_INSIDE,headXpositive);
 
         while (opModeIsActive()){
 

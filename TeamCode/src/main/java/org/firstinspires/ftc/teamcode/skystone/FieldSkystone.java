@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.skystone;
 
 
 /**  Main Configuration for Sky Stone Challenge game field
@@ -6,17 +6,17 @@ package org.firstinspires.ftc.teamcode;
  **  with Y pointing to the middle of the field and X pointing to the stone side.
  */
 
-public class fieldConfiguration {
+public class FieldSkystone {
     public static final boolean BLUESIDE =false;      //if red side, set it to false
     public static final boolean PARK_INSIDE =true;
     public static final boolean START_STONE_SIDE=true;  //true if start at stone side
 
     // field distances between objects
-    static final double     TILE_SIZE                   = 24.0;
-    static final double     SIDE_WALL_TO_FOUNDATION     = 47.25;
-    static final double     BUILD_WALL_TO_FOUNDATION    = 4.0;
-    static final double     FOUNDATION_LENGTH           = 37.5;
-    static final double     FOUNDATION_WIDTH            = 18.5;
+    public static final double     TILE_SIZE                   = 24.0;
+    public static final double     SIDE_WALL_TO_FOUNDATION     = 47.25;
+    public static final double     BUILD_WALL_TO_FOUNDATION    = 4.0;
+    public static final double     FOUNDATION_LENGTH           = 37.5;
+    public static final double     FOUNDATION_WIDTH            = 18.5;
 
     public static double robotStartX= 41;      // robot origin aline with image right
     public static double robotStartY=17.25;       //right back corner of robot

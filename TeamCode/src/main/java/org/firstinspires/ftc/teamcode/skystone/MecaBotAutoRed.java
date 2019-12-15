@@ -27,15 +27,15 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.skystone;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
+import org.firstinspires.ftc.teamcode.robot.MecaBot;
+import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
 
 /**
  * This file illustrates the concept of driving a path based on encoder counts.
@@ -64,10 +64,10 @@ import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name="Blue Auto Foundation", group="Mecabot Auto")
-public class MecabotAutoBlue extends LinearOpMode {
+@Autonomous(name="Red Auto Foundation", group="Mecabot Auto")
+public class MecaBotAutoRed extends LinearOpMode {
 
-    private static final boolean BLUE = true;
+    static final boolean BLUE = false;
 
     /* Declare OpMode members. */
     static final double     DRIVE_SPEED             = 0.8;
@@ -77,8 +77,8 @@ public class MecabotAutoBlue extends LinearOpMode {
     static final double     MOVE_TOWARDS_FOUNDATION = 24.0;
     static final double     TURN_FOUNDATION_DISTANCE= 64.0;
 
-    protected MecaBot       robot = new MecaBot();   // Use a Mecabot's hardware
-    protected MecaBotMove   nav = new MecaBotMove(this, robot);
+    protected MecaBot robot = new MecaBot();   // Use a Mecabot's hardware
+    protected MecaBotMove nav = new MecaBotMove(this, robot);
     private ElapsedTime     runtime = new ElapsedTime();
 
     @Override
@@ -99,8 +99,8 @@ public class MecabotAutoBlue extends LinearOpMode {
 
         // Send telemetry message to indicate successful Encoder reset
         telemetry.addData("Path0",  "Starting at %7d :%7d",
-                          robot.leftFrontDrive.getCurrentPosition(),
-                          robot.rightFrontDrive.getCurrentPosition());
+                robot.leftFrontDrive.getCurrentPosition(),
+                robot.rightFrontDrive.getCurrentPosition());
         telemetry.update();
 
         // Wait for the game to start (driver presses PLAY)
@@ -125,12 +125,12 @@ public class MecabotAutoBlue extends LinearOpMode {
         nav.moveForwardBack(-MOVE_TOWARDS_FOUNDATION);
 
         // move towards the build wall to center robot on foundation long edge
-        double robotToFoundationEdge = (fieldConfiguration.FOUNDATION_LENGTH - MecaBot.WIDTH) / 2;
-        double moveToBuildWall = BUILD_WALL_TO_ROBOT - fieldConfiguration.BUILD_WALL_TO_FOUNDATION - robotToFoundationEdge;
+        double robotToFoundationEdge = (FieldSkystone.FOUNDATION_LENGTH - MecaBot.WIDTH) / 2;
+        double moveToBuildWall = BUILD_WALL_TO_ROBOT - FieldSkystone.BUILD_WALL_TO_FOUNDATION - robotToFoundationEdge;
         nav.moveRightLeft(BLUE ? moveToBuildWall : -moveToBuildWall);
 
         // move backwards towards the foundation now, slowly
-        nav.moveForwardBack((fieldConfiguration.SIDE_WALL_TO_FOUNDATION - MecaBot.LENGTH - MOVE_TOWARDS_FOUNDATION) * -1.0, SLOW_SPEED);
+        nav.moveForwardBack((FieldSkystone.SIDE_WALL_TO_FOUNDATION - MecaBot.LENGTH - MOVE_TOWARDS_FOUNDATION) * -1.0, SLOW_SPEED);
 
         // TODO: check for the contact switch activation here to tell us when robot has reached
 
@@ -138,20 +138,22 @@ public class MecabotAutoBlue extends LinearOpMode {
         // Allow the servo some time to move
         sleep(1000);
 
-//        nav.moveForwardBack(24);
+        nav.moveForwardBack(24);
 
+        double turnDistance = BLUE ? TURN_FOUNDATION_DISTANCE : 130;
         // turn the foundation so that long edge if parallel to the build zone wall
-        nav.encoderTurn(TURN_FOUNDATION_DISTANCE, BLUE, SLOW_SPEED);
+//        nav.encoderTurn(turnDistance, BLUE ? true : false, SLOW_SPEED);
+        nav.encoderRotate(40, BLUE ? true : false, SLOW_SPEED);
 
         // drive the robot in reverse to push the foundation to the build zone wall
-        nav.moveForwardBack(-30);
+        nav.moveForwardBack(-20);
 
         robot.releaseFoundation();
         // Allow the servo some time to move
         sleep(1000);
 
         // Move towards the wall so that we allow space for alliance partner to park
-        nav.moveRightLeft(BLUE ? +12 : -12);
+        nav.moveRightLeft(BLUE ? -12 : -18);
 
         // now go park under the bridge
         nav.moveForwardBack(42);

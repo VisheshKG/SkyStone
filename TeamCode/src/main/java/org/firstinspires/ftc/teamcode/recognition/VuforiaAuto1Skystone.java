@@ -1,18 +1,21 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.recognition;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.teamcode.skystone.FieldSkystone;
+import org.firstinspires.ftc.teamcode.robot.MecaBot;
+import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
 
 @Autonomous(name = "Auto1_skystone")
 //@Disabled
-public class polarisAuto1_skystone extends LinearOpMode {
+public class VuforiaAuto1Skystone extends LinearOpMode {
     //--------Configure -----------
 
     // Blue Alliance or Red Alliance
-    private static boolean BLUESIDE =fieldConfiguration.BLUESIDE;
-    private static boolean PARK_INSIDE =fieldConfiguration.PARK_INSIDE;
+    private static boolean BLUESIDE = FieldSkystone.BLUESIDE;
+    private static boolean PARK_INSIDE = FieldSkystone.PARK_INSIDE;
 
     //--------End of Configure
     double LOW_SPEED=0.3;
@@ -27,13 +30,13 @@ public class polarisAuto1_skystone extends LinearOpMode {
 
     //robot origin is right back corner of robot
     //robot start position: put the eye at center of 2nd stone
-    private static double robotStartX= fieldConfiguration.robotStartX;
-    private static double robotStartY= fieldConfiguration.robotStartY;       //right back corner of robot
+    private static double robotStartX= FieldSkystone.robotStartX;
+    private static double robotStartY= FieldSkystone.robotStartY;       //right back corner of robot
     //3" clearance on both side of robot between bridge poll and the parked robot
     // 4.5= 46-18-1/2 *22.25
     private static double backDistToCtrBridge=4.5;
 
-    private static double inchClosetoScan=fieldConfiguration.inchClosetoScan;
+    private static double inchClosetoScan= FieldSkystone.inchClosetoScan;
 
     //eye placed 11 inch from far side of viewable stone
     // 18.5 inch off image means eye can see 3 stones 24 inches
@@ -52,20 +55,20 @@ public class polarisAuto1_skystone extends LinearOpMode {
 
     MecaBot robot = new MecaBot();   // Use Omni-Directional drive system
     MecaBotMove nav = new MecaBotMove(this, robot);
-    polarisVuforiaUtil vUtil= new polarisVuforiaUtil(this);
+    VuforiaUtil vUtil= new VuforiaUtil(this);
 
     @Override
     public void runOpMode() {
         // Initialize the robot and navigation
         //todo: restore
         robot.init(this.hardwareMap);
-        fieldConfiguration.initRobotStartX();
+        FieldSkystone.initRobotStartX();
 
         vUtil.initVuforia();
         vUtil.activateTracking();  //takes a few seconds
         telemetry.setAutoClear(false);
-        curX=fieldConfiguration.robotStartX;
-        curY=fieldConfiguration.robotStartY;
+        curX= FieldSkystone.robotStartX;
+        curY= FieldSkystone.robotStartY;
         String side="RED";
         if (BLUESIDE){ side="BLUE"; }
         telemetry.addData(" ",side);
@@ -129,8 +132,8 @@ public class polarisAuto1_skystone extends LinearOpMode {
         //double xdistance=49-robotStartingX;   //stone placed at 49 inches; robot starting 36
         //call vuforia to find stone, start scanning from bridge end to wall
         // if robot on blue side, it moves left first. 2nd parameter, true to move robot left
-        double maxTimeViewStone=fieldConfiguration.maxTimeViewStone;
-        double maxTimeViewOneStone=fieldConfiguration.maxTimeViewOneStone;
+        double maxTimeViewStone= FieldSkystone.maxTimeViewStone;
+        double maxTimeViewOneStone= FieldSkystone.maxTimeViewOneStone;
         double curSeconds = opmodeRunTime.seconds();
         double lastSeconds = curSeconds;
         double deltaTime;
@@ -144,7 +147,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
             maxCt=2;
             limitX=48;  //half field - 3 stone over=72-20
         }
-        double scanInterval=fieldConfiguration.scanIntervalDistance;
+        double scanInterval= FieldSkystone.scanIntervalDistance;
 
         int ct=0;  //Count # moves
         while (!stonefound){   //todo: need to time out
@@ -216,9 +219,9 @@ public class polarisAuto1_skystone extends LinearOpMode {
 
         //nav.setSpeedWheel(LOW_SPEED);
         if (y>0){     //test shows a drift to right of stone
-            yinch=yinch-fieldConfiguration.errForwardAdjust;  //move less to right stone
+            yinch=yinch- FieldSkystone.errForwardAdjust;  //move less to right stone
         }else{
-            yinch=yinch-fieldConfiguration.errForwardAdjust;
+            yinch=yinch- FieldSkystone.errForwardAdjust;
         }
         float stoneDistanceMargin = 1; //Vuforia stone center margin
         if (Math.abs(yinch) > stoneDistanceMargin) {
@@ -238,7 +241,7 @@ public class polarisAuto1_skystone extends LinearOpMode {
         }
         //advance to move close to stone for grabbing
         telemetry.addData("MoveToStone", xinch);
-        double adv=Math.abs(xinch)-fieldConfiguration.closeToStone;  //include vuforia overshot of 1 inch
+        double adv=Math.abs(xinch)- FieldSkystone.closeToStone;  //include vuforia overshot of 1 inch
         nav.moveLeftRight(-adv);
         curY=curY+adv;
         telemetry.addData("Field Current Position {x y}=","%.2f  %.2f", curX,curY);

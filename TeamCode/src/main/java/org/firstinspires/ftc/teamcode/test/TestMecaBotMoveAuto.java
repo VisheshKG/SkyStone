@@ -1,15 +1,19 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.test;
 
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name = "Test MecaBotMove")
-//@Disabled
-public class testMoveMecaBot extends LinearOpMode {
+import org.firstinspires.ftc.teamcode.robot.MecaBot;
+import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
+import org.firstinspires.ftc.teamcode.skystone.FieldSkystone;
+
+@Autonomous(name = "Test MecaBotMove", group="Test")
+@Disabled
+public class TestMecaBotMoveAuto extends LinearOpMode {
 
     MecaBot robot = new MecaBot();   // Use Omni-Directional drive system
     MecaBotMove nav = new MecaBotMove(this, robot);
@@ -19,10 +23,10 @@ public class testMoveMecaBot extends LinearOpMode {
         ElapsedTime opmodeRunTime = new ElapsedTime();
         telemetry.setAutoClear(false);
 
-        fieldConfiguration.initRobotStartX();
+        FieldSkystone.initRobotStartX();
         telemetry.addData("Test MecaBotMove Time:", opmodeRunTime.seconds());
-        telemetry.addData("robotStartX:", fieldConfiguration.robotStartX);
-        telemetry.addData("robotStartY:", fieldConfiguration.robotStartY);
+        telemetry.addData("robotStartX:", FieldSkystone.robotStartX);
+        telemetry.addData("robotStartY:", FieldSkystone.robotStartY);
         telemetry.update();
 
         robot.init(this.hardwareMap);
