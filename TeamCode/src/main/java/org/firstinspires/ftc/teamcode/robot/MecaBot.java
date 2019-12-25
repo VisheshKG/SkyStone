@@ -80,7 +80,7 @@ public class MecaBot
     public static final double     WIDTH           = 18.0;
     public static final double     HALF_WIDTH      = WIDTH / 2;
 
-    public static final double LIFT_TOP = 4950;
+    public static final double LIFT_TOP = 11400;
     public static final double LIFT_BOTTOM = 0;
     public static final double ARM_INSIDE = Servo.MIN_POSITION;
     public static final double ARM_OUTSIDE = Servo.MAX_POSITION;
@@ -132,7 +132,7 @@ public class MecaBot
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
-        liftMotor.setDirection(DcMotor.Direction.FORWARD);
+        liftMotor.setDirection(DcMotor.Direction.REVERSE);
         leftIntake.setDirection(DcMotor.Direction.REVERSE);
         rightIntake.setDirection(DcMotor.Direction.FORWARD);
 
