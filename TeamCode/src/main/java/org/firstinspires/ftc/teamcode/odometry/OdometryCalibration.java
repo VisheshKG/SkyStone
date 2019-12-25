@@ -15,6 +15,11 @@ import java.io.File;
 
 /**
  * Created by Sarthak on 6/1/2019.
+ * Modified by Vishesh Goyal on 12/24/2019
+ * - adaptation to Team13345 MecaBot hardware
+ * - Detailed comments to explain the calculation of wheel base separation. Improved variable names for better understanding.
+ * - Bug fixes in code and comments
+ *
  * Odometry system calibration. Run this OpMode to generate the necessary constants to calculate the robot's global position on the field.
  * The Global Positioning Algorithm will not function and will throw an error if this program is not run first
  */
@@ -28,22 +33,18 @@ public class OdometryCalibration extends LinearOpMode {
     //IMU Sensor
     BNO055IMU imu;
 
-    //Hardware Map Names for drive motors and odometry wheels. THIS WILL CHANGE ON EACH ROBOT, YOU NEED TO UPDATE THESE VALUES ACCORDINGLY
+    //Hardware Map Names for drive motors and odometry wheels. THIS WILL CHANGE FOR EACH ROBOT AND NEED TO BE UPDATED HERE
     String rfName = "rightFrontDrive", rbName = "rightBackDrive", lfName = "leftFrontDrive", lbName = "leftBackDrive";
-    String verticalLeftEncoderName = lfName, verticalRightEncoderName = rfName, horizontalEncoderName = lbName;
+    String verticalLeftEncoderName = "leftIntake", verticalRightEncoderName = "rightIntake", horizontalEncoderName = "horizontalEncoder";
 
-    final double PIVOT_SPEED = 0.5;
+    final double PIVOT_SPEED = 0.4;
 
-    //The amount of encoder ticks for each inch the robot moves. THIS WILL CHANGE FOR EACH ROBOT AND NEEDS TO BE UPDATED HERE
-    final double COUNTS_PER_INCH = 307.699557;
-
-    ElapsedTime timer = new ElapsedTime();
-
-    double horizontalTickOffset = 0;
+    //The amount of encoder ticks for each inch the robot moves. THIS WILL CHANGE FOR EACH ROBOT AND NEED TO BE UPDATED HERE
+    final double COUNTS_PER_INCH = 242.552133272048492;  // FTC Team 13345 MecaBot encoder has 1440 ticks per rotation, wheel has 48mm diameter
 
     //Text files to write the values to. The files are stored in the robot controller under Internal Storage\FIRST\settings
     File wheelBaseSeparationFile = AppUtil.getInstance().getSettingsFile("wheelBaseSeparation.txt");
-    File horizontalTickOffsetFile = AppUtil.getInstance().getSettingsFile("horizontalTickOffset.txt");
+    File horizontalCountPerRadianFile = AppUtil.getInstance().getSettingsFile("horizontalCountsPerRadian.txt");
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -62,25 +63,22 @@ public class OdometryCalibration extends LinearOpMode {
         parameters.loggingTag          = "IMU";
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
         imu.initialize(parameters);
-        telemetry.addData("Odometry System Calibration Status", "IMU Init Complete");
+        telemetry.addData("Odometry Calibration", "IMU Init Complete");
         telemetry.clear();
 
         //Odometry System Calibration Init Complete
-        telemetry.addData("Odometry System Calibration Status", "Init Complete");
+        telemetry.addData("Odometry Calibration", "All Init Complete, Ready to Start");
         telemetry.update();
 
         waitForStart();
 
-        //Begin calibration (if robot is unable to pivot at these speeds, please adjust the constant at the top of the code
+        // Begin calibration, by pivoting the robot in place, in this setup rotate right is positive angle
+        // if robot is unable to pivot at these speeds, please adjust the constant at the top of the code
         while(getZAngle() < 90 && opModeIsActive()){
-            right_front.setPower(-PIVOT_SPEED);
-            right_back.setPower(-PIVOT_SPEED);
-            left_front.setPower(PIVOT_SPEED);
-            left_back.setPower(PIVOT_SPEED);
             if(getZAngle() < 60) {
-                setPowerAll(-PIVOT_SPEED, -PIVOT_SPEED, PIVOT_SPEED, PIVOT_SPEED);
+                setPowerAll(-PIVOT_SPEED, -PIVOT_SPEED, PIVOT_SPEED, PIVOT_SPEED); // rotate right
             }else{
-                setPowerAll(-PIVOT_SPEED/2, -PIVOT_SPEED/2, PIVOT_SPEED/2, PIVOT_SPEED/2);
+                setPowerAll(-PIVOT_SPEED/2, -PIVOT_SPEED/2, PIVOT_SPEED/2, PIVOT_SPEED/2); // rotate right
             }
 
             telemetry.addData("IMU Angle", getZAngle());
@@ -89,8 +87,9 @@ public class OdometryCalibration extends LinearOpMode {
 
         //Stop the robot
         setPowerAll(0, 0, 0, 0);
+        ElapsedTime timer = new ElapsedTime();
         timer.reset();
-        while(timer.milliseconds() < 1000 && opModeIsActive()){
+        while(timer.milliseconds() < 2000 && opModeIsActive()){
             telemetry.addData("IMU Angle", getZAngle());
             telemetry.update();
         }
@@ -99,34 +98,43 @@ public class OdometryCalibration extends LinearOpMode {
         double angle = getZAngle();
 
         /*
-        Encoder Difference is calculated by the formula (leftEncoder - rightEncoder)
-        Since the left encoder is also mapped to a drive motor, the encoder value needs to be reversed with the negative sign in front
-        THIS MAY NEED TO BE CHANGED FOR EACH ROBOT
+        Since the orientation of encoders on each side is opposite, one of the encoder value
+        needs to be reversed so that both side encoders produced positive ticks with forward movement.
+        Horizontal encoder ticks may also need sign reversal, in this code clockwise rotation of robot should produce positive tick count
+        THIS WILL CHANGE FOR EACH ROBOT AND NEED TO BE UPDATED HERE
        */
-        double encoderDifference = Math.abs(verticalLeft.getCurrentPosition()) + (Math.abs(verticalRight.getCurrentPosition()));
+        double verticalLeftCount = verticalLeft.getCurrentPosition();
+        double verticalRightCount = -verticalRight.getCurrentPosition();
+        double horizontalCount = horizontal.getCurrentPosition();
 
-        double verticalEncoderTickOffsetPerDegree = encoderDifference/angle;
+        // The Robot pivoted around its own center for a certain angle and we recorded the encoder ticks on left and right
+        // wheel base separation = sum of radius of left arc and radius of right arc around the pivot point
+        // Note that: length of arc for 1 radian angle = radius of circle
+        // Therefore wheel base separation = sum of left arc length and right arc length for 1 radian rotation
+        double verticalEncoderTicks = Math.abs(verticalLeftCount) + (Math.abs(verticalRightCount));
+        double verticalEncoderTicksPerDegree = verticalEncoderTicks/angle;
+        double verticalEncoderTicksPerRadian = (180*verticalEncoderTicks)/(Math.PI*angle);
+        double wheelBaseSeparationInches = verticalEncoderTicksPerRadian/COUNTS_PER_INCH;
 
-        double wheelBaseSeparation = (2*90*verticalEncoderTickOffsetPerDegree)/(Math.PI*COUNTS_PER_INCH);
-
-        horizontalTickOffset = horizontal.getCurrentPosition()/Math.toRadians(getZAngle());
+        double horizontalCountPerRadian = Math.abs(horizontalCount)/Math.toRadians(angle);
 
         //Write the constants to text files
-        ReadWriteFile.writeFile(wheelBaseSeparationFile, String.valueOf(wheelBaseSeparation));
-        ReadWriteFile.writeFile(horizontalTickOffsetFile, String.valueOf(horizontalTickOffset));
+        ReadWriteFile.writeFile(wheelBaseSeparationFile, String.valueOf(wheelBaseSeparationInches));
+        ReadWriteFile.writeFile(horizontalCountPerRadianFile, String.valueOf(horizontalCountPerRadian));
 
         while(opModeIsActive()){
             telemetry.addData("Odometry System Calibration Status", "Calibration Complete");
             //Display calculated constants
-            telemetry.addData("Wheel Base Separation", wheelBaseSeparation);
-            telemetry.addData("Horizontal Encoder Offset", horizontalTickOffset);
+            telemetry.addData("Wheel Base Separation (inches)", wheelBaseSeparationInches);
+            telemetry.addData("Horizontal Encoder Ticks per Radian", horizontalCountPerRadian);
 
             //Display raw values
-            telemetry.addData("IMU Angle", getZAngle());
-            telemetry.addData("Vertical Left Position", -verticalLeft.getCurrentPosition());
-            telemetry.addData("Vertical Right Position", verticalRight.getCurrentPosition());
-            telemetry.addData("Horizontal Position", horizontal.getCurrentPosition());
-            telemetry.addData("Vertical Encoder Offset", verticalEncoderTickOffsetPerDegree);
+            telemetry.addData("IMU Angle (degrees)", angle);
+            telemetry.addData("Vertical Left Position", verticalLeftCount);
+            telemetry.addData("Vertical Right Position", verticalRightCount);
+            telemetry.addData("Horizontal Position", horizontalCount);
+            telemetry.addData("Vertical Encoder Ticks per Degree", verticalEncoderTicksPerDegree);
+            telemetry.addData("Vertical Encoder Ticks per Radian", verticalEncoderTicksPerRadian);
 
             //Update values
             telemetry.update();
@@ -161,27 +169,30 @@ public class OdometryCalibration extends LinearOpMode {
         verticalRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         horizontal.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-
         right_front.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         right_back.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         left_front.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         left_back.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        left_front.setDirection(DcMotorSimple.Direction.REVERSE);
-        right_front.setDirection(DcMotorSimple.Direction.REVERSE);
-        right_back.setDirection(DcMotorSimple.Direction.REVERSE);
+        // THIS WILL CHANGE FOR EACH ROBOT AND NEED TO BE UPDATED HERE
+        left_front.setDirection(DcMotor.Direction.REVERSE);
+        left_back.setDirection(DcMotor.Direction.REVERSE);
+        right_front.setDirection(DcMotor.Direction.FORWARD);
+        right_back.setDirection(DcMotor.Direction.FORWARD);
 
 
-        telemetry.addData("Status", "Hardware Map Init Complete");
+        telemetry.addData("Odometry Calibration", "Hardware Map Init Complete");
         telemetry.update();
 
     }
 
     /**
      * Gets the orientation of the robot using the REV IMU
+     * This code assumes that clockwise rotation is positive angle, thus reverse sign of value returned by IMU
      * @return the angle of the robot
      */
     private double getZAngle(){
+
         return (-imu.getAngularOrientation().firstAngle);
     }
 

@@ -3,25 +3,25 @@ package org.firstinspires.ftc.teamcode.odometry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 /**
  * Created by Sarthak on 10/4/2019.
  */
-@TeleOp(name = "My Odometry OpMode")
+@TeleOp(name = "My Odometry OpMode", group = "Test")
 public class MyOdometryOpmode extends LinearOpMode {
     //Drive motors
     DcMotor right_front, right_back, left_front, left_back;
     //Odometry Wheels
     DcMotor verticalLeft, verticalRight, horizontal;
 
-    final double COUNTS_PER_INCH = 307.699557;
+    //The amount of encoder ticks for each inch the robot moves. THIS WILL CHANGE FOR EACH ROBOT AND NEEDS TO BE UPDATED HERE
+    final double COUNTS_PER_INCH = 242.552133272048492;  // FTC Team 13345 MecaBot encoder has 1440 ticks per rotation, wheel has 48mm diameter
 
     //Hardware Map Names for drive motors and odometry wheels. THIS WILL CHANGE ON EACH ROBOT, YOU NEED TO UPDATE THESE VALUES ACCORDINGLY
     String rfName = "rightFrontDrive", rbName = "rightBackDrive", lfName = "leftFrontDrive", lbName = "leftBackDrive";
-    String verticalLeftEncoderName = rfName, verticalRightEncoderName = lfName, horizontalEncoderName = lbName;
+    String verticalLeftEncoderName = "leftIntake", verticalRightEncoderName = "rightIntake", horizontalEncoderName = "horizontalEncoder";
 
-    OdometryGlobalCoordinatePosition globalPositionUpdate;
+    OdometryGlobalPosition globalPositionUpdate;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -32,23 +32,28 @@ public class MyOdometryOpmode extends LinearOpMode {
         telemetry.update();
         waitForStart();
 
-        //Create and start GlobalCoordinatePosition thread to constantly update the global coordinate positions
-        globalPositionUpdate = new OdometryGlobalCoordinatePosition(verticalLeft, verticalRight, horizontal, COUNTS_PER_INCH, 75);
+        //Create and start GlobalPosition thread to constantly update the global position coordinates
+        globalPositionUpdate = new OdometryGlobalPosition(verticalLeft, verticalRight, horizontal, COUNTS_PER_INCH, 75);
+        // Left encoder value, robot forward movement should produce positive encoder count
+        // globalPositionUpdate.reverseLeftEncoder();  // disabled corresponding to robot hardware
+        // Right encoder value, robot forward movement should produce negative encoder count values
+        globalPositionUpdate.reverseRightEncoder();  // enabled corresponding to robot hardware
+        // Horizontal encoder value, robot clockwise turn should produce positive encoder count values
+        // globalPositionUpdate.reverseNormalEncoder(); // disabled corresponding to robot hardware
+
         Thread positionThread = new Thread(globalPositionUpdate);
         positionThread.start();
 
-        globalPositionUpdate.reverseRightEncoder();
-        globalPositionUpdate.reverseNormalEncoder();
 
         while(opModeIsActive()){
             //Display Global (x, y, theta) coordinates
-            telemetry.addData("X Position", globalPositionUpdate.returnXCoordinate() / COUNTS_PER_INCH);
-            telemetry.addData("Y Position", globalPositionUpdate.returnYCoordinate() / COUNTS_PER_INCH);
-            telemetry.addData("Orientation (Degrees)", globalPositionUpdate.returnOrientation());
+            telemetry.addData("X Position", globalPositionUpdate.getXCount() / COUNTS_PER_INCH);
+            telemetry.addData("Y Position", globalPositionUpdate.getYCount() / COUNTS_PER_INCH);
+            telemetry.addData("Orientation (Degrees)", globalPositionUpdate.GetOrientationDegrees());
 
-            telemetry.addData("Vertical left encoder position", verticalLeft.getCurrentPosition());
-            telemetry.addData("Vertical right encoder position", verticalRight.getCurrentPosition());
-            telemetry.addData("horizontal encoder position", horizontal.getCurrentPosition());
+            telemetry.addData("Vertical left encoder", globalPositionUpdate.getVerticalLeftCount());
+            telemetry.addData("Vertical right encoder", globalPositionUpdate.getVerticalRightCount());
+            telemetry.addData("horizontal encoder", globalPositionUpdate.getHorizontalCount());
 
             telemetry.addData("Thread Active", positionThread.isAlive());
             telemetry.update();
@@ -87,15 +92,16 @@ public class MyOdometryOpmode extends LinearOpMode {
         verticalRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         horizontal.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-
         right_front.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         right_back.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         left_front.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         left_back.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        left_front.setDirection(DcMotorSimple.Direction.REVERSE);
-        right_front.setDirection(DcMotorSimple.Direction.REVERSE);
-        right_back.setDirection(DcMotorSimple.Direction.REVERSE);
+        // THIS WILL CHANGE FOR EACH ROBOT AND NEED TO BE UPDATED HERE
+        left_front.setDirection(DcMotor.Direction.REVERSE);
+        left_back.setDirection(DcMotor.Direction.REVERSE);
+        right_front.setDirection(DcMotor.Direction.FORWARD);
+        right_back.setDirection(DcMotor.Direction.FORWARD);
 
         telemetry.addData("Status", "Hardware Map Init Complete");
         telemetry.update();
