@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.teamcode.robot.MecaBot;
 
 
-@TeleOp(name = "MecaBotTeleOp")
+@TeleOp(name = "MecaBotTeleOp", group="QT")
 public class MecaBotTeleOp extends LinearOpMode {
 
     static final int    CYCLE_MS    =   50;     // period of each cycle
@@ -81,17 +81,20 @@ public class MecaBotTeleOp extends LinearOpMode {
         // The game pad joystick is negative when pushed forwards or upwards.
         // We want this direction to raise the lift upwards, therefore flip the sign to positive.
         float power = -gamepad2.left_stick_y;
+        // current position of lift can be positive or negative depending on FORWARD or REVERSE rotation setting
+        // The reference position (lift collapsed or at bottom) = 0 encoder count, initialized at power up
+        double pos = robot.liftMotor.getCurrentPosition();
 
         // if lift stops are being ignored then simply apply the joystick power to the motor
         if (bIgnoreLiftStops) {
             robot.liftMotor.setPower(power);
         }
-        // lift upwards direction
-        else if (power > 0 && robot.liftMotor.getCurrentPosition() < robot.LIFT_TOP) {
+        // move lift upwards direction but respect the stop to avoid breaking string
+        else if (power > 0 && pos < robot.LIFT_TOP) {
             robot.liftMotor.setPower(power);
         }
-        // lift downwards direction
-        else if (power < 0 && robot.liftMotor.getCurrentPosition() > robot.LIFT_BOTTOM) {
+        // move lift downwards direction but respect the stop to avoid winding string in opposite direction on the spool
+        else if (power < 0 && pos > robot.LIFT_BOTTOM) {
             robot.liftMotor.setPower(power);
         }
         // stop the lift movement
@@ -100,7 +103,7 @@ public class MecaBotTeleOp extends LinearOpMode {
         }
 
         telemetry.addData(">", "GP2 left joystick = " + gamepad2.left_stick_y);
-        telemetry.addData(">", "Lift tick count = " + robot.liftMotor.getCurrentPosition());
+        telemetry.addData(">", "Lift tick count = " + pos);
         //robot.liftServo.setPosition(robot.liftServo.getPosition() + (gamepad2.right_stick_y / 20));
 
         /*

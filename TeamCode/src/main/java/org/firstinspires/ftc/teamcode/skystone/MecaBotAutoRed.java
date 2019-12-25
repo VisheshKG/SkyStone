@@ -64,7 +64,7 @@ import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name="Red Auto Foundation", group="Mecabot Auto")
+@Autonomous(name="Red Auto Foundation", group="QT")
 public class MecaBotAutoRed extends LinearOpMode {
 
     static final boolean BLUE = false;

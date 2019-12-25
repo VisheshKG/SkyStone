@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.robot.MecaBot;
 import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
 
-@Autonomous(name = "Parking Only")
+@Autonomous(name = "Parking Only", group="QT")
 //@Disabled
 public class ParkingOnly extends LinearOpMode {
 
