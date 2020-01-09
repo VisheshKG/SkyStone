@@ -87,7 +87,7 @@ public class TestMecaBotMoveAuto extends LinearOpMode {
         nav.moveLeftRight(aInch);
     }
     public void testColorSensor(){
-        ColorSensor cs=robot.groundColorSensor;
+        ColorSensor cs=robot.rightColorSensor;
         telemetry.addData("Blue Reading=", cs.blue());
         telemetry.addData("Red Reading=", cs.red());
         telemetry.addData("Alpha Reading=", cs.alpha());

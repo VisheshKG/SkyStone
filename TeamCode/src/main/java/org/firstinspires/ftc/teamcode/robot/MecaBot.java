@@ -70,7 +70,9 @@ public class MecaBot
     public Servo sideArmServo = null;
 
  //   public ModernRoboticsI2cColorSensor groundColorSensor = null;
-    public ColorSensor groundColorSensor = null;
+    public ColorSensor leftColorSensor = null;
+    public ColorSensor rightColorSensor = null;
+
     public Servo leftClamp = null;
     public Servo rightClamp = null;
 
@@ -123,7 +125,9 @@ public class MecaBot
         clawRotate = hwMap.get(Servo.class, "clawRotate");
         clawGrab = hwMap.get(Servo.class, "clawGrab");
         sideArmServo = hwMap.get(Servo.class, "sideArmServo");
-        groundColorSensor = hwMap.get(ColorSensor.class, "groundColorSensor");
+        leftColorSensor = hwMap.get(ColorSensor.class, "leftColorSensor");
+        rightColorSensor = hwMap.get(ColorSensor.class, "rightColorSensor");
+
         leftClamp = hwMap.get(Servo.class, "leftClamp");
         rightClamp = hwMap.get(Servo.class, "rightClamp");
 

@@ -272,7 +272,7 @@ public class MecaBotMove {
     }
 
     public boolean isUnderBridge(){
-        ColorSensor cs = robot.groundColorSensor;
+        ColorSensor cs = robot.rightColorSensor;
 
         myOpMode.telemetry.addData("Blue Reading=", cs.blue());
         myOpMode.telemetry.addData("Red Reading=", cs.red());
