@@ -127,19 +127,19 @@ public class OdometryGlobalPosition implements Runnable{
     }
 
     /**
-     * Returns the vertical right encoder's tick count
-     * @return Vertical Right Encoder count
-     */
-    public double getVerticalRightCount() {
-        return verticalRightEncoder.getCurrentPosition();
-    }
-
-    /**
      * Returns the vertical left encoder's tick count
      * @return Vertical Left Encoder count
      */
     public double getVerticalLeftCount() {
-        return verticalLeftEncoder.getCurrentPosition();
+        return verticalLeftCount;
+    }
+
+    /**
+     * Returns the vertical right encoder's tick count
+     * @return Vertical Right Encoder count
+     */
+    public double getVerticalRightCount() {
+        return verticalRightCount;
     }
 
     /**
@@ -147,13 +147,15 @@ public class OdometryGlobalPosition implements Runnable{
      * @return Horizontal Encoder count
      */
     public double getHorizontalCount() {
-        return horizontalEncoder.getCurrentPosition();
+        return horizontalCount;
     }
 
     /**
      * Stops the position update thread
      */
-    public void stop(){ isRunning = false; }
+    public void stop() {
+        isRunning = false;
+    }
 
     public void reverseLeftEncoder(){
         if(verticalLeftEncoderDirection == 1){

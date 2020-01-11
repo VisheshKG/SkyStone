@@ -34,9 +34,9 @@ public class TestMecaBotMoveAuto extends LinearOpMode {
         //testDrawBox();
         testMoveYX();
 
-        nav.grabTheStone();
+        robot.grabStoneWithSidearm();
         sleep(2000 );
-        nav.releaseTheStone();
+        robot.releaseStoneWithSidearm();
 
         //nav.moveLeftRight(-12);
 

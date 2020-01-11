@@ -254,23 +254,6 @@ public class MecaBotMove {
 
     }
 
-    // Claw and Damper movements
-    public void grabTheStone(){
-        robot.grabStoneWithSidearm();
-    }
-
-    public void releaseTheStone(){
-        robot.releaseStoneWithSidearm();
-    }
-
-    public void grabFoundation(){
-        robot.grabFoundation();
-    }
-
-    public void releaseFoundation(){
-        robot.releaseFoundation();
-    }
-
     public boolean isUnderBridge(){
         ColorSensor cs = robot.rightColorSensor;
 
