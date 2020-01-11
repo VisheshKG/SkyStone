@@ -6,6 +6,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 
 /**
  * Created by Sarthak on 10/4/2019.
+ * Modified by Vishesh Goyal on 12/24/2019
+ * - adaptation to Team13345 MecaBot hardware
  */
 @TeleOp(name = "My Odometry OpMode", group = "Test")
 public class MyOdometryOpmode extends LinearOpMode {
@@ -16,6 +18,7 @@ public class MyOdometryOpmode extends LinearOpMode {
 
     //The amount of encoder ticks for each inch the robot moves. THIS WILL CHANGE FOR EACH ROBOT AND NEEDS TO BE UPDATED HERE
     final double COUNTS_PER_INCH = 242.552133272048492;  // FTC Team 13345 MecaBot encoder has 1440 ticks per rotation, wheel has 48mm diameter
+                                                         // (1440 * MM_PER_INCH) / ( Math.PI * 48)
 
     //Hardware Map Names for drive motors and odometry wheels. THIS WILL CHANGE ON EACH ROBOT, YOU NEED TO UPDATE THESE VALUES ACCORDINGLY
     String rfName = "rightFrontDrive", rbName = "rightBackDrive", lfName = "leftFrontDrive", lbName = "leftBackDrive";
@@ -25,21 +28,23 @@ public class MyOdometryOpmode extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        //Initialize hardware map values. PLEASE UPDATE THESE VALUES TO MATCH YOUR CONFIGURATION
+        //Initialize hardware map values. PLEASE UPDATE THESE VALUES TO MATCH YOUR ROBOT CONFIGURATION
         initDriveHardwareMap(rfName, rbName, lfName, lbName, verticalLeftEncoderName, verticalRightEncoderName, horizontalEncoderName);
 
         telemetry.addData("Status", "Init Complete");
         telemetry.update();
         waitForStart();
 
-        //Create and start GlobalPosition thread to constantly update the global position coordinates
+        //Create and start GlobalPosition thread to constantly update the global position coordinates.
         globalPositionUpdate = new OdometryGlobalPosition(verticalLeft, verticalRight, horizontal, COUNTS_PER_INCH, 75);
+
+        // Set direction of odometry encoders. PLEASE UPDATE THESE VALUES TO MATCH YOUR ROBOT HARDWARE
         // Left encoder value, robot forward movement should produce positive encoder count
-        // globalPositionUpdate.reverseLeftEncoder();  // disabled corresponding to robot hardware
-        // Right encoder value, robot forward movement should produce negative encoder count values
-        globalPositionUpdate.reverseRightEncoder();  // enabled corresponding to robot hardware
-        // Horizontal encoder value, robot clockwise turn should produce positive encoder count values
-        // globalPositionUpdate.reverseNormalEncoder(); // disabled corresponding to robot hardware
+        // globalPositionUpdate.reverseLeftEncoder();
+        // Right encoder value, robot forward movement should produce positive encoder count
+        globalPositionUpdate.reverseRightEncoder();
+        // Horizontal encoder value, robot right sideways movement should produce positive encoder count values
+        globalPositionUpdate.reverseNormalEncoder();
 
         Thread positionThread = new Thread(globalPositionUpdate);
         positionThread.start();

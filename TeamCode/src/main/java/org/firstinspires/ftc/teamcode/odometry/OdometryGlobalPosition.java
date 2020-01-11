@@ -9,10 +9,15 @@ import java.io.File;
 
 /**
  * Created by Sarthak on 6/1/2019.
+ * Modified by Vishesh Goyal on 12/24/2019
  *
- * All the position values are initialized to zero, including the robot orientation angle theta
- * Further the change in robot angle is computed (see below) using (left encoder count - right encoder count) indicating clockwise turn is positive angle.
- * The vector projection formula used for calculating global position indicates robot angle is measured from Y-Axis
+ * All the position values are initialized to zero, including the robot orientation angle theta.
+ * The implemention by Sarthak computed the change in robot angle using (left encoder count - right encoder count) indicating clockwise turn is positive angle.
+ * Also the vector projection formula used for calculating global position indicates robot angle is measured from Y-Axis
+ *
+ * Modified by Vishesh to follow the conventional polar coordinate system, so we use this code with other code modules such as pure pursuit
+ * change in robot angle = (right encoder count - left encoder count) indicating counter-clockwise rotation is positive angle value
+ * Vector projection formula used for calculating global position, now uses robot angle (robotAngleRad) measured from X-Axis
  *
  */
 public class OdometryGlobalPosition implements Runnable{
@@ -23,7 +28,7 @@ public class OdometryGlobalPosition implements Runnable{
     private boolean isRunning = true;
 
     //Position variables used for storage and calculations
-    private double robotGlobalX = 0, robotGlobalY = 0, robotAngleRad = 0;
+    private double robotGlobalX = 0, robotGlobalY = 0, robotAngleRad = Math.PI/2; // robot starts with 90 degree angle in direction of positive Y-axis
     private double verticalRightCount = 0, verticalLeftCount = 0, horizontalCount = 0;
     private double prevVerticalRightCount = 0, prevVerticalLeftCount = 0, prevHorizontalCount = 0;
 
@@ -73,24 +78,24 @@ public class OdometryGlobalPosition implements Runnable{
         double rightChange = verticalRightCount - prevVerticalRightCount;
 
         //Calculate Angle
-        // These formulas assume that robotAngleRad is positive turning clockwise
-        double changeInRobotAngle = (leftChange - rightChange) / (wheelBaseSeparationCount);
+        // These formulas assume that robotAngleRad is positive when Robot is turning counter-clockwise
+        // All local variables are a signed value, representing change or angle direction
+        double changeInRobotAngle = (rightChange - leftChange) / (wheelBaseSeparationCount);
         robotAngleRad = ((robotAngleRad + changeInRobotAngle));
 
         //Get the components of the motion
         double rawHorizontalChange = horizontalCount - prevHorizontalCount;
-        double horizontalChange = rawHorizontalChange - (changeInRobotAngle * horizontalCountPerRadian);
+        double horizontalChange = rawHorizontalChange + (changeInRobotAngle * horizontalCountPerRadian);
 
         // p is the vector of forward movement of the Robot, direction parallel to drivetrain wheels
         // n is the vector of normal movement of thee Robot, direction perpendicular to drivetrain wheels
         double p = ((rightChange + leftChange) / 2);
         double n = horizontalChange;
 
-        // Calculate and update the position
-        // These formulas assume robotAngleRad is measured from Y-Axis turning clockwise
-        // This seems an unconventional choice, typically angle theta is counter-clockwise turn from X-Axis
-        robotGlobalX = robotGlobalX + (p*Math.sin(robotAngleRad) + n*Math.cos(robotAngleRad));
-        robotGlobalY = robotGlobalY + (p*Math.cos(robotAngleRad) - n*Math.sin(robotAngleRad));
+        // Calculate and update the position using Vector projection formula
+        // These formulas assume robotAngleRad is measured from X-Axis turning counter-clockwise, same as angle theta in a polar coordinate system
+        robotGlobalX = robotGlobalX + (p*Math.cos(robotAngleRad) + n*Math.sin(robotAngleRad));
+        robotGlobalY = robotGlobalY + (p*Math.sin(robotAngleRad) - n*Math.cos(robotAngleRad));
 
         prevVerticalLeftCount = verticalLeftCount;
         prevVerticalRightCount = verticalRightCount;
@@ -126,7 +131,7 @@ public class OdometryGlobalPosition implements Runnable{
      * @return Vertical Right Encoder count
      */
     public double getVerticalRightCount() {
-        return verticalRightCount;
+        return verticalRightEncoder.getCurrentPosition();
     }
 
     /**
@@ -134,7 +139,7 @@ public class OdometryGlobalPosition implements Runnable{
      * @return Vertical Left Encoder count
      */
     public double getVerticalLeftCount() {
-        return verticalLeftCount;
+        return verticalLeftEncoder.getCurrentPosition();
     }
 
     /**
@@ -142,7 +147,7 @@ public class OdometryGlobalPosition implements Runnable{
      * @return Horizontal Encoder count
      */
     public double getHorizontalCount() {
-        return horizontalCount;
+        return horizontalEncoder.getCurrentPosition();
     }
 
     /**
