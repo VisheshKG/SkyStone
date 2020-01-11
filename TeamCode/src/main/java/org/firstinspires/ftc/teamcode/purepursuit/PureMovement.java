@@ -12,7 +12,7 @@ public class PureMovement {
 
 
         // TODO: need the starting position of the robot
-        double distanceToTarget = Math.hypot(x = worldXPosition, y - worldYPosition);
+        double distanceToTarget = Math.hypot(x - worldXPosition, y - worldYPosition);
 
         // The angle to get to correct vector (from 0)
         // TODO: need the starting position of the robot
