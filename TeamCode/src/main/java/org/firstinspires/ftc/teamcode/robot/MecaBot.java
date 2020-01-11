@@ -84,8 +84,8 @@ public class MecaBot
 
     public static final double LIFT_TOP = 11400;
     public static final double LIFT_BOTTOM = 0;
-    public static final double ARM_INSIDE = Servo.MIN_POSITION;
-    public static final double ARM_OUTSIDE = Servo.MAX_POSITION;
+    public static final double ARM_INSIDE = 0.0 ;
+    public static final double ARM_OUTSIDE = 0.3;
     public static final double ARM_STEP = 0.05;
     public static final double CLAW_PARALLEL = Servo.MAX_POSITION;
     public static final double CLAW_PERPENDICULAR = Servo.MIN_POSITION;

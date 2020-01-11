@@ -118,7 +118,7 @@ public class MecaBotTeleOp extends LinearOpMode {
             } else {
                 newpos = robot.liftServo.getPosition() + MecaBot.ARM_STEP; // inside to outside is clockwise
             }
-            newpos = Range.clip(newpos, Servo.MIN_POSITION, Servo.MAX_POSITION);
+            newpos = Range.clip(newpos, MecaBot.ARM_INSIDE, MecaBot.ARM_OUTSIDE);
             robot.liftServo.setPosition(newpos);
             telemetry.addData(">", "lift servo new pos %5.2f", newpos);
             telemetry.addData(">", "right joystick pushed %5.2f", gamepad2.right_stick_y);
