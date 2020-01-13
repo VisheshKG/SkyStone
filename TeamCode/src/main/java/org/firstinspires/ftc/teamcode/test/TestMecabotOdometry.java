@@ -30,7 +30,7 @@ public class TestMecabotOdometry extends LinearOpMode {
             //Display Global (x, y, theta) coordinates
             telemetry.addData("X Position", robotGlobalPosition.getXCount() / robot.ODOMETRY_COUNT_PER_INCH);
             telemetry.addData("Y Position", robotGlobalPosition.getYCount() / robot.ODOMETRY_COUNT_PER_INCH);
-            telemetry.addData("Orientation (Degrees)", robotGlobalPosition.GetOrientationDegrees());
+            telemetry.addData("Orientation (Degrees)", robotGlobalPosition.getOrientationDegrees());
 
             telemetry.addData("Vertical left encoder", robotGlobalPosition.getVerticalLeftCount());
             telemetry.addData("Vertical right encoder", robotGlobalPosition.getVerticalRightCount());
