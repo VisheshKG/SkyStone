@@ -5,7 +5,9 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalPosition;
 import org.firstinspires.ftc.teamcode.skystone.FieldSkystone;
+import static org.firstinspires.ftc.teamcode.purepursuit.MathFunctions.angleWrap;
 
 
 public class MecaBotMove {
@@ -29,6 +31,7 @@ public class MecaBotMove {
 
     private LinearOpMode        myOpMode;       // Access to the OpMode object
     private MecaBot robot;        // Access to the Robot hardware
+    private OdometryGlobalPosition globalPosition;
     //current location: origin is at red/blue wall center with x pointing to stone side and y to center of field
     private static double       curX=0;
     private static double       curY=0;
@@ -39,6 +42,24 @@ public class MecaBotMove {
         // Save reference to OpMode and Hardware map
         myOpMode = opMode;
         robot = aRobot;
+        globalPosition = robot.getPosition();
+    }
+
+    public void goToPosition(double x, double y, double speed) {
+
+        double distanceToPosition = Math.hypot(globalPosition.getXinches() - x,  globalPosition.getYinches() - y);
+        double absoluteAngleToPosition = Math.atan2(y - globalPosition.getYCount(), x - globalPosition.getXCount());
+        double relativeAngleToPosition = angleWrap(absoluteAngleToPosition - globalPosition.getOrientationRadians());
+
+
+        if (distanceToPosition < 6) {
+            return;
+        }
+
+        double turnPower = Range.clip(relativeAngleToPosition / Math.toRadians(30), -1.0, 1.0) * speed;
+
+        robot.driveTank(speed, turnPower);
+
     }
 
     public void setSpeedWheel(double speed) {
