@@ -52,8 +52,8 @@ public class MyOdometryOpmode extends LinearOpMode {
 
         while(opModeIsActive()){
             //Display Global (x, y, theta) coordinates
-            telemetry.addData("X Position", globalPositionUpdate.getXCount() / COUNTS_PER_INCH);
-            telemetry.addData("Y Position", globalPositionUpdate.getYCount() / COUNTS_PER_INCH);
+            telemetry.addData("X Position", globalPositionUpdate.getXinches());
+            telemetry.addData("Y Position", globalPositionUpdate.getYinches());
             telemetry.addData("Orientation (Degrees)", globalPositionUpdate.getOrientationDegrees());
 
             telemetry.addData("Vertical left encoder", globalPositionUpdate.getVerticalLeftCount());

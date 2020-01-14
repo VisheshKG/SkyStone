@@ -5,18 +5,23 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalPosition;
 import org.firstinspires.ftc.teamcode.robot.MecaBot;
+import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
 
 @TeleOp(name = "Test Odometry Mecabot", group = "Test")
 public class TestMecabotOdometry extends LinearOpMode {
 
-    private MecaBot robot = new MecaBot();   // Use a Mecabot's hardware
+    private MecaBot robot;
+    private MecaBotMove nav;
     private OdometryGlobalPosition robotGlobalPosition;
 
     @Override
     public void runOpMode() throws InterruptedException {
 
+        robot = new MecaBot();
         robot.init(hardwareMap);
-        robotGlobalPosition = robot.initOdometry();
+
+        nav = new MecaBotMove(this, robot);
+        robotGlobalPosition = nav.getPosition();
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -24,8 +29,7 @@ public class TestMecabotOdometry extends LinearOpMode {
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         // start odometry reading calculations before any driving begins
-        Thread positionThread = new Thread(robotGlobalPosition);
-        positionThread.start();
+        nav.startOdometry();
 
         // run until the end of the match (driver presses STOP)
         while(opModeIsActive()){
@@ -42,7 +46,7 @@ public class TestMecabotOdometry extends LinearOpMode {
         }
 
         //Stop the thread
-        robotGlobalPosition.stop();
+        nav.stopOdometry();
 
     }
 }

@@ -191,7 +191,11 @@ public class MecaBot {
         releaseFoundation();
     }
 
-    public OdometryGlobalPosition initOdometry() {
+    public OdometryGlobalPosition initOdometry() throws IllegalStateException {
+
+        if ((leftEncoder == null) || (rightEncoder == null) || (horizontalEncoder == null)) {
+            throw new IllegalStateException("Mecabot hardware must be initialized before Odometry.");
+        }
 
         //Create and start GlobalPosition thread to constantly update the global position coordinates.
         OdometryGlobalPosition globalPosition = new OdometryGlobalPosition(leftEncoder, rightEncoder, horizontalEncoder, ODOMETRY_COUNT_PER_INCH, 75);

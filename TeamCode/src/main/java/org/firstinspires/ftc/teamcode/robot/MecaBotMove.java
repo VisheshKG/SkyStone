@@ -28,10 +28,10 @@ public class MecaBotMove {
     private LinearOpMode        myOpMode;       // Access to the OpMode object
     private MecaBot             robot;          // Access to the Robot hardware
     private OdometryGlobalPosition globalPosition; // Robot global position tracker
+    private Thread              globalPositionThread;
 
-    //current location: origin is at red/blue wall center with x pointing to stone side and y to center of field
-    private static double       curX=0;
-    private static double       curY=0;
+//    private static double       curX=0;
+//    private static double       curY=0;
 
     /* Constructor */
     public MecaBotMove(LinearOpMode opMode, MecaBot aRobot) {
@@ -48,11 +48,13 @@ public class MecaBotMove {
 
     public void startOdometry() {
 
-        if (globalPosition == null) {
-            globalPosition = robot.initOdometry();
-        }
-        Thread positionThread = new Thread(globalPosition);
-        positionThread.start();
+        globalPositionThread = new Thread(globalPosition);
+        globalPositionThread.start();
+    }
+
+    public void stopOdometry() {
+
+        globalPosition.stop();
     }
 
     /**
@@ -66,7 +68,7 @@ public class MecaBotMove {
      * @param x     Target position global x coordinate value (inches)
      * @param y     Target position global y coordinate value (inches)
      * @param speed Speed/Power used to drive. Must be in range of -1.0 <= speed <= 1.0
-     * @return <code>true</code> if sucessfully issued command to robot to drive, <code>false</code> if reached the destination
+     * @return <em>true</em> if sucessfully issued command to robot to drive, <em>false</em> if reached the destination
      */
     public boolean goTowardsPosition(double x, double y, double speed) {
 
@@ -95,10 +97,10 @@ public class MecaBotMove {
         return true;
     }
 
-    public double getCurX(){ return curX;}
-    public double getCurY(){ return curY;}
-    public void setCurX(double x){curX=x;}
-    public void setCurY(double y){curY=y;}
+//    public double getCurX(){ return curX;}
+//    public double getCurY(){ return curY;}
+//    public void setCurX(double x){curX=x;}
+//    public void setCurY(double y){curY=y;}
     /*
      * Move robot forward or backward, +ve distance moves forward, -ve distance moves backward
      */
@@ -314,6 +316,13 @@ public class MecaBotMove {
 
         return false;
     }
+
+/*
+ * The code below is obsolete after the 24-NOV-2019 Qualifying Tournament.
+ * 1. The Robot does not have a side arm, the robot heading will always towards the stone side for both RED and BLUE
+ * 2. Since we are using odometry we cannot flip the X-axis positive direction between RED and BLUE.
+ */
+
 
 /**
  *  Method to drive the robot from one point marked by coordinate curX, curY to another targetX, target Y.
