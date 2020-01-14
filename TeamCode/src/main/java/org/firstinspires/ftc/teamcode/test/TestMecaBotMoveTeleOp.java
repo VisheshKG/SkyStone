@@ -77,6 +77,8 @@ public class TestMecaBotMoveTeleOp extends LinearOpMode {
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
+        // start odometry reading calculations before any driving begins
+        nav.startOdometry();
         runtime.reset();
 
         // run until the end of the match (driver presses STOP)
@@ -115,7 +117,10 @@ public class TestMecaBotMoveTeleOp extends LinearOpMode {
                 nav.moveRightLeft(-12);
             }
             else {
-                robot.driveTank(-gamepad1.left_stick_y, gamepad1.right_stick_x);
+                // forward press on joystick is negative, backward press (towards human) is positive
+                // right press on joystick is positive value, left press is negative value
+                // reverse sign of joystick values to match the expected sign in driveTank() method.
+                robot.driveTank(-gamepad1.left_stick_y, -gamepad1.right_stick_x);
             }
 /*
             // Setup a variable for each drive wheel to save power level for telemetry

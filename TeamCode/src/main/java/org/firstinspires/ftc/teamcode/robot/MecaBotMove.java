@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalPosition;
 import org.firstinspires.ftc.teamcode.skystone.FieldSkystone;
-import static org.firstinspires.ftc.teamcode.purepursuit.MathFunctions.angleWrap;
+import static org.firstinspires.ftc.teamcode.purepursuit.MathFunctions.angleWrapRad;
 
 
 public class MecaBotMove {
@@ -30,8 +30,9 @@ public class MecaBotMove {
     static final double X_PARK_INNER_OUTER  = 9.0;
 
     private LinearOpMode        myOpMode;       // Access to the OpMode object
-    private MecaBot robot;        // Access to the Robot hardware
-    private OdometryGlobalPosition globalPosition;
+    private MecaBot             robot;          // Access to the Robot hardware
+    private OdometryGlobalPosition globalPosition; // Robot global position tracker
+
     //current location: origin is at red/blue wall center with x pointing to stone side and y to center of field
     private static double       curX=0;
     private static double       curY=0;
@@ -42,24 +43,61 @@ public class MecaBotMove {
         // Save reference to OpMode and Hardware map
         myOpMode = opMode;
         robot = aRobot;
-        globalPosition = robot.getPosition();
+        globalPosition = robot.initOdometry();
     }
 
-    public void goToPosition(double x, double y, double speed) {
+    // Access methods
+    public OdometryGlobalPosition getPosition() {
+        return globalPosition;
+    }
+
+    public void startOdometry() {
+
+        if (globalPosition == null) {
+            globalPosition = robot.initOdometry();
+        }
+        Thread positionThread = new Thread(globalPosition);
+        positionThread.start();
+    }
+
+    /**
+     * Drive the robot at specified speed towards the specified target position on the field.
+     * Note that we are not waiting to reach the target position. This method only sets wheel power
+     * in the direction of the target position and must be called again repeatedly at an update
+     * interval, typically 50ms - 75ms.
+     * The current position of the robot obtained using odometry readings and wheel power are both
+     * calculated again at each call to this method.
+     *
+     * @param x     Target position global x coordinate value (inches)
+     * @param y     Target position global y coordinate value (inches)
+     * @param speed Speed/Power used to drive. Must be in range of -1.0 <= speed <= 1.0
+     * @return <code>true</code> if sucessfully issued command to robot to drive, <code>false</code> if reached the destination
+     */
+    public boolean goTowardsPosition(double x, double y, double speed) {
 
         double distanceToPosition = Math.hypot(globalPosition.getXinches() - x,  globalPosition.getYinches() - y);
-        double absoluteAngleToPosition = Math.atan2(y - globalPosition.getYCount(), x - globalPosition.getXCount());
-        double relativeAngleToPosition = angleWrap(absoluteAngleToPosition - globalPosition.getOrientationRadians());
 
-
-        if (distanceToPosition < 6) {
-            return;
+        // let's stop driving when within 2 inches of the destination. This threshold may need to be tuned.
+        // A threshold is necessary to avoid oscillations caused by overshooting of target position.
+        if (distanceToPosition < 2) {
+            robot.stopDriving();
+            return false;
         }
 
+        double absoluteAngleToPosition = Math.atan2(y - globalPosition.getYinches(), x - globalPosition.getXinches());
+        double relativeAngleToPosition = angleWrapRad(absoluteAngleToPosition - globalPosition.getOrientationRadians());
+
+        // when within 1 feet (12 inches) of target, reduce the speed proportional to remaining distance to target
+        double drivePower = Range.clip(distanceToPosition / 12, -1.0, 1.0) * speed;
+
+        // set turnspeed proportional to the amount of turn required, however beyond 30 degrees turn, full speed is ok
+        // note here that positive angle means turn left (since angle is measured counter clockwise from X-axis)
+        // this must match the behavior of MecaBot.DriveTank() method used below.
         double turnPower = Range.clip(relativeAngleToPosition / Math.toRadians(30), -1.0, 1.0) * speed;
 
-        robot.driveTank(speed, turnPower);
+        robot.driveTank(drivePower, turnPower);
 
+        return true;
     }
 
     public void setSpeedWheel(double speed) {

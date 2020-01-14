@@ -34,7 +34,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
-
 import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalPosition;
 
 /**
@@ -48,8 +47,7 @@ import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalPosition;
  * Note: The names can be found in the init() method where literal strings are used to initialize hardware.
  *
  */
-public class MecaBot
-{
+public class MecaBot {
     // drive train motors
     public DcMotor leftFrontDrive = null;
     public DcMotor leftBackDrive = null;
@@ -80,18 +78,15 @@ public class MecaBot
     public ColorSensor leftColorSensor = null;
     public ColorSensor rightColorSensor = null;
 
-    // Odometry system members
-    protected OdometryGlobalPosition globalPosition;
-
 
     //constants here
-    public static final double     LENGTH          = 17.0;
-    public static final double     WIDTH           = 18.0;
-    public static final double     HALF_WIDTH      = WIDTH / 2;
+    public static final double LENGTH = 17.0;
+    public static final double WIDTH = 18.0;
+    public static final double HALF_WIDTH = WIDTH / 2;
 
     public static final double LIFT_TOP = 11400;
     public static final double LIFT_BOTTOM = 0;
-    public static final double ARM_INSIDE = 0.0 ;
+    public static final double ARM_INSIDE = 0.0;
     public static final double ARM_OUTSIDE = 0.3;
     public static final double ARM_STEP = 0.05;
     public static final double CLAW_PARALLEL = Servo.MAX_POSITION;
@@ -111,7 +106,7 @@ public class MecaBot
     // (1440 * MM_PER_INCH) / ( Math.PI * 48)
 
     /* local OpMode members. */
-    HardwareMap hwMap =  null;
+    HardwareMap hwMap = null;
 
     /* Constructor */
     public MecaBot() {
@@ -126,7 +121,7 @@ public class MecaBot
         /* Define and Initialize Motors and Servos */
 
         // Drivetrain motors
-        leftFrontDrive  = hwMap.get(DcMotor.class, "leftFrontDrive");
+        leftFrontDrive = hwMap.get(DcMotor.class, "leftFrontDrive");
         leftBackDrive = hwMap.get(DcMotor.class, "leftBackDrive");
         rightFrontDrive = hwMap.get(DcMotor.class, "rightFrontDrive");
         rightBackDrive = hwMap.get(DcMotor.class, "rightBackDrive");
@@ -196,10 +191,10 @@ public class MecaBot
         releaseFoundation();
     }
 
-    public void initOdometry() {
+    public OdometryGlobalPosition initOdometry() {
 
         //Create and start GlobalPosition thread to constantly update the global position coordinates.
-        globalPosition = new OdometryGlobalPosition(leftEncoder, rightEncoder, horizontalEncoder, ODOMETRY_COUNT_PER_INCH, 75);
+        OdometryGlobalPosition globalPosition = new OdometryGlobalPosition(leftEncoder, rightEncoder, horizontalEncoder, ODOMETRY_COUNT_PER_INCH, 75);
 
         // Set direction of odometry encoders.
         // PLEASE UPDATE THESE VALUES TO MATCH YOUR ROBOT HARDWARE *AND* the DCMOTOR DIRECTION (FORWARD/REVERSE) CONFIGURATION
@@ -210,10 +205,8 @@ public class MecaBot
         // Horizontal encoder value, robot right sideways movement should produce positive encoder count values
         globalPosition.reverseNormalEncoder();
 
-        Thread positionThread = new Thread(globalPosition);
-        positionThread.start();
+        return globalPosition;
     }
-
 
     /*
      * Driving movement methods
@@ -252,6 +245,15 @@ public class MecaBot
         this.driveStraight(0);
     }
 
+    /**
+     * Tank mode drives in forward (or backward) direction only, no mecanum sideways movement
+     * The turns are achieved by speed differential between left and right side wheels
+     * Sign value of speed parameters controls direction. +ve driveSpeed means forward and
+     * +ve turnSpeed means turn left (since turn angle theta is +ve when counter clockwise from X-axis)
+     *
+     * @param driveSpeed    forward speed specified within range [-1.0, 1.0]
+     * @param turnSpeed     turning speed specified within range [-1.0, 1.0]
+     */
     public void driveTank(double driveSpeed, double turnSpeed) {
 
         driveSpeed = Range.clip(driveSpeed, -1.0, 1.0);
@@ -262,14 +264,14 @@ public class MecaBot
         double rightFront = driveSpeed;
         double rightBack = driveSpeed;
 
-        // right turn is positive turnSpeed, left turn is negative turnSpeed
-        // to turn right, add turnSpeed to left motors, subtract from right motors
-        // to turn left, same code applies, negative values cause left turn automatically
+        // left turn is positive turnSpeed, right turn is negative turnSpeed
+        // to turn left, add turnSpeed to right motors, subtract from left motors
+        // to turn right, same code applies, negative values cause right turn automatically
         turnSpeed = Range.clip(turnSpeed, -1.0, 1.0);
-        leftFront += turnSpeed;
-        leftBack += turnSpeed;
-        rightFront -= turnSpeed;
-        rightBack -= turnSpeed;
+        leftFront -= turnSpeed;
+        leftBack -= turnSpeed;
+        rightFront += turnSpeed;
+        rightBack += turnSpeed;
 
         driveWheels(leftFront, leftBack, rightFront, rightBack);
     }
@@ -360,11 +362,6 @@ public class MecaBot
     }
     public void releaseStoneWithSidearm() {
         sideArmServo.setPosition(SIDEARM_UP); // side arm up and free
-    }
-
-    // Access methods
-    public OdometryGlobalPosition getPosition() {
-        return globalPosition;
     }
 }
 
