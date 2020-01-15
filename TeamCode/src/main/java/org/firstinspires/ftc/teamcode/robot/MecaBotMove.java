@@ -73,34 +73,38 @@ public class MecaBotMove {
     public boolean goTowardsPosition(double x, double y, double speed) {
 
         double distanceToPosition = Math.hypot(globalPosition.getXinches() - x,  globalPosition.getYinches() - y);
-
-        // let's stop driving when within 2 inches of the destination. This threshold may need to be tuned.
-        // A threshold is necessary to avoid oscillations caused by overshooting of target position.
-        if (distanceToPosition < 2) {
-            robot.stopDriving();
-            return false;
-        }
-
         double absoluteAngleToPosition = Math.atan2(y - globalPosition.getYinches(), x - globalPosition.getXinches());
         double relativeAngleToPosition = angleWrapRad(absoluteAngleToPosition - globalPosition.getOrientationRadians());
 
         // when within 1 feet (12 inches) of target, reduce the speed proportional to remaining distance to target
-        double drivePower = Range.clip(distanceToPosition / 12, -1.0, 1.0) * speed;
+        double drivePower = Range.clip(distanceToPosition / 12, 0.2, 1.0) * speed;
+        // however absolute minimium 0.15 power is required otherwise the robot cannot move the last couple of inches
+        if (drivePower < 0.15)
+            drivePower = 0.15;
 
         // set turnspeed proportional to the amount of turn required, however beyond 30 degrees turn, full speed is ok
         // note here that positive angle means turn left (since angle is measured counter clockwise from X-axis)
         // this must match the behavior of MecaBot.DriveTank() method used below.
         double turnPower = Range.clip(relativeAngleToPosition / Math.toRadians(30), -1.0, 1.0) * speed;
+        // no minimum for turnPower until robot auto driving tests indicate a need.
+
+        myOpMode.telemetry.addData("Driving to location ", "(X %3.2f, Y %3.2f)", x, y);
+        myOpMode.telemetry.addLine("Target ").addData("Distance", " %4.2f in", distanceToPosition).addData("Angle", " %4.2f deg", Math.toDegrees(relativeAngleToPosition));
+        myOpMode.telemetry.addLine("Power: ").addData("drive", " %.2f", drivePower).addData("turn", "%.2f", turnPower);
+
+        // let's stop driving when within a short distance of the destination. This threshold may need to be tuned.
+        // A threshold is necessary to avoid oscillations caused by overshooting of target position.
+        // This check could be done early in the method, however it is done towards end deliberately to get telemetry readouts
+        if (distanceToPosition < 1) {
+            robot.stopDriving();
+            return false;
+        }
 
         robot.driveTank(drivePower, turnPower);
 
         return true;
     }
 
-//    public double getCurX(){ return curX;}
-//    public double getCurY(){ return curY;}
-//    public void setCurX(double x){curX=x;}
-//    public void setCurY(double y){curY=y;}
     /*
      * Move robot forward or backward, +ve distance moves forward, -ve distance moves backward
      */
@@ -170,8 +174,7 @@ public class MecaBotMove {
         robot.setDriveMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // Set the power of the motors to whatever speed is needed
-        speed = Range.clip(speed, 0.0, 1.0);
-        robot.driveStraight(speed);
+        robot.setDrivePower(speed);
 
         myOpMode.telemetry.addLine("Driving inches | ").addData("outer", inches).addData("inner", inches);
 
@@ -182,8 +185,6 @@ public class MecaBotMove {
 
     // Rotate around Robot own center
     public void encoderRotate(double inches, boolean counterClockwise, double speed) {
-
-        double wheelPower = Range.clip(speed, 0.0, 1.0);
 
         // Green intake wheels is front of robot,
         // counterClockwise means Right wheels turning forward, Left wheels turning backwards
@@ -202,7 +203,7 @@ public class MecaBotMove {
         // Set the motors to run to the necessary target position
         robot.setDriveMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        robot.driveWheels(wheelPower, wheelPower, wheelPower, wheelPower);
+        robot.setDrivePower(speed);
 
         myOpMode.telemetry.addLine("Driving inches | ").addData("outer", inches).addData("inner", inches);
 
@@ -221,8 +222,6 @@ public class MecaBotMove {
     // Outer wheels run along outer circle and inner wheels run along an inner circle
 
     public void encoderTurn(double inches, boolean counterClockwise, double speed) {
-
-        double wheelPower = Range.clip(speed, 0.0, 1.0);
 
         // Green intake wheels is front of robot, counterClockwise means Right wheels on outer circle
         double outerWheelInches = inches;
@@ -243,11 +242,12 @@ public class MecaBotMove {
         // Set the motors to run to the necessary target position
         robot.setDriveMode(DcMotor.RunMode.RUN_TO_POSITION);
 
+        double wheelPower = Range.clip(speed, 0.0, 1.0);
         double insideWheelPower = wheelPower / OUTER_TO_INNER_TURN_SPEED_RATIO;
         if (counterClockwise) {
-            robot.driveWheels(insideWheelPower, insideWheelPower, wheelPower, wheelPower);
+            robot.setDrivePower(insideWheelPower, wheelPower);
         } else {
-            robot.driveWheels(wheelPower, wheelPower, insideWheelPower, insideWheelPower);
+            robot.setDrivePower(wheelPower, insideWheelPower);
         }
 
         myOpMode.telemetry.addLine("Driving inches | ").addData("outer", outerWheelInches).addData("inner", innerWheelInches);
