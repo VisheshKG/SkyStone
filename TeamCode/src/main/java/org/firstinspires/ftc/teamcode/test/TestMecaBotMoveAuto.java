@@ -31,12 +31,15 @@ public class TestMecaBotMoveAuto extends LinearOpMode {
 
         robot.init(this.hardwareMap);
         waitForStart();
+        // start odometry reading calculations before any driving begins
+        nav.startOdometry();
+
         //testDrawBox();
         testMoveYX();
 
-        nav.grabTheStone();
+        robot.grabStoneWithSidearm();
         sleep(2000 );
-        nav.releaseTheStone();
+        robot.releaseStoneWithSidearm();
 
         //nav.moveLeftRight(-12);
 

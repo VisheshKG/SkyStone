@@ -5,7 +5,9 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalPosition;
 import org.firstinspires.ftc.teamcode.skystone.FieldSkystone;
+import static org.firstinspires.ftc.teamcode.purepursuit.MathFunctions.angleWrapRad;
 
 
 public class MecaBotMove {
@@ -19,30 +21,78 @@ public class MecaBotMove {
     static final double ENCODER_TICKS_PER_INCH      = MOTOR_TICK_COUNT / WHEEL_CIRCUMFERENCE;
     static final int    ENCODER_TICKS_ERR_MARGIN    = 50;
     static final double DEFAULT_SPEED       = 0.6;  //default wheel speed, same as motor power
-    static final double OUTER_TURN_RADIUS   = 22.75; // arbitrary choice to turn robot inside a tile of 24 inches
-    static final double INNER_TURN_RADIUS   = 7.25;  // OUTER_TURN_RAIDUS - Robot Wheelbase (15.5 inches)
     static final double OUTER_TO_INNER_TURN_SPEED_RATIO = 6.0;
 
-    static final double Y_PARK_INNER        = 46.0;
-    static final double Y_PARK_OUTER        = 22.0;
     static final double X_PARK_INNER_OUTER  = 9.0;
 
     private LinearOpMode        myOpMode;       // Access to the OpMode object
-    private MecaBot robot;        // Access to the Robot hardware
+    private MecaBot             robot;          // Access to the Robot hardware
+    private OdometryGlobalPosition globalPosition; // Robot global position tracker
+
     //current location: origin is at red/blue wall center with x pointing to stone side and y to center of field
     private static double       curX=0;
     private static double       curY=0;
-    private static double       wheelPower=DEFAULT_SPEED;
 
     /* Constructor */
     public MecaBotMove(LinearOpMode opMode, MecaBot aRobot) {
         // Save reference to OpMode and Hardware map
         myOpMode = opMode;
         robot = aRobot;
+        globalPosition = robot.initOdometry();
     }
 
-    public void setSpeedWheel(double speed) {
-        wheelPower=speed;
+    // Access methods
+    public OdometryGlobalPosition getPosition() {
+        return globalPosition;
+    }
+
+    public void startOdometry() {
+
+        if (globalPosition == null) {
+            globalPosition = robot.initOdometry();
+        }
+        Thread positionThread = new Thread(globalPosition);
+        positionThread.start();
+    }
+
+    /**
+     * Drive the robot at specified speed towards the specified target position on the field.
+     * Note that we are not waiting to reach the target position. This method only sets wheel power
+     * in the direction of the target position and must be called again repeatedly at an update
+     * interval, typically 50ms - 75ms.
+     * The current position of the robot obtained using odometry readings and wheel power are both
+     * calculated again at each call to this method.
+     *
+     * @param x     Target position global x coordinate value (inches)
+     * @param y     Target position global y coordinate value (inches)
+     * @param speed Speed/Power used to drive. Must be in range of -1.0 <= speed <= 1.0
+     * @return <code>true</code> if sucessfully issued command to robot to drive, <code>false</code> if reached the destination
+     */
+    public boolean goTowardsPosition(double x, double y, double speed) {
+
+        double distanceToPosition = Math.hypot(globalPosition.getXinches() - x,  globalPosition.getYinches() - y);
+
+        // let's stop driving when within 2 inches of the destination. This threshold may need to be tuned.
+        // A threshold is necessary to avoid oscillations caused by overshooting of target position.
+        if (distanceToPosition < 2) {
+            robot.stopDriving();
+            return false;
+        }
+
+        double absoluteAngleToPosition = Math.atan2(y - globalPosition.getYinches(), x - globalPosition.getXinches());
+        double relativeAngleToPosition = angleWrapRad(absoluteAngleToPosition - globalPosition.getOrientationRadians());
+
+        // when within 1 feet (12 inches) of target, reduce the speed proportional to remaining distance to target
+        double drivePower = Range.clip(distanceToPosition / 12, -1.0, 1.0) * speed;
+
+        // set turnspeed proportional to the amount of turn required, however beyond 30 degrees turn, full speed is ok
+        // note here that positive angle means turn left (since angle is measured counter clockwise from X-axis)
+        // this must match the behavior of MecaBot.DriveTank() method used below.
+        double turnPower = Range.clip(relativeAngleToPosition / Math.toRadians(30), -1.0, 1.0) * speed;
+
+        robot.driveTank(drivePower, turnPower);
+
+        return true;
     }
 
     public double getCurX(){ return curX;}
@@ -53,26 +103,22 @@ public class MecaBotMove {
      * Move robot forward or backward, +ve distance moves forward, -ve distance moves backward
      */
     public void moveForwardBack(double inches) {
-        moveDistance( inches, false);
+        moveDistance( inches, false, DEFAULT_SPEED);
     }
 
     public void moveForwardBack(double inches, double speed) {
-        wheelPower = Range.clip(speed, 0.0, 1.0);
-        moveDistance( inches, false);
-        wheelPower = DEFAULT_SPEED;
+        moveDistance( inches, false, speed);
     }
 
    /*
     * Move robot left or right, +ve distance moves right, -ve distance moves left
     */
     public void moveRightLeft(double inches) {
-        moveDistance(inches, true);
+        moveDistance(inches, true, DEFAULT_SPEED);
     }
 
     public void moveRightLeft(double inches, double speed) {
-        wheelPower = Range.clip(speed, 0.0, 1.0);
-        moveDistance(inches, true);
-        wheelPower = DEFAULT_SPEED;
+        moveDistance(inches, true, speed);
     }
 
     /*
@@ -83,19 +129,17 @@ public class MecaBotMove {
         if (inches < 0){    //right over drive by a multiple
             inches=inches * FieldSkystone.rightMultiple;
         }
-        moveDistance(inches * -1.0, true);
+        moveDistance(inches * -1.0, true, DEFAULT_SPEED);
     }
 
     public void moveLeftRight(double inches, double speed) {
-        wheelPower = Range.clip(speed, 0.0, 1.0);
-        moveDistance(inches * -1.0, true);
-        wheelPower = DEFAULT_SPEED;
+        moveDistance(inches * -1.0, true, speed);
     }
 
     /*
      * The movement direction is controlled by the sign of the first parameter, distance in inches to move
      */
-    private void moveDistance(double inches, boolean mecanumSideways) {
+    private void moveDistance(double inches, boolean mecanumSideways, double speed) {
 
         //convert inches to tick counts
         int driverEncoderTarget = (int) (ENCODER_TICKS_PER_INCH * inches);
@@ -124,7 +168,8 @@ public class MecaBotMove {
         robot.setDriveMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // Set the power of the motors to whatever speed is needed
-        robot.driveStraight(wheelPower);
+        speed = Range.clip(speed, 0.0, 1.0);
+        robot.driveStraight(speed);
 
         myOpMode.telemetry.addLine("Driving inches | ").addData("outer", inches).addData("inner", inches);
 
@@ -136,7 +181,7 @@ public class MecaBotMove {
     // Rotate around Robot own center
     public void encoderRotate(double inches, boolean counterClockwise, double speed) {
 
-        wheelPower = Range.clip(speed, 0.0, 1.0);
+        double wheelPower = Range.clip(speed, 0.0, 1.0);
 
         // Green intake wheels is front of robot,
         // counterClockwise means Right wheels turning forward, Left wheels turning backwards
@@ -162,8 +207,6 @@ public class MecaBotMove {
         // loop until motors are busy driving, update current position on driver station using telemetry
         waitToReachTargetPosition(counterClockwise ? WheelPosition.RIGHT_FRONT : WheelPosition.LEFT_FRONT,
                 leftFront, leftBack, rightFront, rightBack);
-
-        wheelPower = DEFAULT_SPEED;
     }
 
     public void encoderRotate(double inches, boolean counterClockwise) {
@@ -177,7 +220,7 @@ public class MecaBotMove {
 
     public void encoderTurn(double inches, boolean counterClockwise, double speed) {
 
-        wheelPower = Range.clip(speed, 0.0, 1.0);
+        double wheelPower = Range.clip(speed, 0.0, 1.0);
 
         // Green intake wheels is front of robot, counterClockwise means Right wheels on outer circle
         double outerWheelInches = inches;
@@ -210,8 +253,6 @@ public class MecaBotMove {
         // loop until motors are busy driving, update current position on driver station using telemetry
         waitToReachTargetPosition(counterClockwise ? WheelPosition.RIGHT_FRONT : WheelPosition.LEFT_FRONT,
                 leftFront, leftBack, rightFront, rightBack);
-
-        wheelPower = DEFAULT_SPEED;
     }
 
     public void encoderTurn(double inches, boolean counterClockwise) {
@@ -252,23 +293,6 @@ public class MecaBotMove {
 
         myOpMode.sleep(250);
 
-    }
-
-    // Claw and Damper movements
-    public void grabTheStone(){
-        robot.grabStoneWithSidearm();
-    }
-
-    public void releaseTheStone(){
-        robot.releaseStoneWithSidearm();
-    }
-
-    public void grabFoundation(){
-        robot.grabFoundation();
-    }
-
-    public void releaseFoundation(){
-        robot.releaseFoundation();
     }
 
     public boolean isUnderBridge(){

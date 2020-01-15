@@ -44,7 +44,7 @@ public class OdometryCalibration extends LinearOpMode {
 
     //Text files to write the values to. The files are stored in the robot controller under Internal Storage\FIRST\settings
     File wheelBaseSeparationFile = AppUtil.getInstance().getSettingsFile("wheelBaseSeparation.txt");
-    File horizontalCountPerRadianFile = AppUtil.getInstance().getSettingsFile("horizontalCountsPerRadian.txt");
+    File horizontalCountPerRadianFile = AppUtil.getInstance().getSettingsFile("horizontalCountPerRadian.txt");
 
     @Override
     public void runOpMode() throws InterruptedException {

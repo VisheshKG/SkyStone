@@ -70,9 +70,10 @@ public class MecaBotTeleOp extends LinearOpMode {
         }
         // normal tank movement
         else {
-            // forwared press on joystick is negative, backward press (towards human) is positive, reverse sign
-            // right press on joystick is positive, left press is negative
-            robot.driveTank(-gamepad1.left_stick_y, gamepad1.right_stick_x * TURN_FACTOR);
+            // forward press on joystick is negative, backward press (towards human) is positive
+            // right press on joystick is positive value, left press is negative value
+            // reverse sign of joystick values to match the expected sign in driveTank() method.
+            robot.driveTank(-gamepad1.left_stick_y, -gamepad1.right_stick_x * TURN_FACTOR);
         }
     }
 
@@ -118,7 +119,7 @@ public class MecaBotTeleOp extends LinearOpMode {
             } else {
                 newpos = robot.liftServo.getPosition() + MecaBot.ARM_STEP; // inside to outside is clockwise
             }
-            newpos = Range.clip(newpos, Servo.MIN_POSITION, Servo.MAX_POSITION);
+            newpos = Range.clip(newpos, MecaBot.ARM_INSIDE, MecaBot.ARM_OUTSIDE);
             robot.liftServo.setPosition(newpos);
             telemetry.addData(">", "lift servo new pos %5.2f", newpos);
             telemetry.addData(">", "right joystick pushed %5.2f", gamepad2.right_stick_y);

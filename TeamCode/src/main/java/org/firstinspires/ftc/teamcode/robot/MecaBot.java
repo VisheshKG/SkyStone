@@ -29,63 +29,65 @@
 
 package org.firstinspires.ftc.teamcode.robot;
 
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalPosition;
 
 /**
  * This is NOT an opmode.
  *
  * This class can be used to define all the specific hardware for a single robot.
- * In this case that robot is a Pushbot.
- * See PushbotTeleopTank_Iterative and others classes starting with "Pushbot" for usage examples.
+ * In this case that robot is a Mecabot.
  *
  * This hardware class assumes the following device names have been configured on the robot:
- * Note:  All names are lower case and some have single spaces between words.
+ * Note: All names are camel case without spaces.
+ * Note: The names can be found in the init() method where literal strings are used to initialize hardware.
  *
- * Motor channel:  Left  drive motor:        "left_drive"
- * Motor channel:  Right drive motor:        "right_drive"
- * Motor channel:  Manipulator drive motor:  "left_arm"
- * Servo channel:  Servo to open left claw:  "left_hand"
- * Servo channel:  Servo to open right claw: "right_hand"
  */
-public class MecaBot
-{
-    /* Public OpMode members. */
+public class MecaBot {
+    // drive train motors
     public DcMotor leftFrontDrive = null;
     public DcMotor leftBackDrive = null;
     public DcMotor rightFrontDrive = null;
     public DcMotor rightBackDrive = null;
-    public DcMotor liftMotor = null;
+
+    // odometry encoder wheels
+    public DcMotor leftEncoder = null;
+    public DcMotor rightEncoder = null;
+    public DcMotor horizontalEncoder = null;
+
+    // [skystone] front intake (green compliant wheels for skystone blocks)
     public DcMotor leftIntake = null;
     public DcMotor rightIntake = null;
+
+    // [skystone] lift and arm and claw for picking and delivering stones (blocks)
+    public DcMotor liftMotor = null;
     public Servo liftServo = null;
     public Servo clawRotate = null;
     public Servo clawGrab = null;
     public Servo sideArmServo = null;
 
- //   public ModernRoboticsI2cColorSensor groundColorSensor = null;
-    public ColorSensor leftColorSensor = null;
-    public ColorSensor rightColorSensor = null;
-
+    // [skystone] foundation bumper clamps on rear of the robot
     public Servo leftClamp = null;
     public Servo rightClamp = null;
 
+    // [skystone] color sensors used for detecting skystone vs normal stone in quarry
+    public ColorSensor leftColorSensor = null;
+    public ColorSensor rightColorSensor = null;
+
+
     //constants here
-    public static final double     LENGTH_WITH_INTAKE = 23.0;
-    public static final double     LENGTH          = 17.0;
-    public static final double     WIDTH           = 18.0;
-    public static final double     HALF_WIDTH      = WIDTH / 2;
+    public static final double LENGTH = 17.0;
+    public static final double WIDTH = 18.0;
+    public static final double HALF_WIDTH = WIDTH / 2;
 
     public static final double LIFT_TOP = 11400;
     public static final double LIFT_BOTTOM = 0;
-    public static final double ARM_INSIDE = Servo.MIN_POSITION;
-    public static final double ARM_OUTSIDE = Servo.MAX_POSITION;
+    public static final double ARM_INSIDE = 0.0;
+    public static final double ARM_OUTSIDE = 0.3;
     public static final double ARM_STEP = 0.05;
     public static final double CLAW_PARALLEL = Servo.MAX_POSITION;
     public static final double CLAW_PERPENDICULAR = Servo.MIN_POSITION;
@@ -95,13 +97,16 @@ public class MecaBot
     public static final double RT_BUMPER_DOWN = Servo.MIN_POSITION;
     public static final double LT_BUMPER_UP = Servo.MIN_POSITION;
     public static final double LT_BUMPER_DOWN = Servo.MAX_POSITION;
+
     public static final double SIDEARM_UP = Servo.MAX_POSITION;
     public static final double SIDEARM_DOWN = Servo.MIN_POSITION;
 
+    //The amount of encoder ticks for each inch the robot moves. THIS WILL CHANGE FOR EACH ROBOT AND NEEDS TO BE UPDATED HERE
+    public static final double ODOMETRY_COUNT_PER_INCH = 242.552133272048492;  // FTC Team 13345 MecaBot encoder has 1440 ticks per rotation, wheel has 48mm diameter
+    // (1440 * MM_PER_INCH) / ( Math.PI * 48)
 
     /* local OpMode members. */
-    HardwareMap hwMap =  null;
-    private ElapsedTime period = new ElapsedTime();
+    HardwareMap hwMap = null;
 
     /* Constructor */
     public MecaBot() {
@@ -113,63 +118,99 @@ public class MecaBot
         // Save reference to Hardware map
         hwMap = ahwMap;
 
-        // Define and Initialize Motors
-        leftFrontDrive  = hwMap.get(DcMotor.class, "leftFrontDrive");
+        /* Define and Initialize Motors and Servos */
+
+        // Drivetrain motors
+        leftFrontDrive = hwMap.get(DcMotor.class, "leftFrontDrive");
         leftBackDrive = hwMap.get(DcMotor.class, "leftBackDrive");
         rightFrontDrive = hwMap.get(DcMotor.class, "rightFrontDrive");
         rightBackDrive = hwMap.get(DcMotor.class, "rightBackDrive");
-        liftMotor = hwMap.get(DcMotor.class, "liftMotor");
-        leftIntake = hwMap.get(DcMotor.class, "leftIntake");
-        rightIntake = hwMap.get(DcMotor.class, "rightIntake");
-        liftServo = hwMap.get(Servo.class, "liftServo");
-        clawRotate = hwMap.get(Servo.class, "clawRotate");
-        clawGrab = hwMap.get(Servo.class, "clawGrab");
-        sideArmServo = hwMap.get(Servo.class, "sideArmServo");
-        leftColorSensor = hwMap.get(ColorSensor.class, "leftColorSensor");
-        rightColorSensor = hwMap.get(ColorSensor.class, "rightColorSensor");
-
-        leftClamp = hwMap.get(Servo.class, "leftClamp");
-        rightClamp = hwMap.get(Servo.class, "rightClamp");
-
-        // Set motor direction
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
-        liftMotor.setDirection(DcMotor.Direction.REVERSE);
-        leftIntake.setDirection(DcMotor.Direction.REVERSE);
-        rightIntake.setDirection(DcMotor.Direction.FORWARD);
-
         leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        liftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        // Set all motors to run without encoders.
+        resetDriveEncoder();
+        // Set all drivetrain motors to run without encoders.
         // May want to use RUN_USING_ENCODERS if encoders are installed.
         setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        liftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        // Intake
+        leftIntake = hwMap.get(DcMotor.class, "leftIntake");
+        rightIntake = hwMap.get(DcMotor.class, "rightIntake");
+        leftIntake.setDirection(DcMotor.Direction.REVERSE);
+        rightIntake.setDirection(DcMotor.Direction.FORWARD);
+        leftIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftIntake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightIntake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        // Odometry encoders
+        leftEncoder = leftIntake;   // we are using the encoder port of intake motor for odometry
+        rightEncoder = rightIntake; // we are using the encoder port of intake motor for odometry
+        horizontalEncoder = hwMap.dcMotor.get("horizontalEncoder");
+        horizontalEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        horizontalEncoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        // We are not driving any motor using encoder, the odometry wheels are free to rotate, the encoders will still read correct values
+
+        // Lift, arm and claw
+        liftMotor = hwMap.get(DcMotor.class, "liftMotor");
+        liftMotor.setDirection(DcMotor.Direction.REVERSE);
+        liftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        liftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        liftServo = hwMap.get(Servo.class, "liftServo");
+        clawRotate = hwMap.get(Servo.class, "clawRotate");
+        clawGrab = hwMap.get(Servo.class, "clawGrab");
+        sideArmServo = hwMap.get(Servo.class, "sideArmServo");
+
+        // foundation bumper clamps
+        leftClamp = hwMap.get(Servo.class, "leftClamp");
+        rightClamp = hwMap.get(Servo.class, "rightClamp");
+
+        // color sensors
+        leftColorSensor = hwMap.get(ColorSensor.class, "leftColorSensor");
+        rightColorSensor = hwMap.get(ColorSensor.class, "rightColorSensor");
 
         // Set all motors to zero power
         stopDriving();
         stopIntake();
-        liftMotor.setPower(0);
+        stopLift();
 
         // set all servos to their resting position
-        liftServo.setPosition(ARM_INSIDE);
-        clawRotate.setPosition(CLAW_PARALLEL);
+        moveLiftArmInside();
+        rotateClawInside();
         releaseStoneWithClaw();
         releaseStoneWithSidearm();
         releaseFoundation();
     }
 
+    public OdometryGlobalPosition initOdometry() {
+
+        //Create and start GlobalPosition thread to constantly update the global position coordinates.
+        OdometryGlobalPosition globalPosition = new OdometryGlobalPosition(leftEncoder, rightEncoder, horizontalEncoder, ODOMETRY_COUNT_PER_INCH, 75);
+
+        // Set direction of odometry encoders.
+        // PLEASE UPDATE THESE VALUES TO MATCH YOUR ROBOT HARDWARE *AND* the DCMOTOR DIRECTION (FORWARD/REVERSE) CONFIGURATION
+        // Left encoder value, robot forward movement should produce positive encoder count
+        globalPosition.reverseLeftEncoder();
+        // Right encoder value, robot forward movement should produce positive encoder count
+        globalPosition.reverseRightEncoder();
+        // Horizontal encoder value, robot right sideways movement should produce positive encoder count values
+        globalPosition.reverseNormalEncoder();
+
+        return globalPosition;
+    }
+
+    /*
+     * Driving movement methods
+     */
     public void setTargetPosition(int leftFront, int leftBack, int rightFront, int rightBack) {
         leftFrontDrive.setTargetPosition(leftFront);
         leftBackDrive.setTargetPosition(leftBack);
@@ -204,6 +245,15 @@ public class MecaBot
         this.driveStraight(0);
     }
 
+    /**
+     * Tank mode drives in forward (or backward) direction only, no mecanum sideways movement
+     * The turns are achieved by speed differential between left and right side wheels
+     * Sign value of speed parameters controls direction. +ve driveSpeed means forward and
+     * +ve turnSpeed means turn left (since turn angle theta is +ve when counter clockwise from X-axis)
+     *
+     * @param driveSpeed    forward speed specified within range [-1.0, 1.0]
+     * @param turnSpeed     turning speed specified within range [-1.0, 1.0]
+     */
     public void driveTank(double driveSpeed, double turnSpeed) {
 
         driveSpeed = Range.clip(driveSpeed, -1.0, 1.0);
@@ -214,14 +264,14 @@ public class MecaBot
         double rightFront = driveSpeed;
         double rightBack = driveSpeed;
 
-        // right turn is positive turnSpeed, left turn is negative turnSpeed
-        // to turn right, add turnSpeed to left motors, subtract from right motors
-        // to turn left, same code applies, negative values cause left turn automatically
+        // left turn is positive turnSpeed, right turn is negative turnSpeed
+        // to turn left, add turnSpeed to right motors, subtract from left motors
+        // to turn right, same code applies, negative values cause right turn automatically
         turnSpeed = Range.clip(turnSpeed, -1.0, 1.0);
-        leftFront += turnSpeed;
-        leftBack += turnSpeed;
-        rightFront -= turnSpeed;
-        rightBack -= turnSpeed;
+        leftFront -= turnSpeed;
+        leftBack -= turnSpeed;
+        rightFront += turnSpeed;
+        rightBack += turnSpeed;
 
         driveWheels(leftFront, leftBack, rightFront, rightBack);
     }
@@ -259,6 +309,9 @@ public class MecaBot
         rightBackDrive.setPower(rightBack);
     }
 
+    /*
+     * Intake operation methods
+     */
     public void runIntake(double speed) {
         leftIntake.setPower(speed);
         rightIntake.setPower(speed);
@@ -267,11 +320,24 @@ public class MecaBot
         leftIntake.setPower(0);
         rightIntake.setPower(0);
     }
-    public void moveLiftArmInside() {
 
+    /*
+     * Lift, arm and claw operation methods
+     */
+    public void stopLift() {
+        liftMotor.setPower(0);
+    }
+    public void moveLiftArmInside() {
+        liftServo.setPosition(ARM_INSIDE);
     }
     public void moveLiftArmOutside() {
-
+        liftServo.setPosition(ARM_OUTSIDE);
+    }
+    public void rotateClawInside() {
+        clawRotate.setPosition(CLAW_PARALLEL);
+    }
+    public void rotateClawOutside() {
+        clawRotate.setPosition(CLAW_PERPENDICULAR);
     }
     public void grabStoneWithClaw() {
         clawGrab.setPosition(CLAW_CLOSE);
@@ -279,6 +345,10 @@ public class MecaBot
     public void releaseStoneWithClaw() {
         clawGrab.setPosition(CLAW_OPEN);
     }
+
+    /*
+     * Foundation bumper clamps operataion methods
+     */
     public void grabFoundation() {
         leftClamp.setPosition(LT_BUMPER_DOWN); // clamp down to engage the foundation
         rightClamp.setPosition(RT_BUMPER_DOWN);
@@ -293,6 +363,5 @@ public class MecaBot
     public void releaseStoneWithSidearm() {
         sideArmServo.setPosition(SIDEARM_UP); // side arm up and free
     }
-
 }
 
