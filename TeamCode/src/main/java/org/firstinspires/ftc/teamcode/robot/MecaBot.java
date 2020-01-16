@@ -78,6 +78,10 @@ public class MecaBot {
     public ColorSensor leftColorSensor = null;
     public ColorSensor rightColorSensor = null;
 
+    // Robot front and rear can be flipped for driving purposes
+    // Define enum constant for whether INTAKE or LIFT is Front of the robot (and other one is Rear)
+    public static enum DIRECTION { NORMAL, REVERSE};
+    private DIRECTION frontFace;
 
     //constants here
     public static final double LENGTH = 17.0;
@@ -89,8 +93,8 @@ public class MecaBot {
     public static final double ARM_INSIDE = 0.0;
     public static final double ARM_OUTSIDE = 0.3;
     public static final double ARM_STEP = 0.05;
-    public static final double CLAW_PARALLEL = Servo.MAX_POSITION;
-    public static final double CLAW_PERPENDICULAR = Servo.MIN_POSITION;
+    public static final double CLAW_INSIDE = Servo.MAX_POSITION;
+    public static final double CLAW_OUTSIDE = 0.15;
     public static final double CLAW_OPEN = Servo.MAX_POSITION;
     public static final double CLAW_CLOSE = Servo.MIN_POSITION;
     public static final double RT_BUMPER_UP = Servo.MAX_POSITION;
@@ -111,8 +115,26 @@ public class MecaBot {
     /* Constructor */
     public MecaBot() {
 
+        frontFace = DIRECTION.NORMAL;
     }
 
+    // Robot front facing direction toggle methods
+    public DIRECTION frontDirection() {
+        return frontFace;
+    }
+    public boolean isFrontNormal() {
+        return (frontFace == DIRECTION.NORMAL);
+    }
+    public boolean isFrontReversed() {
+        return (frontFace == DIRECTION.REVERSE);
+    }
+    public void setFrontNormal() {
+        frontFace = DIRECTION.NORMAL;
+    }
+    public void setFrontReversed() {
+        frontFace = DIRECTION.REVERSE;
+    }
+            
     /* Initialize standard Hardware interfaces */
     public void init(HardwareMap ahwMap) {
         // Save reference to Hardware map
@@ -191,7 +213,11 @@ public class MecaBot {
         releaseFoundation();
     }
 
-    public OdometryGlobalPosition initOdometry() {
+    public OdometryGlobalPosition initOdometry() throws IllegalStateException {
+
+        if ((leftEncoder == null) || (rightEncoder == null) || (horizontalEncoder == null)) {
+            throw new IllegalStateException("Mecabot hardware must be initialized before Odometry.");
+        }
 
         //Create and start GlobalPosition thread to constantly update the global position coordinates.
         OdometryGlobalPosition globalPosition = new OdometryGlobalPosition(leftEncoder, rightEncoder, horizontalEncoder, ODOMETRY_COUNT_PER_INCH, 75);
@@ -212,10 +238,18 @@ public class MecaBot {
      * Driving movement methods
      */
     public void setTargetPosition(int leftFront, int leftBack, int rightFront, int rightBack) {
-        leftFrontDrive.setTargetPosition(leftFront);
-        leftBackDrive.setTargetPosition(leftBack);
-        rightFrontDrive.setTargetPosition(rightFront);
-        rightBackDrive.setTargetPosition(rightBack);
+        if (isFrontNormal()) {
+            leftFrontDrive.setTargetPosition(leftFront);
+            leftBackDrive.setTargetPosition(leftBack);
+            rightFrontDrive.setTargetPosition(rightFront);
+            rightBackDrive.setTargetPosition(rightBack);
+        }
+        else { // isFrontReversed()
+            leftFrontDrive.setTargetPosition(-rightBack);
+            leftBackDrive.setTargetPosition(-rightFront);
+            rightFrontDrive.setTargetPosition(-leftBack);
+            rightBackDrive.setTargetPosition(-leftFront);
+        }
     }
 
     public void setDriveMode(DcMotor.RunMode runMode) {
@@ -232,17 +266,25 @@ public class MecaBot {
         rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
-    public void driveStraight(double speed) {
-
-        speed = Range.clip( speed, -1.0, 1.0);
+    public void setDrivePower(double speed) {
+        speed = Range.clip( speed, 0.0, 1.0);
         leftFrontDrive.setPower(speed);
         leftBackDrive.setPower(speed);
         rightFrontDrive.setPower(speed);
         rightBackDrive.setPower(speed);
     }
 
+    public void setDrivePower(double leftSpeed, double rightSpeed) {
+        leftSpeed = Range.clip( leftSpeed, 0.0, 1.0);
+        rightSpeed = Range.clip( rightSpeed, 0.0, 1.0);
+        leftFrontDrive.setPower(leftSpeed);
+        leftBackDrive.setPower(leftSpeed);
+        rightFrontDrive.setPower(rightSpeed);
+        rightBackDrive.setPower(rightSpeed);
+    }
+
     public void stopDriving() {
-        this.driveStraight(0);
+        this.setDrivePower(0);
     }
 
     /**
@@ -295,7 +337,7 @@ public class MecaBot {
         // find the highest power motor and divide all motors by that to preserve the ratio
         // while also keeping the maximum power at 1
         double max = Math.max(Math.max(Math.abs(leftFront), Math.abs(leftBack)), Math.max(Math.abs(rightFront), Math.abs(rightBack)));
-        if (max > 1) {
+        if (max > 1.0) {
             leftFront /= max;
             leftBack /= max;
             rightFront /= max;
@@ -303,10 +345,18 @@ public class MecaBot {
         }
 
         //set drive train motor's power to the values calculated
-        leftFrontDrive.setPower(leftFront);
-        leftBackDrive.setPower(leftBack);
-        rightFrontDrive.setPower(rightFront);
-        rightBackDrive.setPower(rightBack);
+        if (isFrontNormal()) {
+            leftFrontDrive.setPower(leftFront);
+            leftBackDrive.setPower(leftBack);
+            rightFrontDrive.setPower(rightFront);
+            rightBackDrive.setPower(rightBack);
+        }
+        else { // isFrontReversed()
+            leftFrontDrive.setPower(-rightBack);
+            leftBackDrive.setPower(-rightFront);
+            rightFrontDrive.setPower(-leftBack);
+            rightBackDrive.setPower(-leftFront);
+        }
     }
 
     /*
@@ -334,10 +384,10 @@ public class MecaBot {
         liftServo.setPosition(ARM_OUTSIDE);
     }
     public void rotateClawInside() {
-        clawRotate.setPosition(CLAW_PARALLEL);
+        clawRotate.setPosition(CLAW_INSIDE);
     }
     public void rotateClawOutside() {
-        clawRotate.setPosition(CLAW_PERPENDICULAR);
+        clawRotate.setPosition(CLAW_OUTSIDE);
     }
     public void grabStoneWithClaw() {
         clawGrab.setPosition(CLAW_CLOSE);

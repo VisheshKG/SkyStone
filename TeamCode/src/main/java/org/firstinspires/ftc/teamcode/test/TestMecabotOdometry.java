@@ -3,46 +3,68 @@ package org.firstinspires.ftc.teamcode.test;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalPosition;
 import org.firstinspires.ftc.teamcode.robot.MecaBot;
+import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
 
 @TeleOp(name = "Test Odometry Mecabot", group = "Test")
 public class TestMecabotOdometry extends LinearOpMode {
 
-    private MecaBot robot = new MecaBot();   // Use a Mecabot's hardware
-    private OdometryGlobalPosition robotGlobalPosition;
+    private MecaBot robot;
+    private MecaBotMove nav;
+    private OdometryGlobalPosition globalPosition;
 
     @Override
     public void runOpMode() throws InterruptedException {
 
+        robot = new MecaBot();
         robot.init(hardwareMap);
-        robotGlobalPosition = robot.initOdometry();
+
+        nav = new MecaBotMove(this, robot);
+        globalPosition = nav.getPosition();
+        globalPosition.initGlobalPosition(14.0, 9.0, 90.0);
 
         telemetry.addData("Status", "Initialized");
+
+        telemetry.addLine("Global Position ")
+                .addData("X", "%3.2f", new Func<Double>() {
+                    @Override public Double value() {
+                        return globalPosition.getXinches();
+                    }
+                })
+                .addData("Y", "%2.2f", new Func<Double>() {
+                    @Override public Double value() {
+                        return globalPosition.getYinches();
+                    }
+                })
+                .addData("Angle", "%4.2f", new Func<Double>() {
+                    @Override public Double value() {
+                        return globalPosition.getOrientationDegrees();
+                    }
+                });
         telemetry.update();
+
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         // start odometry reading calculations before any driving begins
-        Thread positionThread = new Thread(robotGlobalPosition);
-        positionThread.start();
+        nav.startOdometry();
 
         // run until the end of the match (driver presses STOP)
         while(opModeIsActive()){
-            //Display Global (x, y, theta) coordinates
-            telemetry.addData("X Position", robotGlobalPosition.getXinches());
-            telemetry.addData("Y Position", robotGlobalPosition.getYinches());
-            telemetry.addData("Orientation (Degrees)", robotGlobalPosition.getOrientationDegrees());
 
-            telemetry.addData("Vertical left encoder", robotGlobalPosition.getVerticalLeftCount());
-            telemetry.addData("Vertical right encoder", robotGlobalPosition.getVerticalRightCount());
-            telemetry.addData("horizontal encoder", robotGlobalPosition.getHorizontalCount());
+            nav.goTowardsPosition(33.0, 32.5, 0.6);
+
+//            telemetry.addData("Vertical left encoder", globalPosition.getVerticalLeftCount());
+//            telemetry.addData("Vertical right encoder", globalPosition.getVerticalRightCount());
+//            telemetry.addData("horizontal encoder", globalPosition.getHorizontalCount());
 
             telemetry.update();
         }
 
         //Stop the thread
-        robotGlobalPosition.stop();
+        nav.stopOdometry();
 
     }
 }

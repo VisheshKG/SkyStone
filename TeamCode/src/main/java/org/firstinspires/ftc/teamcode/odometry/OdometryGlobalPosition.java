@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ReadWriteFile;
 
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
+import org.firstinspires.ftc.teamcode.purepursuit.MathFunctions;
 
 import java.io.File;
 
@@ -83,7 +84,7 @@ public class OdometryGlobalPosition implements Runnable{
         // These formulas assume that robotAngleRad is positive when Robot is turning counter-clockwise
         // All local variables are a signed value, representing change or angle direction
         double changeInRobotAngle = (rightChange - leftChange) / (WHEELBASE_SEPARATION_COUNT);
-        robotAngleRad = ((robotAngleRad + changeInRobotAngle));
+        robotAngleRad = MathFunctions.angleWrapRad(robotAngleRad + changeInRobotAngle);
 
         //Get the components of the motion
         double rawHorizontalChange = horizontalCount - prevHorizontalCount;
@@ -134,7 +135,7 @@ public class OdometryGlobalPosition implements Runnable{
      * @return global orientation angle
      */
     public double getOrientationDegrees() {
-        return Math.toDegrees(robotAngleRad) % 180;
+        return Math.toDegrees(robotAngleRad);
     }
 
     /**
@@ -201,27 +202,15 @@ public class OdometryGlobalPosition implements Runnable{
     }
 
     public void reverseLeftEncoder(){
-        if(verticalLeftEncoderDirection == 1){
-            verticalLeftEncoderDirection = -1;
-        }else{
-            verticalLeftEncoderDirection = 1;
-        }
+        verticalLeftEncoderDirection *= -1;
     }
 
     public void reverseRightEncoder(){
-        if(verticalRightEncoderDirection == 1){
-            verticalRightEncoderDirection = -1;
-        }else{
-            verticalRightEncoderDirection = 1;
-        }
+        verticalRightEncoderDirection *= -1;
     }
 
     public void reverseNormalEncoder(){
-        if(horizontalEncoderDirection == 1){
-            horizontalEncoderDirection = -1;
-        }else{
-            horizontalEncoderDirection = 1;
-        }
+        horizontalEncoderDirection *= -1;
     }
 
     /**

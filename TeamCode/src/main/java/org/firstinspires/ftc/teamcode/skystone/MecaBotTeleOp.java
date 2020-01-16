@@ -5,7 +5,11 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.Func;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalPosition;
 import org.firstinspires.ftc.teamcode.robot.MecaBot;
+import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
 
 
 @TeleOp(name = "MecaBotTeleOp", group="QT")
@@ -16,7 +20,14 @@ public class MecaBotTeleOp extends LinearOpMode {
     private boolean     bIgnoreLiftStops = false;
 
     /* Declare OpMode members. */
-    MecaBot robot = new MecaBot();   // Use a Pushbot's hardware
+    MecaBot     robot = new MecaBot();   // Use a MecaBot's hardware
+    MecaBotMove nav;
+    OdometryGlobalPosition globalPosition;
+
+    // record position that we need to return to repeatedly
+    double xpos, ypos, tpos;
+    boolean autoDriving = false;
+    double speedMultiplier = 1.0;
 
     @Override
     public void runOpMode() {
@@ -26,17 +37,39 @@ public class MecaBotTeleOp extends LinearOpMode {
         robot.init(hardwareMap);
         telemetry.addData(">", "Hardware initialized");
 
+        nav = new MecaBotMove(this, robot);
+        globalPosition = nav.getPosition();
+
         // Send telemetry message to signify robot waiting;
         telemetry.addData(">", "Waiting for Start");    //
         telemetry.update();
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
+        nav.startOdometry();
+
+        telemetry.addLine("Global Position ")
+                .addData("X", "%3.2f", new Func<Double>() {
+                    @Override public Double value() {
+                        return globalPosition.getXinches();
+                    }
+                })
+                .addData("Y", "%2.2f", new Func<Double>() {
+                    @Override public Double value() {
+                        return globalPosition.getYinches();
+                    }
+                })
+                .addData("Angle", "%4.2f", new Func<Double>() {
+                    @Override public Double value() {
+                        return globalPosition.getOrientationDegrees();
+                    }
+                });
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             setup();
-            drive();
+            autodrive();
+            operdrive();
             lift();
             intake();
             bumper();
@@ -45,6 +78,12 @@ public class MecaBotTeleOp extends LinearOpMode {
             sleep(CYCLE_MS);
             idle();
         }
+
+        //Stop the thread
+        nav.stopOdometry();
+
+        // all done, please exit
+
     }
 
     private void setup() {
@@ -61,19 +100,53 @@ public class MecaBotTeleOp extends LinearOpMode {
         if ((gamepad1.y) && (gamepad2.y)) {
             bIgnoreLiftStops = false;
         }
+        // The A button on gamepad1 (driver) allows to toggle which face of the Robot is front for driving
+        if (gamepad1.x) {
+            if (gamepad1.dpad_up) {  // dpad_up means NORMAL or green intake wheels is front of robot
+                robot.setFrontNormal();
+            }
+            else if (gamepad1.dpad_down) {
+                robot.setFrontReversed(); // dpad_down means REVERSED or Lift face is front of robot
+            }
+            else if (gamepad1.left_bumper) {
+                xpos = globalPosition.getXinches();
+                ypos = globalPosition.getYinches();
+                tpos = globalPosition.getOrientationDegrees();
+                telemetry.addData("Locked Position", "X %2.2f | Y %2.2f | Angle %3.2f", xpos, ypos, tpos);
+
+            }
+        }
+        if (gamepad1.y) {
+            autoDriving = true;
+        }
     }
 
-    public void drive() {
+    public void autodrive() {
+        if (autoDriving) {
+            autoDriving = nav.goTowardsPosition(xpos, ypos, 0.5);
+            telemetry.addData("Driving Towards", "X %2.2f | Y %2.2f | Angle %3.2f", xpos, ypos, tpos);
+        }
+    }
+
+    public void operdrive() {
+        //update speedMultiplier
+        if (gamepad1.right_bumper) {
+            speedMultiplier = 1.0;
+        }
+        else if (gamepad1.left_bumper) {
+            speedMultiplier = 0.66;
+        }
+
         //if we want to move sideways (MECANUM)
         if (Math.abs(gamepad1.left_stick_x) > Math.abs(gamepad1.left_stick_y)) {
-            robot.driveMecanum(gamepad1.left_stick_x);
+            robot.driveMecanum(gamepad1.left_stick_x * speedMultiplier);
         }
         // normal tank movement
-        else {
+        else {  // only if joystick is active, otherwise brakes are applied during autodrive()
             // forward press on joystick is negative, backward press (towards human) is positive
             // right press on joystick is positive value, left press is negative value
             // reverse sign of joystick values to match the expected sign in driveTank() method.
-            robot.driveTank(-gamepad1.left_stick_y, -gamepad1.right_stick_x * TURN_FACTOR);
+            robot.driveTank(-gamepad1.left_stick_y * speedMultiplier, -gamepad1.right_stick_x * speedMultiplier * TURN_FACTOR);
         }
     }
 
@@ -103,9 +176,7 @@ public class MecaBotTeleOp extends LinearOpMode {
             robot.liftMotor.setPower(0);
         }
 
-        telemetry.addData(">", "GP2 left joystick = " + gamepad2.left_stick_y);
-        telemetry.addData(">", "Lift tick count = " + pos);
-        //robot.liftServo.setPosition(robot.liftServo.getPosition() + (gamepad2.right_stick_y / 20));
+        telemetry.addData(">", "Lift encoder count = " + pos);
 
         /*
          * Lift Arm control
@@ -122,30 +193,20 @@ public class MecaBotTeleOp extends LinearOpMode {
             newpos = Range.clip(newpos, MecaBot.ARM_INSIDE, MecaBot.ARM_OUTSIDE);
             robot.liftServo.setPosition(newpos);
             telemetry.addData(">", "lift servo new pos %5.2f", newpos);
-            telemetry.addData(">", "right joystick pushed %5.2f", gamepad2.right_stick_y);
         }
 
-        //robot.clawRotate.setPosition(robot.clawRotate.getPosition() + (gamepad2.right_trigger / 20) - (gamepad2.left_trigger / 20));
-
-        // If operator right trigger is pressed, rotate claw to Stone pickup position inside robot
         if (gamepad2.x) {
-            robot.clawRotate.setPosition(robot.CLAW_PARALLEL);
-            telemetry.addData(">", "right trigger pushed %5.2f", gamepad2.right_trigger);
-
+            robot.rotateClawInside();
         }
-        // If operator left trigger is pressed, rotate claw perpendicular to Stone pickup position
         else if (gamepad2.y) {
-            robot.clawRotate.setPosition(robot.CLAW_PERPENDICULAR);
-            telemetry.addData(">", "left trigger pushed %5.2f", gamepad2.left_trigger);
+            robot.rotateClawOutside();
         }
 
         if (gamepad2.right_bumper) {
             robot.grabStoneWithClaw(); // right is grab the stone, claw closed
-            telemetry.addData(">", "right bumper pushed");
         }
         else if (gamepad2.left_bumper) {
             robot.releaseStoneWithClaw(); // left is release the stone, claw open
-            telemetry.addData(">", "left bumper pushed");
         }
     }
 

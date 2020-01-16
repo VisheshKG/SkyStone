@@ -28,7 +28,7 @@ public class MathFunctions {
      * @return angle with range -PI to +PI
      */
     public static double angleWrapRad(double angle) {
-        while (angle < -Math.PI) {
+        while (angle <= -Math.PI) {
             angle += (2*Math.PI);
         }
 
