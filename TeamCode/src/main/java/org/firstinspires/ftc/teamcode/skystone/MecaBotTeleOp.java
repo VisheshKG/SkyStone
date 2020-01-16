@@ -27,6 +27,7 @@ public class MecaBotTeleOp extends LinearOpMode {
     // record position that we need to return to repeatedly
     double xpos, ypos, tpos;
     boolean autoDriving = false;
+    double speedMultiplier = 1.0;
 
     @Override
     public void runOpMode() {
@@ -128,16 +129,24 @@ public class MecaBotTeleOp extends LinearOpMode {
     }
 
     public void operdrive() {
+        //update speedMultiplier
+        if (gamepad1.right_bumper) {
+            speedMultiplier = 1.0;
+        }
+        else if (gamepad1.left_bumper) {
+            speedMultiplier = 0.66;
+        }
+
         //if we want to move sideways (MECANUM)
         if (Math.abs(gamepad1.left_stick_x) > Math.abs(gamepad1.left_stick_y)) {
-            robot.driveMecanum(gamepad1.left_stick_x);
+            robot.driveMecanum(gamepad1.left_stick_x * speedMultiplier);
         }
         // normal tank movement
-        else if (gamepad1.left_stick_y != 0){  // only if joystick is active, otherwise brakes are applied during autodrive()
+        else {  // only if joystick is active, otherwise brakes are applied during autodrive()
             // forward press on joystick is negative, backward press (towards human) is positive
             // right press on joystick is positive value, left press is negative value
             // reverse sign of joystick values to match the expected sign in driveTank() method.
-            robot.driveTank(-gamepad1.left_stick_y, -gamepad1.right_stick_x * TURN_FACTOR);
+            robot.driveTank(-gamepad1.left_stick_y * speedMultiplier, -gamepad1.right_stick_x * speedMultiplier * TURN_FACTOR);
         }
     }
 
