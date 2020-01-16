@@ -20,10 +20,11 @@ public class TestMecabotOdometry extends LinearOpMode {
 
         robot = new MecaBot();
         robot.init(hardwareMap);
+        robot.initIMU();
 
         nav = new MecaBotMove(this, robot);
         globalPosition = nav.getPosition();
-        globalPosition.initGlobalPosition(14.0, 9.0, 90.0);
+        globalPosition.initGlobalPosition(14.0, 9.0, 0.0);
 
         telemetry.addData("Status", "Initialized");
 
@@ -51,10 +52,22 @@ public class TestMecabotOdometry extends LinearOpMode {
         // start odometry reading calculations before any driving begins
         nav.startOdometry();
 
+        nav.goToPosition(33.0, 32.5, 0.6);
+        sleep(2000);
+        nav.gyroRotateToHeading(-90, 0.25);
+        sleep(2000);
+        nav.goToPosition(36.50, 9.0, 0.4);
+
+//        nav.gyroRotateToHeading(8, 0.2);
+//        sleep(2000);
+//        nav.gyroRotateToHeading(80, 0.3);
+//        sleep(2000);
+//        nav.gyroRotateToHeading(-90, 0.2);
+//        sleep(2000);
+//        nav.gyroRotateToHeading(0, 0.25);
+
         // run until the end of the match (driver presses STOP)
         while(opModeIsActive()){
-
-            nav.goTowardsPosition(33.0, 32.5, 0.6);
 
 //            telemetry.addData("Vertical left encoder", globalPosition.getVerticalLeftCount());
 //            telemetry.addData("Vertical right encoder", globalPosition.getVerticalRightCount());

@@ -5,8 +5,15 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalPosition;
+import org.firstinspires.ftc.teamcode.purepursuit.MathFunctions;
 import org.firstinspires.ftc.teamcode.skystone.FieldSkystone;
+
+import static java.lang.Double.NaN;
 import static org.firstinspires.ftc.teamcode.purepursuit.MathFunctions.angleWrapRad;
 
 
@@ -22,16 +29,15 @@ public class MecaBotMove {
     static final int    ENCODER_TICKS_ERR_MARGIN    = 50;
     static final double DEFAULT_SPEED       = 0.6;  //default wheel speed, same as motor power
     static final double OUTER_TO_INNER_TURN_SPEED_RATIO = 6.0;
-
+    static final double DRIVETRAIN_MIN_POWER= 0.15;
     static final double X_PARK_INNER_OUTER  = 9.0;
 
     private LinearOpMode        myOpMode;       // Access to the OpMode object
     private MecaBot             robot;          // Access to the Robot hardware
     private OdometryGlobalPosition globalPosition; // Robot global position tracker
     private Thread              globalPositionThread;
+    private Orientation         angles;         // Robot heading angle obtained from gyro in IMU sensor
 
-//    private static double       curX=0;
-//    private static double       curY=0;
 
     /* Constructor */
     public MecaBotMove(LinearOpMode opMode, MecaBot aRobot) {
@@ -39,6 +45,60 @@ public class MecaBotMove {
         myOpMode = opMode;
         robot = aRobot;
         globalPosition = robot.initOdometry();
+    }
+
+    /**
+     * Rotate the robot to desired angle position using the built in gyro in IMU sensor onboard the REV expansion hub
+     * The angle is specified relative to the start position of the robot when the IMU is initialized
+     * and gyro angle is intialized to zero degrees.
+     *
+     * @param targetAngle   The desired target angle position in degrees
+     * @param turnSpeed     The speed at which to drive the motors for the rotation. 0.0 < turnSpeed <= 1.0
+     */
+    public void gyroRotateToHeading(double targetAngle, double turnSpeed) {
+
+        // determine current angle of the robot
+        angles = robot.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        double robotAngle = angles.firstAngle;
+        double delta = MathFunctions.angleWrap(targetAngle - robotAngle);
+        double prev = delta;
+        double direction = (delta >= 0) ? 1.0 : -1.0; // positive angle requires CCW rotation, negative angle requires CW
+
+        while ((delta != 0) && ((delta > 0) == (prev > 0))) { // while the sign of delta and prev is same (both +ve or both -ve)
+
+            if (Math.abs(delta) < 10) // slow down when less than 10 degrees rotation remaining
+                turnSpeed = DRIVETRAIN_MIN_POWER;
+            // the sign of turnSpeed determines the direction of rotation of robot
+            robot.driveTank(0, turnSpeed * direction);
+
+            angles = robot.imu.getAngularOrientation();
+            robotAngle = angles.firstAngle;
+            prev = delta;
+            delta = MathFunctions.angleWrap(targetAngle - robotAngle);
+
+            myOpMode.telemetry.addLine("Gyro Angle ")
+                    .addData("target", "%.2f", targetAngle)
+                    .addData("robot", "%.2f", robotAngle)
+                    .addData("delta", "%.2f", delta);
+            myOpMode.telemetry.update();
+        }
+        robot.stopDriving();
+    }
+
+    /**
+     * Return the Z-axis angle reading from the Gyro on the IMU sensor inside expansion hub
+     * This method will return a valid value only if one of the above gyroXYZ() methods have been called
+     * resulting in the IMU sensor being read recently.
+     * Otherwise the last saved value will be returned, which does not match actual robot heading
+     *
+     * @return The angle reading in degrees. Positive value is counter clockwise from initial zero position
+     * Negative value is clock wise from initial zero. Angle value wraps around at 180 and -180 degrees.
+     */
+    public double getGyroHeading() {
+        if (angles == null) {
+            return NaN;
+        }
+        return angles.firstAngle;
     }
 
     // Access methods
@@ -79,8 +139,8 @@ public class MecaBotMove {
         // when within 1 feet (12 inches) of target, reduce the speed proportional to remaining distance to target
         double drivePower = Range.clip(distanceToPosition / 12, 0.2, 1.0) * speed;
         // however absolute minimium 0.15 power is required otherwise the robot cannot move the last couple of inches
-        if (drivePower < 0.15)
-            drivePower = 0.15;
+        if (drivePower < DRIVETRAIN_MIN_POWER)
+            drivePower = DRIVETRAIN_MIN_POWER;
 
         // set turnspeed proportional to the amount of turn required, however beyond 30 degrees turn, full speed is ok
         // note here that positive angle means turn left (since angle is measured counter clockwise from X-axis)
@@ -103,6 +163,24 @@ public class MecaBotMove {
         robot.driveTank(drivePower, turnPower);
 
         return true;
+    }
+
+    /**
+     * Drive the robot at specified speed towards the specified target position on the field.
+     * The current position of the robot obtained using odometry readings.
+     *
+     * @param x     Target position global x coordinate value (inches)
+     * @param y     Target position global y coordinate value (inches)
+     * @param speed Speed/Power used to drive. Must be in range of -1.0 <= speed <= 1.0
+     */
+    public void goToPosition(double x, double y, double speed) {
+
+        boolean driving = true;
+        while (driving) {
+            driving = goTowardsPosition(x, y, speed);
+            myOpMode.telemetry.update();
+            myOpMode.sleep(50);
+        }
     }
 
     /*
