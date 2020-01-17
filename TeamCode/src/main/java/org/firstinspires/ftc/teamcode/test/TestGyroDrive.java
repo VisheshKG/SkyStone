@@ -70,8 +70,8 @@ public class TestGyroDrive extends LinearOpMode
     Orientation angles;
     Acceleration gravity;
 
-    protected MecaBot robot = new MecaBot();
-    protected MecaBotMove nav = new MecaBotMove(this, robot);
+    protected MecaBot robot;
+    protected MecaBotMove nav;
 
     //----------------------------------------------------------------------------------------------
     // Main logic
@@ -79,7 +79,9 @@ public class TestGyroDrive extends LinearOpMode
 
     @Override public void runOpMode() {
 
+        robot = new MecaBot();
         robot.init(hardwareMap);
+        nav = new MecaBotMove(this, robot);
 
         // Set up the parameters with which we will use our IMU. Note that integration
         // algorithm here just reports accelerations to the logcat log; it doesn't actually
@@ -113,14 +115,17 @@ public class TestGyroDrive extends LinearOpMode
             // update angles
             angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
-            if (angles.firstAngle > -90) {
+            // Rotate the robot for a quarter turn of 90 degrees and then stop
+            // Gyro angle reading  -180 < angle < 180, is positive counter clockwise, and wraps around from +180 to -180
+            if (angles.firstAngle < 90) {
+                // driveTank rotates counter clock wise on +ve turn speed
                 robot.driveTank(0, 0.3);
             }
             else {
                 robot.stopDriving();
             }
 
-
+            telemetry.addData("Robot Heading", angles.firstAngle);
             telemetry.update();
         }
     }

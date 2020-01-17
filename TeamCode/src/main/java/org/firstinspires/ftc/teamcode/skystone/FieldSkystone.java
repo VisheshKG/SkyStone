@@ -18,6 +18,11 @@ public class FieldSkystone {
     public static final double     FOUNDATION_LENGTH           = 37.5;
     public static final double     FOUNDATION_WIDTH            = 18.5;
 
+    public static final double  ANGLE_POS_X_AXIS = 0.0;
+    public static final double  ANGLE_POS_Y_AXIS = 90.0;
+    public static final double  ANGLE_NEG_X_AXIS = 180.0;
+    public static final double  ANGLE_NEG_Y_AXIS = -90.0;
+
     public static double robotStartX= 41;      // robot origin aline with image right
     public static double robotStartY=17.25;       //right back corner of robot
 

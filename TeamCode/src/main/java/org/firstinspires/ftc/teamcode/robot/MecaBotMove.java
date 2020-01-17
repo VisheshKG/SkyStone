@@ -5,8 +5,15 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalPosition;
+import org.firstinspires.ftc.teamcode.purepursuit.MathFunctions;
 import org.firstinspires.ftc.teamcode.skystone.FieldSkystone;
+
+import static java.lang.Double.NaN;
 import static org.firstinspires.ftc.teamcode.purepursuit.MathFunctions.angleWrapRad;
 
 
@@ -22,16 +29,23 @@ public class MecaBotMove {
     static final int    ENCODER_TICKS_ERR_MARGIN    = 50;
     static final double DEFAULT_SPEED       = 0.6;  //default wheel speed, same as motor power
     static final double OUTER_TO_INNER_TURN_SPEED_RATIO = 6.0;
-
     static final double X_PARK_INNER_OUTER  = 9.0;
+
+    public static final double DRIVE_SPEED_MIN     = 0.15;
+    public static final double DRIVE_SPEED_SLOW    = 0.3;
+    public static final double DRIVE_SPEED_DEFAULT = 0.6;
+    public static final double DRIVE_SPEED_FAST    = 0.8;
+    public static final double DRIVE_SPEED_MAX     = 1.0;
+    public static final double ROTATE_SPEED_SLOW   = 0.2;
+    public static final double ROTATE_SPEED_DEFAULT= 0.3;
+    public static final double ROTATE_SPEED_FAST   = 0.5;
 
     private LinearOpMode        myOpMode;       // Access to the OpMode object
     private MecaBot             robot;          // Access to the Robot hardware
     private OdometryGlobalPosition globalPosition; // Robot global position tracker
     private Thread              globalPositionThread;
+    private Orientation         angles;         // Robot heading angle obtained from gyro in IMU sensor
 
-//    private static double       curX=0;
-//    private static double       curY=0;
 
     /* Constructor */
     public MecaBotMove(LinearOpMode opMode, MecaBot aRobot) {
@@ -58,6 +72,86 @@ public class MecaBotMove {
     }
 
     /**
+     * Rotate the robot to desired angle position using the built in gyro in IMU sensor onboard the REV expansion hub
+     * The angle is specified relative to the start position of the robot when the IMU is initialized
+     * and gyro angle is intialized to zero degrees.
+     *
+     * @param targetAngle   The desired target angle position in degrees
+     * @param turnSpeed     The speed at which to drive the motors for the rotation. 0.0 < turnSpeed <= 1.0
+     */
+    public void gyroRotateToHeading(double targetAngle, double turnSpeed) {
+
+        // determine current angle of the robot
+        angles = robot.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        double robotAngle = angles.firstAngle;
+        double delta = MathFunctions.angleWrap(targetAngle - robotAngle);
+        double prev = delta;
+        double direction = (delta >= 0) ? 1.0 : -1.0; // positive angle requires CCW rotation, negative angle requires CW
+
+        while ((delta != 0) && ((delta > 0) == (prev > 0))) { // while the sign of delta and prev is same (both +ve or both -ve)
+
+            if (Math.abs(delta) < 10) // slow down when less than 10 degrees rotation remaining
+                turnSpeed = DRIVE_SPEED_MIN;
+            // the sign of turnSpeed determines the direction of rotation of robot
+            robot.driveTank(0, turnSpeed * direction);
+
+            angles = robot.imu.getAngularOrientation();
+            robotAngle = angles.firstAngle;
+            prev = delta;
+            delta = MathFunctions.angleWrap(targetAngle - robotAngle);
+
+            myOpMode.telemetry.addLine("Gyro Angle ")
+                    .addData("target", "%.2f", targetAngle)
+                    .addData("robot", "%.2f", robotAngle)
+                    .addData("delta", "%.2f", delta);
+            myOpMode.telemetry.update();
+        }
+        robot.stopDriving();
+    }
+
+    public void gyroRotateToHeading(double targetAngle) {
+        gyroRotateToHeading(targetAngle, ROTATE_SPEED_DEFAULT);
+    }
+
+    /**
+     * Return the Z-axis angle reading from the Gyro on the IMU sensor inside expansion hub
+     * This method will return a valid value only if one of the above gyroXYZ() methods have been called
+     * resulting in the IMU sensor being read recently.
+     * Otherwise the last saved value will be returned, which does not match actual robot heading
+     *
+     * @return The angle reading in degrees. Positive value is counter clockwise from initial zero position
+     * Negative value is clock wise from initial zero. Angle value wraps around at 180 and -180 degrees.
+     */
+    public double getGyroHeading() {
+        if (angles == null) {
+            return NaN;
+        }
+        return angles.firstAngle;
+    }
+
+    /**
+     * Drive the robot at specified speed towards the specified target position on the field.
+     * The current position of the robot obtained using odometry readings.
+     *
+     * @param x     Target position global x coordinate value (inches)
+     * @param y     Target position global y coordinate value (inches)
+     * @param speed Speed/Power used to drive. Must be in range of -1.0 <= speed <= 1.0
+     */
+    public void goToPosition(double x, double y, double speed) {
+
+        boolean driving = true;
+        while (driving) {
+            driving = goTowardsPosition(x, y, speed);
+            myOpMode.telemetry.update();
+            myOpMode.sleep(50);
+        }
+    }
+
+    public void goToPosition(double x, double y) {
+        goToPosition(x, y, DRIVE_SPEED_DEFAULT);
+    }
+
+    /**
      * Drive the robot at specified speed towards the specified target position on the field.
      * Note that we are not waiting to reach the target position. This method only sets wheel power
      * in the direction of the target position and must be called again repeatedly at an update
@@ -79,8 +173,8 @@ public class MecaBotMove {
         // when within 1 feet (12 inches) of target, reduce the speed proportional to remaining distance to target
         double drivePower = Range.clip(distanceToPosition / 12, 0.2, 1.0) * speed;
         // however absolute minimium 0.15 power is required otherwise the robot cannot move the last couple of inches
-        if (drivePower < 0.15)
-            drivePower = 0.15;
+        if (drivePower < DRIVE_SPEED_MIN)
+            drivePower = DRIVE_SPEED_MIN;
 
         // set turnspeed proportional to the amount of turn required, however beyond 30 degrees turn, full speed is ok
         // note here that positive angle means turn left (since angle is measured counter clockwise from X-axis)
@@ -103,6 +197,173 @@ public class MecaBotMove {
         robot.driveTank(drivePower, turnPower);
 
         return true;
+    }
+
+    /**
+     * Move to a position at specified X-coordinate, while maintaining the current Y-coordinate value
+     *
+     * @param targetX   the target X coordinate position
+     * @param speed     driving speed for movement
+     */
+    public void goToXPosition(double targetX, double speed) {
+
+        double curX = globalPosition.getXinches();
+
+        // do not move less than 1 inch, that is our margin threshold for reaching the target coordinate.
+        if (Math.abs(targetX - curX) < 1.0) {
+            return;
+        }
+
+        // First lets point heading in the direction of movement, so we can drive straight
+        if (targetX - curX > 0) { // if we need to move towards positive X-Axis
+            gyroRotateToHeading(0.0, ROTATE_SPEED_SLOW);
+        }
+        else { // we need to move towareds negative X-Axis
+            gyroRotateToHeading(180.0, ROTATE_SPEED_SLOW);
+        }
+
+        // the gyro rotation moves the robot X,Y position, we will ignore that small amount
+        // get the Y coorindate now (after gyroRotate()) so we drive stright only along X-axis
+        double curY = globalPosition.getYinches();
+
+        // Now lets go to the target destination coordinate
+        goToPosition(targetX, curY, speed);
+    }
+
+    public void goToXPosition(double targetX) {
+        goToXPosition(targetX, DRIVE_SPEED_DEFAULT);
+    }
+
+    /**
+     * Move to a position at specified Y-coordinate, while maintaining the current X-coordinate value
+     *
+     * @param targetY   the target Y coordinate position
+     * @param speed     driving speed for movement
+     */
+    public void goToYPosition(double targetY, double speed) {
+
+        double curY = globalPosition.getYinches();
+
+        // do not move less than 1 inch, that is our margin threshold for reaching the target coordinate.
+        if (Math.abs(targetY - curY) < 1.0) {
+            return;
+        }
+
+        // First lets point heading in the direction of movement, so we can drive straight
+        if (targetY - curY > 0) { // if we need to move towards positive Y-Axis
+            gyroRotateToHeading(90.0, ROTATE_SPEED_SLOW);
+        }
+        else { // we need to move towareds negative Y-Axis (which is off the field, so never reach here)
+            gyroRotateToHeading(-90.0, ROTATE_SPEED_SLOW);
+        }
+
+        // the gyro rotation moves the robot X,Y position, we will ignore that small amount
+        // get the X coorindate now (after gyroRotate()) so we drive stright only along X-axis
+        double curX = globalPosition.getXinches();
+
+        // Now lets go to the target destination coordinate
+        goToPosition(curX, targetY, speed);
+    }
+
+    public void goToYPosition(double targetY) {
+        goToXPosition(targetY, DRIVE_SPEED_DEFAULT);
+    }
+
+    /**
+     * Move the specified distance (in inches), either normal or mecanum sideways movement.
+     * The movement direction is controlled by the sign of the first parameter, distance in inches to move
+     * This method uses odometry feedback to determine Robot current position during movement
+     * Move FORWARD : inches +ve value, mecanumSideways = false;
+     * Move REVERSE : inches -ve value, mecanumSideways = false;
+     * Move RIGHT   : inches +ve value, mecanumSideways = true;
+     * Move LEFT    : inches -ve value, mecanumSideways = true;
+     * @param inches            distance to move
+     * @param mecanumSideways   Mecanum sideways movement if true, Normal tank movement if false
+     */
+    public void odometryMoveDistance(double inches, boolean mecanumSideways) {
+        odometryMoveDistance(inches, mecanumSideways, DRIVE_SPEED_DEFAULT);
+    }
+
+    /**
+     * Move the specified distance (in inches), either normal or mecanum sideways movement.
+     * The movement direction is controlled by the sign of the first parameter, distance in inches to move
+     * This method uses odometry feedback to determine Robot current position during movement
+     * Move FORWARD : inches +ve value, mecanumSideways = false;
+     * Move REVERSE : inches -ve value, mecanumSideways = false;
+     * Move RIGHT   : inches +ve value, mecanumSideways = true;
+     * Move LEFT    : inches -ve value, mecanumSideways = true;
+     * @param inches            distance to move
+     * @param mecanumSideways   Mecanum sideways movement if true, Normal tank movement if false
+     * @param speed             driving speed for the movement
+     */
+    public void odometryMoveDistance(double inches, boolean mecanumSideways, double speed) {
+        // do not move less than 1 inch, that is our margin threshold for reaching the target coordinate.
+        if (Math.abs(inches) < 1.0) {
+            return;
+        }
+        robot.setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        // if distance is negative, direction must be reversed, both forwards/backwards or left/right side
+        // which is done by negative power to the motors
+        if (inches < 0) {
+            speed = -speed;
+        }
+        double origX = globalPosition.getXinches();
+        double origY = globalPosition.getYinches();
+        double curX = origX;
+        double curY = origY;
+        double dist = 0;
+
+        while (dist < Math.abs(inches)) {
+            if (mecanumSideways) {
+                robot.driveMecanum(speed);
+            }
+            else {
+                robot.driveTank(speed, 0.0);
+            }
+            curX = globalPosition.getXinches();
+            curY = globalPosition.getYinches();
+            dist = Math.hypot((curX - origX), (curY - origY));
+
+            myOpMode.telemetry.addLine("odoMoveDist() ").addData("Moved %.2f", dist).addData("Target %.2f inches", inches);
+            myOpMode.telemetry.update();
+        }
+        // Reached within threshold of target distance.
+        robot.stopDriving();
+    }
+
+    /**
+     * Move robot forward or backward, +ve distance moves forward, -ve distance moves backward
+     * @param inches distance to move
+     */
+    public void odometryMoveForwardBack(double inches) {
+        odometryMoveDistance(inches, false, DRIVE_SPEED_DEFAULT);
+    }
+
+    /**
+     * Move robot forward or backward, +ve distance moves forward, -ve distance moves backward
+     * @param inches distance to move
+     * @param speed  speed of movement
+     */
+    public void odometryMoveForwardBack(double inches, double speed) {
+        odometryMoveDistance(inches, false, speed);
+    }
+
+    /**
+     * Move robot left or right, +ve distance moves right, -ve distance moves left
+     * @param inches distance to move
+     */
+    public void odometryMoveRightLeft(double inches) {
+        odometryMoveDistance(inches, true, DRIVE_SPEED_DEFAULT);
+    }
+
+    /**
+     * Move robot left or right, +ve distance moves right, -ve distance moves left
+     * @param inches distance to move
+     * @param speed  speed of movement
+     */
+    public void odometryMoveRightLeft(double inches, double speed) {
+        odometryMoveDistance(inches, true, speed);
     }
 
     /*
@@ -130,6 +391,7 @@ public class MecaBotMove {
     /*
      * Move robot left or right, +ve distance moves LEFT, -ve distance moves RIGHT
      */
+    @Deprecated
     public void moveLeftRight(double inches) {
         // maybe needed to compensate for weak movements
         if (inches < 0){    //right over drive by a multiple
@@ -138,13 +400,20 @@ public class MecaBotMove {
         moveDistance(inches * -1.0, true, DEFAULT_SPEED);
     }
 
+    @Deprecated
     public void moveLeftRight(double inches, double speed) {
         moveDistance(inches * -1.0, true, speed);
     }
 
-    /*
+    /**
+     * Move the specified distance (in inches), either normal or mecanum sideways movement.
      * The movement direction is controlled by the sign of the first parameter, distance in inches to move
+     * This method uses the wheel encoders to move exactly the desired distance.
+     * @param inches            distance to move
+     * @param mecanumSideways   Mecanum sideways movement if true, Normal tank movement if false
+     * @param speed             driving speed for the movement
      */
+
     private void moveDistance(double inches, boolean mecanumSideways, double speed) {
 
         //convert inches to tick counts

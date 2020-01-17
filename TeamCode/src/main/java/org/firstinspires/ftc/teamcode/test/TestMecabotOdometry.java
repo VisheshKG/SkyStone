@@ -7,6 +7,7 @@ import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalPosition;
 import org.firstinspires.ftc.teamcode.robot.MecaBot;
 import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
+import org.firstinspires.ftc.teamcode.skystone.FieldSkystone;
 
 @TeleOp(name = "Test Odometry Mecabot", group = "Test")
 public class TestMecabotOdometry extends LinearOpMode {
@@ -20,10 +21,11 @@ public class TestMecabotOdometry extends LinearOpMode {
 
         robot = new MecaBot();
         robot.init(hardwareMap);
+        robot.initIMU();
 
         nav = new MecaBotMove(this, robot);
         globalPosition = nav.getPosition();
-        globalPosition.initGlobalPosition(14.0, 9.0, 90.0);
+        globalPosition.initGlobalPosition(14.0, 9.0, 0.0);
 
         telemetry.addData("Status", "Initialized");
 
@@ -51,10 +53,39 @@ public class TestMecabotOdometry extends LinearOpMode {
         // start odometry reading calculations before any driving begins
         nav.startOdometry();
 
+        nav.goToPosition(33.0, 33);
+        sleep(2000);
+        nav.gyroRotateToHeading(FieldSkystone.ANGLE_NEG_Y_AXIS);
+        sleep(2000);
+        nav.goToXPosition(23.5);
+        sleep(200);
+        nav.goToYPosition(23.5);
+        nav.gyroRotateToHeading(FieldSkystone.ANGLE_NEG_Y_AXIS);
+
+        nav.odometryMoveDistance(-12.0, false, MecaBotMove.DRIVE_SPEED_SLOW);
+        sleep(200);
+        nav.odometryMoveDistance(-12.0, true, MecaBotMove.DRIVE_SPEED_SLOW);
+        sleep(200);
+        nav.odometryMoveDistance(+12.0, false, MecaBotMove.DRIVE_SPEED_SLOW);
+        sleep(200);
+        nav.gyroRotateToHeading(FieldSkystone.ANGLE_NEG_X_AXIS);
+        sleep(10000);
+        nav.goToPosition(14, 24);
+        nav.gyroRotateToHeading(FieldSkystone.ANGLE_POS_X_AXIS);
+        nav.odometryMoveDistance(+15, true, MecaBotMove.DRIVE_SPEED_SLOW);
+        nav.gyroRotateToHeading(FieldSkystone.ANGLE_POS_X_AXIS);
+
+
+//        nav.gyroRotateToHeading(8, 0.2);
+//        sleep(2000);
+//        nav.gyroRotateToHeading(80, 0.3);
+//        sleep(2000);
+//        nav.gyroRotateToHeading(-90, 0.2);
+//        sleep(2000);
+//        nav.gyroRotateToHeading(0, 0.25);
+
         // run until the end of the match (driver presses STOP)
         while(opModeIsActive()){
-
-            nav.goTowardsPosition(33.0, 32.5, 0.6);
 
 //            telemetry.addData("Vertical left encoder", globalPosition.getVerticalLeftCount());
 //            telemetry.addData("Vertical right encoder", globalPosition.getVerticalRightCount());
