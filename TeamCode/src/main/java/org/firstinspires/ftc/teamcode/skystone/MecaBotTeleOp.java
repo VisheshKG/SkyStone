@@ -129,6 +129,10 @@ public class MecaBotTeleOp extends LinearOpMode {
     }
 
     public void operdrive() {
+        if (autoDriving) {
+            return;
+        }
+
         //update speedMultiplier
         if (gamepad1.right_bumper) {
             speedMultiplier = 1.0;
@@ -142,7 +146,7 @@ public class MecaBotTeleOp extends LinearOpMode {
             robot.driveMecanum(gamepad1.left_stick_x * speedMultiplier);
         }
         // normal tank movement
-        else {  // only if joystick is active, otherwise brakes are applied during autodrive()
+        else{  // only if joystick is active, otherwise brakes are applied during autodrive()
             // forward press on joystick is negative, backward press (towards human) is positive
             // right press on joystick is positive value, left press is negative value
             // reverse sign of joystick values to match the expected sign in driveTank() method.
