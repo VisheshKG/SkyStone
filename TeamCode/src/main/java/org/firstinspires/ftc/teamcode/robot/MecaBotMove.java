@@ -170,6 +170,13 @@ public class MecaBotMove {
         double absoluteAngleToPosition = Math.atan2(y - globalPosition.getYinches(), x - globalPosition.getXinches());
         double relativeAngleToPosition = angleWrapRad(absoluteAngleToPosition - globalPosition.getOrientationRadians());
 
+        // override in case of Robot front face has been REVERSED. The motors will run swapped (left front runs as right back)
+        // The only control we need to change is to calculate the turn power for driving in reverse direction
+        // This is done by adding 180 degrees (or PI radians) to the relative Angle (or to the robot orientation angle)
+        if (robot.isFrontReversed()) {
+            relativeAngleToPosition = angleWrapRad(relativeAngleToPosition + Math.PI);
+        }
+
         // when within 1 feet (12 inches) of target, reduce the speed proportional to remaining distance to target
         double drivePower = Range.clip(distanceToPosition / 12, 0.2, 1.0) * speed;
         // however absolute minimium 0.15 power is required otherwise the robot cannot move the last couple of inches
@@ -189,7 +196,7 @@ public class MecaBotMove {
         // let's stop driving when within a short distance of the destination. This threshold may need to be tuned.
         // A threshold is necessary to avoid oscillations caused by overshooting of target position.
         // This check could be done early in the method, however it is done towards end deliberately to get telemetry readouts
-        if (distanceToPosition < 1) {
+        if (distanceToPosition < 1.0) {
             robot.stopDriving();
             return false;
         }
@@ -325,7 +332,7 @@ public class MecaBotMove {
             curY = globalPosition.getYinches();
             dist = Math.hypot((curX - origX), (curY - origY));
 
-            myOpMode.telemetry.addLine("odoMoveDist() ").addData("Moved %.2f", dist).addData("Target %.2f inches", inches);
+            myOpMode.telemetry.addLine("odoMoveDist() ").addData("Moved ", "%.2f", dist).addData("Target ", "%.2f inches", inches);
             myOpMode.telemetry.update();
         }
         // Reached within threshold of target distance.

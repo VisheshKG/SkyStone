@@ -37,13 +37,7 @@ import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-
 import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalPosition;
-import org.firstinspires.ftc.teamcode.purepursuit.MathFunctions;
 
 import static java.lang.Double.NaN;
 
@@ -91,8 +85,8 @@ public class MecaBot {
 
     // Robot front and rear can be flipped for driving purposes
     // Define enum constant for whether INTAKE or LIFT is Front of the robot (and other one is Rear)
-    public static enum DIRECTION { NORMAL, REVERSE};
-    private DIRECTION frontFace;
+    static enum DIRECTION { NORMAL, REVERSE};
+    DIRECTION frontFace;
 
     //constants here
     public static final double LENGTH = 17.0;
@@ -133,7 +127,20 @@ public class MecaBot {
         frontFace = DIRECTION.NORMAL;
     }
 
-    // Robot front facing direction toggle methods
+    /*
+     * Robot front facing direction toggle methods. Robot FRONT direction can be flipped.
+     * This is important to understand, to avoid unexpected behavior.
+     * When Robot front direction is toggled from NORMAL to REVERSE, the reverse driving is
+     * achieved by changing only 2 underlying methods, all other code is oblivious of this.
+     * @see MecaBot#setTargetPosition()
+     * @see MecaBot#driveWheels()
+     *
+     * MOST IMPORTANT: All driving and move methods must call one of the above methods,
+     * and must NOT set drivetrain motor power directly. Specifically the methods
+     * @see MecaBot#SetDrivePower()
+     * do NOT handle frontFace flipping and driving in reverse.
+     * They are used for non-directional movement, such as gyro rotation.
+     */
     public DIRECTION frontDirection() {
         return frontFace;
     }
@@ -148,6 +155,9 @@ public class MecaBot {
     }
     public void setFrontReversed() {
         frontFace = DIRECTION.REVERSE;
+    }
+    public String getFrontDirection() {
+        return ((frontFace == DIRECTION.NORMAL) ? "NORMAL" : "REVERSE");
     }
             
     /* Initialize standard Hardware interfaces */
