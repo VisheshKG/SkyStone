@@ -8,7 +8,7 @@ import org.firstinspires.ftc.teamcode.skystone.FieldSkystone;
 import org.firstinspires.ftc.teamcode.robot.MecaBot;
 import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
 
-@Autonomous(name = "Auto1_skystone")
+@Autonomous(name = "VuforiaAuto1Skystone", group = "Concept")
 //@Disabled
 public class VuforiaAuto1Skystone extends LinearOpMode {
     //--------Configure -----------

@@ -32,6 +32,7 @@ package org.firstinspires.ftc.teamcode.test;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcontroller.external.samples.SensorBNO055IMU;
@@ -57,6 +58,7 @@ import java.util.Locale;
  * @see <a href="http://www.adafruit.com/products/2472">Adafruit IMU</a>
  */
 @Autonomous(name = "IMU Sensor Test", group = "Test")
+@Disabled
 public class TestGyroDrive extends LinearOpMode
 {
     //----------------------------------------------------------------------------------------------

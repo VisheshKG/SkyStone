@@ -130,7 +130,7 @@ public class MecaBotTeleOp extends LinearOpMode {
 
     public void operdrive() {
         if (autoDriving) {
-            return;ix
+            return;
         }
 
         //update speedMultiplier

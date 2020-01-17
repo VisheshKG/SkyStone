@@ -9,7 +9,7 @@ import org.firstinspires.ftc.teamcode.robot.MecaBot;
 import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
 import org.firstinspires.ftc.teamcode.skystone.FieldSkystone;
 
-@TeleOp(name = "Test Odometry Mecabot", group = "Test")
+@TeleOp(name = "Test Odometry move methods", group = "Test")
 public class TestMecabotOdometry extends LinearOpMode {
 
     private MecaBot robot;

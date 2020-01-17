@@ -30,6 +30,7 @@
 package org.firstinspires.ftc.teamcode.skystone;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -65,6 +66,7 @@ import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
  */
 
 @Autonomous(name="Blue Auto Foundation", group="QT")
+@Disabled
 public class MecabotAutoBlue extends LinearOpMode {
 
     private static final boolean BLUE = true;
