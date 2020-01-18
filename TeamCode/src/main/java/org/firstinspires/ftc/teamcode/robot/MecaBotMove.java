@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.robot;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -135,7 +136,9 @@ public class MecaBotMove {
      * @param targetAngle   The desired target angle position in degrees
      * @param turnSpeed     The speed at which to drive the motors for the rotation. 0.0 < turnSpeed <= 1.0
      */
-    public void odometryRotateToHeading(double targetAngle, double turnSpeed) {
+    public void odometryRotateToHeading(double targetAngle, double turnSpeed, boolean slowDownAtEnd) {
+
+        ElapsedTime runtime = new ElapsedTime();
 
         // determine current angle of the robot
         double robotAngle = globalPosition.getOrientationDegrees();
@@ -143,10 +146,11 @@ public class MecaBotMove {
         double prev = delta;
         double direction = (delta >= 0) ? 1.0 : -1.0; // positive angle requires CCW rotation, negative angle requires CW
 
+        runtime.reset();
         // while the sign of delta and prev is same (both +ve or both -ve) run loop
-        while ((delta != 0) && ((delta > 0) == (prev > 0)) && myOpMode.opModeIsActive()) {
+        while ((delta != 0) && ((delta > 0) == (prev > 0)) && myOpMode.opModeIsActive() && runtime.seconds() < 3.0) {
 
-            if ((Math.abs(delta) < 10) && (turnSpeed >= ROTATE_SPEED_DEFAULT)) { // slow down when less than 10 degrees rotation remaining
+            if (slowDownAtEnd && (Math.abs(delta) < 6)) { // slow down when less than 10 degrees rotation remaining
                 turnSpeed = DRIVE_SPEED_MIN;
             }
             // the sign of turnSpeed determines the direction of rotation of robot
@@ -166,7 +170,7 @@ public class MecaBotMove {
     }
 
     public void odometryRotateToHeading(double targetAngle) {
-        odometryRotateToHeading(targetAngle, ROTATE_SPEED_DEFAULT);
+        odometryRotateToHeading(targetAngle, ROTATE_SPEED_DEFAULT, true);
     }
 
     /**

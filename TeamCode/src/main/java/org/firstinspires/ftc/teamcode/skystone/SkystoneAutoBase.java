@@ -138,7 +138,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         nav.odometryMoveRightLeft(flipX4Red(-26), MecaBotMove.DRIVE_SPEED_SLOW);
 
         // ensure robot direction is straight down the stone quarry
-        nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS), MecaBotMove.ROTATE_SPEED_SLOW);
+        nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS), MecaBotMove.ROTATE_SPEED_SLOW, true);
 /*
         // CAUTION CAUTION -- The GYRO Angle DOES NOT MATCH the ODOMETRY Angle for the RED side.
         // The gyro initialization CANNOT be controlled by software. It initializes hardware at ZERO angle on program init.
@@ -198,7 +198,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         // move sideways back to the lane under the skybridge
         nav.odometryMoveRightLeft(flipX4Red(+15), MecaBotMove.DRIVE_SPEED_DEFAULT);
         // line up in the lane
-        nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS), MecaBotMove.ROTATE_SPEED_SLOW);
+        nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS), MecaBotMove.ROTATE_SPEED_SLOW, true);
 
         cs = robot.blockColorSensor;
         if (isSkystone(cs)) {
@@ -266,7 +266,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         nav.goToPosition(flipX4Red(-38), 18, MecaBotMove.DRIVE_SPEED_DEFAULT, false);
 
         // rotate with the foundation to be square with the walls
-        nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS));
+        nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS), MecaBotMove.ROTATE_SPEED_DEFAULT, false);
 /*
         // CAUTION CAUTION -- The GYRO Angle DOES NOT MATCH the ODOMETRY Angle for the RED side.
         // The gyro initialization CANNOT be controlled by software. It initializes hardware at ZERO angle on program init.
