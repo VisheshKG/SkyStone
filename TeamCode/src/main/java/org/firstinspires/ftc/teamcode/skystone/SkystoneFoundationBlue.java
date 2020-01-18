@@ -38,7 +38,6 @@ import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
 
 
 @Autonomous(name="BLUE Foundation+Parking", group="QT")
-@Disabled
 public class SkystoneFoundationBlue extends SkystoneAutoBase {
 
     private static final boolean BLUE = true;
@@ -51,20 +50,14 @@ public class SkystoneFoundationBlue extends SkystoneAutoBase {
     static final double     MOVE_TOWARDS_FOUNDATION = 24.0;
     static final double     TURN_FOUNDATION_DISTANCE= 64.0;
 
-    protected MecaBot robot = new MecaBot();   // Use a Mecabot's hardware
-    protected MecaBotMove nav = new MecaBotMove(this, robot);
-    private ElapsedTime     runtime = new ElapsedTime();
-
     @Override
     public void setOdometryStartingPosition() {
-        // Starting postion assumption:
+        // Starting postion assumption:  NEAR BUILD ZONE
         // Robot is 18x18 square, robot position (x,y) is center of the robot
         // starting position is against the wall (y=0), hence robot center is y = 9 inches
-        // Robot (BLUE:right | RED:left) side is exactly on the 1st and 2nd tile line (47 inches from center)
-        // Robot back is facing the foundation (+ve Y-axis)
-        // The direction of travel from starting position to foundation is backwards or reverse
-        // hence robot front face (green wheels) orientation is -ve Y-axis or -90 degrees
-        globalPosition.initGlobalPosition(-47.0, 9.0, -90.0);
+        // Robot (BLUE:left | RED:right) side is exactly on the 1st and 2nd tile line (47 inches from center)
+        // Robot is facing the quarry (+ve X-axis on BLUE side) hence orientation is zero degrees
+        globalPosition.initGlobalPosition(-14.0, 9.0, 0.0);
 
     }
 
@@ -79,22 +72,26 @@ public class SkystoneFoundationBlue extends SkystoneAutoBase {
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
 
-        // This OpMode does all the tasks in the autonomous period of 30 seconds
-        // TODO: Use the odometry methods to move Foundation not this hack from 1st QT
-        moveFoundationToBuildZone();
+        // This OpMode only moves the Foundation and Parks under skybridge
+        startNearBuildZoneAndGoToFoundation();
+        moveFoundation();
+        parkAtInsideLane();
 
         // Don't exit, wait for user (driver presses STOP)
         waitForStop();
 
     }
 
+    /**
+     * OBSOLETE METHOD we are using odometry now
+     */
     /*
      * Starting postion assumption: Robot green wheels touching the perimeter wall folded up
      * Robot (BLUE:right | RED:left) side is exactly on the 1st and 2nd tile line.
      * The direction of travel from starting position to foundation is backwards or reverse
      * Note: Reverse movement is obtained by setting a negative distance (not speed)
      */
-    public void moveFoundationToBuildZone() {
+    public void encoderMoveFoundationAndPark() {
 
         // move away from perimeter wall before moving towards build wall
         nav.encoderMoveForwardBack(-MOVE_TOWARDS_FOUNDATION);

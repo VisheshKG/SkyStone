@@ -430,6 +430,18 @@ public class MecaBot {
         leftIntake.setPower(0);
         rightIntake.setPower(0);
     }
+    public void runOuttake(double speed) {
+        // we need positive power for ejecting out the stones
+        if (speed < 0) {
+            speed = +speed;
+        }
+        leftIntake.setPower(speed);
+        rightIntake.setPower(speed);
+    }
+    public void stopOuttake() {
+        leftIntake.setPower(0);
+        rightIntake.setPower(0);
+    }
 
     /*
      * Lift, arm and claw operation methods

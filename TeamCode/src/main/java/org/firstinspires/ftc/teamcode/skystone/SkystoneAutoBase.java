@@ -129,10 +129,15 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
     }
 
     public void positionToDetectSkystone() {
+        //
+        // Staring position is
+        // BLUE: globalPosition.initGlobalPosition(14.0, 9.0, 0.0);
+        // RED: globalPosition.initGlobalPosition(-14.0, 9.0, 180.0);
+        //
         // stone quarry is 47 inches from the BLUE/RED wall, 48 inches from the audience wall
         // move sideways towards the stone quarry (caution we may hit the skybridge side support)
         // movement is towards +ve Y axis LEFT for BLUE , RIGHT for RED
-        nav.odometryMoveRightLeft(flipX4Red(-25), MecaBotMove.DRIVE_SPEED_SLOW);
+        nav.odometryMoveRightLeft(flipX4Red(-27), MecaBotMove.DRIVE_SPEED_SLOW);
 
         // ensure robot direction is straight down the stone quarry
         // CAUTION CAUTION -- The GYRO Angle DOES NOT MATCH the ODOMETRY Angle for the RED side.
@@ -160,7 +165,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
             // move forward one stone length at a time
             nav.odometryMoveForwardBack(distanceToNextStone, MecaBotMove.DRIVE_SPEED_SLOW);
             // check for skystone
-            if (isSkystone(cs)) {
+            if (isSkystone(cs) && i>1) { // skipping skystone in position #1 since picking up runs into skybridge
                 found = true;
                 // take action to pickup skystone
                 telemetry.addData("Detected Skystone at position # ", i);
@@ -226,21 +231,22 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         nav.goToXPosition(flipX4Red(-55), MecaBotMove.DRIVE_SPEED_SLOW);
         robot.setFrontNormal();
 
-        // turn towards foundation
+        // turn back towards foundation
         nav.gyroRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_NEG_Y_AXIS), MecaBotMove.ROTATE_SPEED_SLOW);
 
         // practical observation note: Rotation decrements the y-position by 3 inches
         // robot position ~ y=32, robot half length = 8.5, foundation position ~ y=47
         // The above for BLUE field, need to update observation for RED field rotation
 
+        // deliver skystone on the foundation, the lift arm will take time to move, meanwhile we will grab and move foundation.
+        if (haveSkystone) {
+            robot.moveLiftArmOutside();
+        }
+
         // move backwards to touch the foundation edge
         nav.odometryMoveForwardBack(-8, MecaBotMove.DRIVE_SPEED_SLOW);
         telemetry.update(); // print the new orientation of the robot on driver station
 
-        // deliver skystone on the foundation
-        if (haveSkystone) {
-            robot.moveLiftArmOutside();
-        }
     }
 
     public void moveFoundation() {
@@ -249,11 +255,6 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         // DO NOT REMOVE this sleep() the clamps take a long time, if we don't sleep the robot moves away before clampiong.
         sleep(1000);
 
-        // release skystone
-        if (haveSkystone) {
-            robot.releaseStoneWithClaw();
-            robot.moveLiftArmInside();
-        }
         // bring the foundation towards the build zone. When we rotate the foundation in next step,
         // its corner will be in build zone when pushed against the scoreboard wall
         //nav.odometryMoveForwardBack(20, MecaBotMove.DRIVE_SPEED_SLOW);
@@ -266,6 +267,11 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         nav.gyroRotateToHeading(FieldSkystone.ANGLE_POS_X_AXIS, MecaBotMove.ROTATE_SPEED_SLOW);
         //nav.encoderTurn(40, true, MecaBotMove.DRIVE_SPEED_SLOW);
 
+        // enough time elapsedn in foundation movement, the lift arm must be out now, release skystone
+        if (haveSkystone) {
+            robot.releaseStoneWithClaw();
+            robot.moveLiftArmInside();
+        }
         // drive backwards to push the foundation against the scoreboard wall
         // foundation is 18.5 and half robot is 9
         nav.encoderMoveForwardBack(-8, MecaBotMove.DRIVE_SPEED_SLOW);
@@ -283,6 +289,31 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         nav.gyroRotateToHeading(FieldSkystone.ANGLE_POS_X_AXIS, MecaBotMove.ROTATE_SPEED_SLOW);
         // now go park under the skybridge
         nav.goToPosition(0.0, 35.0);
+    }
+
+    public void parkAtOutsideLane() {
+        //
+        // assumption is that starting position is approximately ( -43, 18)
+        // therefore we are fairly straight angle to the outside lane
+        //
+        // now go park under the skybridge
+        nav.goToPosition(0.0, 12.0);
+    }
+
+    public void startNearBuildZoneAndGoToFoundation() {
+        //
+        // Staring position is green wheels towards quarry, back touching the tile next to build zone
+        // BLUE: globalPosition.initGlobalPosition(-14.0, 9.0, 0.0);
+        // RED : globalPosition.initGlobalPosition(+14.0, 9.0, 180.0);
+        //
+        nav.goToPosition(flipX4Red(-55), 35, MecaBotMove.DRIVE_SPEED_SLOW);
+
+        // turn back towards foundation
+        nav.gyroRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_NEG_Y_AXIS), MecaBotMove.ROTATE_SPEED_SLOW);
+
+        // move backwards to touch the foundation edge
+        nav.odometryMoveForwardBack(-8, MecaBotMove.DRIVE_SPEED_SLOW);
+        telemetry.update(); // print the new orientation of the robot on driver station
     }
 
 }
