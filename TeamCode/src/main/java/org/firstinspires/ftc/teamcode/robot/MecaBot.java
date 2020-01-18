@@ -484,7 +484,8 @@ public class MecaBot {
         lights.setPattern(pattern);
     }
     public void setFastBlue() {
-        pattern = RevBlinkinLedDriver.BlinkinPattern.HEARTBEAT_BLUE;
+        pattern = RevBlinkinLedDriver.BlinkinPattern.HEARTBEAT_BLUE
+        ;
         lights.setPattern(pattern);
     }
 
