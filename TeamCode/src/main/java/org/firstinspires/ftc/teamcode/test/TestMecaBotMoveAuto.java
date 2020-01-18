@@ -15,18 +15,18 @@ import org.firstinspires.ftc.teamcode.skystone.FieldSkystone;
 @Disabled
 public class TestMecaBotMoveAuto extends LinearOpMode {
 
-    MecaBot robot = new MecaBot();   // Use Omni-Directional drive system
-    MecaBotMove nav = new MecaBotMove(this, robot);
+    private MecaBot robot = new MecaBot();   // Use Omni-Directional drive system
+    private MecaBotMove nav = new MecaBotMove(this, robot);
 
     @Override
     public void runOpMode() {
         ElapsedTime opmodeRunTime = new ElapsedTime();
         telemetry.setAutoClear(false);
 
-        FieldSkystone.initRobotStartX();
+        MecaBotMove.initRobotStartX();
         telemetry.addData("Test MecaBotMove Time:", opmodeRunTime.seconds());
-        telemetry.addData("robotStartX:", FieldSkystone.robotStartX);
-        telemetry.addData("robotStartY:", FieldSkystone.robotStartY);
+        telemetry.addData("robotStartX:", MecaBotMove.robotStartX);
+        telemetry.addData("robotStartY:", MecaBotMove.robotStartY);
         telemetry.update();
 
         robot.init(this.hardwareMap);
@@ -63,7 +63,7 @@ public class TestMecaBotMoveAuto extends LinearOpMode {
 
 
         while (opModeIsActive()){
-
+            sleep(100);
         }
 
     }

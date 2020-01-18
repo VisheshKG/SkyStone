@@ -14,8 +14,7 @@ public class VuforiaAuto1Skystone extends LinearOpMode {
     //--------Configure -----------
 
     // Blue Alliance or Red Alliance
-    private static boolean BLUESIDE = FieldSkystone.BLUESIDE;
-    private static boolean PARK_INSIDE = FieldSkystone.PARK_INSIDE;
+    private static boolean BLUESIDE = MecaBotMove.BLUESIDE;
 
     //--------End of Configure
     double LOW_SPEED=0.3;
@@ -30,13 +29,13 @@ public class VuforiaAuto1Skystone extends LinearOpMode {
 
     //robot origin is right back corner of robot
     //robot start position: put the eye at center of 2nd stone
-    private static double robotStartX= FieldSkystone.robotStartX;
-    private static double robotStartY= FieldSkystone.robotStartY;       //right back corner of robot
+    private static double robotStartX= MecaBotMove.robotStartX;
+    private static double robotStartY= MecaBotMove.robotStartY;       //right back corner of robot
     //3" clearance on both side of robot between bridge poll and the parked robot
     // 4.5= 46-18-1/2 *22.25
     private static double backDistToCtrBridge=4.5;
 
-    private static double inchClosetoScan= FieldSkystone.inchClosetoScan;
+    private static double inchClosetoScan= 14.75; //*** 15" away from stone;increase to close in
 
     //eye placed 11 inch from far side of viewable stone
     // 18.5 inch off image means eye can see 3 stones 24 inches
@@ -46,6 +45,13 @@ public class VuforiaAuto1Skystone extends LinearOpMode {
     //current location: origin is at red/blue wall center with x pointing to stone side and y to center of field
     private static double curX=robotStartX;
     private static double curY=robotStartY;
+
+    //Vuforia setting
+    private static final double scanInterval=8;
+    private static final double maxTimeViewStone=10;
+    private static final double maxTimeViewOneStone=2;
+    private static final float errForwardAdjust=6;  //***left/right adjust due to over or under drive
+    private static final double closeToStone=-1;  //distance from skystone for grabbing, negative means over drive
 
 
     // ----------------
@@ -62,13 +68,13 @@ public class VuforiaAuto1Skystone extends LinearOpMode {
         // Initialize the robot and navigation
         //todo: restore
         robot.init(this.hardwareMap);
-        FieldSkystone.initRobotStartX();
+        MecaBotMove.initRobotStartX();
 
         vUtil.initVuforia();
         vUtil.activateTracking();  //takes a few seconds
         telemetry.setAutoClear(false);
-        curX= FieldSkystone.robotStartX;
-        curY= FieldSkystone.robotStartY;
+        curX= MecaBotMove.robotStartX;
+        curY= MecaBotMove.robotStartY;
         String side="RED";
         if (BLUESIDE){ side="BLUE"; }
         telemetry.addData(" ",side);
@@ -99,7 +105,7 @@ public class VuforiaAuto1Skystone extends LinearOpMode {
         telemetry.addData("Go parking","none");
         telemetry.addData("{curX, curY} =", "%.2f, %.2f",curX,curY);
         telemetry.update();
-        nav.goPark(curX,curY,PARK_INSIDE,!BLUESIDE);
+        nav.goPark(curX,curY,MecaBotMove.PARK_INSIDE,!BLUESIDE);
         telemetry.update();
         vUtil.stopTracking();
         while (!isStopRequested()) {  //just loop
@@ -131,8 +137,6 @@ public class VuforiaAuto1Skystone extends LinearOpMode {
         //double xdistance=49-robotStartingX;   //stone placed at 49 inches; robot starting 36
         //call vuforia to find stone, start scanning from bridge end to wall
         // if robot on blue side, it moves left first. 2nd parameter, true to move robot left
-        double maxTimeViewStone= FieldSkystone.maxTimeViewStone;
-        double maxTimeViewOneStone= FieldSkystone.maxTimeViewOneStone;
         double curSeconds = opmodeRunTime.seconds();
         double lastSeconds = curSeconds;
         double deltaTime;
@@ -146,7 +150,6 @@ public class VuforiaAuto1Skystone extends LinearOpMode {
             maxCt=2;
             limitX=48;  //half field - 3 stone over=72-20
         }
-        double scanInterval= FieldSkystone.scanIntervalDistance;
 
         int ct=0;  //Count # moves
         while (!stonefound){   //todo: need to time out
@@ -218,9 +221,9 @@ public class VuforiaAuto1Skystone extends LinearOpMode {
 
         //nav.setSpeedWheel(LOW_SPEED);
         if (y>0){     //test shows a drift to right of stone
-            yinch=yinch- FieldSkystone.errForwardAdjust;  //move less to right stone
+            yinch=yinch- errForwardAdjust;  //move less to right stone
         }else{
-            yinch=yinch- FieldSkystone.errForwardAdjust;
+            yinch=yinch- errForwardAdjust;
         }
         float stoneDistanceMargin = 1; //Vuforia stone center margin
         if (Math.abs(yinch) > stoneDistanceMargin) {
@@ -240,7 +243,7 @@ public class VuforiaAuto1Skystone extends LinearOpMode {
         }
         //advance to move close to stone for grabbing
         telemetry.addData("MoveToStone", xinch);
-        double adv=Math.abs(xinch)- FieldSkystone.closeToStone;  //include vuforia overshot of 1 inch
+        double adv=Math.abs(xinch)- closeToStone;  //include vuforia overshot of 1 inch
         nav.moveLeftRight(-adv);
         curY=curY+adv;
         telemetry.addData("Field Current Position {x y}=","%.2f  %.2f", curX,curY);
