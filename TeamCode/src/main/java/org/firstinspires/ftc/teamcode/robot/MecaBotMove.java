@@ -78,7 +78,7 @@ public class MecaBotMove {
      * @param targetAngle   The desired target angle position in degrees
      * @param turnSpeed     The speed at which to drive the motors for the rotation. 0.0 < turnSpeed <= 1.0
      */
-    public void gyroRotateToHeading(double targetAngle, double turnSpeed) {
+/*    public void gyroRotateToHeading(double targetAngle, double turnSpeed) {
 
         // determine current angle of the robot
         angles = robot.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
@@ -112,7 +112,7 @@ public class MecaBotMove {
     public void gyroRotateToHeading(double targetAngle) {
         gyroRotateToHeading(targetAngle, ROTATE_SPEED_DEFAULT);
     }
-
+*/
     /**
      * Return the Z-axis angle reading from the Gyro on the IMU sensor inside expansion hub
      * This method will return a valid value only if one of the above gyroXYZ() methods have been called
@@ -130,6 +130,46 @@ public class MecaBotMove {
     }
 
     /**
+     * Rotate the robot to desired angle position using the odometry position feedback
+     *
+     * @param targetAngle   The desired target angle position in degrees
+     * @param turnSpeed     The speed at which to drive the motors for the rotation. 0.0 < turnSpeed <= 1.0
+     */
+    public void odometryRotateToHeading(double targetAngle, double turnSpeed) {
+
+        // determine current angle of the robot
+        double robotAngle = globalPosition.getOrientationDegrees();
+        double delta = MathFunctions.angleWrap(targetAngle - robotAngle);
+        double prev = delta;
+        double direction = (delta >= 0) ? 1.0 : -1.0; // positive angle requires CCW rotation, negative angle requires CW
+
+        // while the sign of delta and prev is same (both +ve or both -ve) run loop
+        while ((delta != 0) && ((delta > 0) == (prev > 0)) && myOpMode.opModeIsActive()) {
+
+            if ((Math.abs(delta) < 10) && (turnSpeed >= ROTATE_SPEED_DEFAULT)) { // slow down when less than 10 degrees rotation remaining
+                turnSpeed = DRIVE_SPEED_MIN;
+            }
+            // the sign of turnSpeed determines the direction of rotation of robot
+            robot.driveTank(0, turnSpeed * direction);
+
+            robotAngle = globalPosition.getOrientationDegrees();
+            prev = delta;
+            delta = MathFunctions.angleWrap(targetAngle - robotAngle);
+
+            myOpMode.telemetry.addLine("Odo Rotate ")
+                    .addData("target", "%.2f", targetAngle)
+                    .addData("robot", "%.2f", robotAngle)
+                    .addData("delta", "%.2f", delta);
+            myOpMode.telemetry.update();
+        }
+        robot.stopDriving();
+    }
+
+    public void odometryRotateToHeading(double targetAngle) {
+        odometryRotateToHeading(targetAngle, ROTATE_SPEED_DEFAULT);
+    }
+
+    /**
      * Drive the robot at specified speed towards the specified target position on the field.
      * The current position of the robot obtained using odometry readings.
      *
@@ -140,10 +180,9 @@ public class MecaBotMove {
     public void goToPosition(double x, double y, double speed) {
 
         boolean driving = true;
-        while (driving) {
+        while (driving && myOpMode.opModeIsActive()) {
             driving = goTowardsPosition(x, y, speed, true);
             myOpMode.telemetry.update();
-            myOpMode.sleep(50);
         }
     }
 
@@ -154,10 +193,9 @@ public class MecaBotMove {
     public void goToPosition(double x, double y, double speed, boolean slowDownAtEnd) {
 
         boolean driving = true;
-        while (driving) {
+        while (driving && myOpMode.opModeIsActive()) {
             driving = goTowardsPosition(x, y, speed, slowDownAtEnd);
             myOpMode.telemetry.update();
-            myOpMode.sleep(50);
         }
     }
 

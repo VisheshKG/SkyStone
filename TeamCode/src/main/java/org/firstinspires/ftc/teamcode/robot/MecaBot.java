@@ -158,9 +158,11 @@ public class MecaBot {
     }
     public void setFrontNormal() {
         frontFace = DIRECTION.NORMAL;
+        setLightGreen();
     }
     public void setFrontReversed() {
         frontFace = DIRECTION.REVERSE;
+        setLightRed();
     }
     public String getFrontDirection() {
         return ((frontFace == DIRECTION.NORMAL) ? "NORMAL" : "REVERSE");

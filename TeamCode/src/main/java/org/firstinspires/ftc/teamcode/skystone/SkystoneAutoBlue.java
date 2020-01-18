@@ -21,7 +21,7 @@ public class SkystoneAutoBlue extends SkystoneAutoBase {
         // starting position is against the wall (y=0), hence robot center is y = 9 inches
         // facing the quarry (+ve X-axis on BLUE side) hence orientation is zero degrees
         // touching the floor tile edge on stone quarry side (hence X = 23 - 9 = 14 inches)
-        globalPosition.initGlobalPosition(14.0, 9.0, 0.0);
+        globalPosition.initGlobalPosition(16.0, 9.0, 0.0);
 
     }
 
