@@ -44,7 +44,10 @@ public abstract class MecaBotSkystoneAuto extends LinearOpMode {
      */
     public abstract void setOdometryStartingPosition();
 
-    public abstract ColorSensor chooseColorSensorForSkystone();
+    public ColorSensor chooseColorSensorForSkystone() {
+        // random choice, the RED and BLUE subclasses should override this method
+        return robot.leftColorSensor;
+    }
 
     /**
      * Initialize all hardware and software data structures
@@ -188,7 +191,7 @@ public abstract class MecaBotSkystoneAuto extends LinearOpMode {
         robot.setFrontReversed();
         telemetry.update(); // print the new oritentation of the robot on driver station
         // destination is the centered on tile in front of center of foundation
-        nav.goToPosition(flipX4Red(-47), 32, MecaBotMove.DRIVE_SPEED_SLOW);
+        nav.goToPosition(flipX4Red(-47), 34, MecaBotMove.DRIVE_SPEED_SLOW);
         robot.setFrontNormal();
         sleep(1000);
 
@@ -225,7 +228,7 @@ public abstract class MecaBotSkystoneAuto extends LinearOpMode {
 
         // drive backwards to push the foundation against the scoreboard wall
         // foundation is 18.5 and half robot is 9
-        nav.encoderMoveForwardBack(-20, MecaBotMove.DRIVE_SPEED_SLOW);
+        nav.encoderMoveForwardBack(-16, MecaBotMove.DRIVE_SPEED_SLOW);
         // foundation has been repositioned, release the clamps
         robot.releaseFoundation();
     }
