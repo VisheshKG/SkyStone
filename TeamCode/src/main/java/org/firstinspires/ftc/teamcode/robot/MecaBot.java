@@ -407,6 +407,10 @@ public class MecaBot {
      * Intake operation methods
      */
     public void runIntake(double speed) {
+        // we need negative power for sucking in the stones
+        if (speed > 0) {
+            speed = -speed;
+        }
         leftIntake.setPower(speed);
         rightIntake.setPower(speed);
     }

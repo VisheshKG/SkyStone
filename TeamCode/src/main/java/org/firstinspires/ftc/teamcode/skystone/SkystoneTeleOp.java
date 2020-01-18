@@ -123,7 +123,7 @@ public class SkystoneTeleOp extends LinearOpMode {
 
     public void autodrive() {
         if (autoDriving) {
-            autoDriving = nav.goTowardsPosition(xpos, ypos, 0.5);
+            autoDriving = nav.goTowardsPosition(xpos, ypos, MecaBotMove.DRIVE_SPEED_DEFAULT, true);
             telemetry.addData("Driving Towards", "X %2.2f | Y %2.2f | Angle %3.2f", xpos, ypos, tpos);
         }
     }

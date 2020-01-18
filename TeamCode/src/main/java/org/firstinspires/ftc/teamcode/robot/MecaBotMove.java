@@ -141,7 +141,7 @@ public class MecaBotMove {
 
         boolean driving = true;
         while (driving) {
-            driving = goTowardsPosition(x, y, speed);
+            driving = goTowardsPosition(x, y, speed, true);
             myOpMode.telemetry.update();
             myOpMode.sleep(50);
         }
@@ -149,6 +149,16 @@ public class MecaBotMove {
 
     public void goToPosition(double x, double y) {
         goToPosition(x, y, DRIVE_SPEED_DEFAULT);
+    }
+
+    public void goToPosition(double x, double y, double speed, boolean slowDownAtEnd) {
+
+        boolean driving = true;
+        while (driving) {
+            driving = goTowardsPosition(x, y, speed, slowDownAtEnd);
+            myOpMode.telemetry.update();
+            myOpMode.sleep(50);
+        }
     }
 
     /**
@@ -164,7 +174,7 @@ public class MecaBotMove {
      * @param speed Speed/Power used to drive. Must be in range of -1.0 <= speed <= 1.0
      * @return <em>true</em> if sucessfully issued command to robot to drive, <em>false</em> if reached the destination
      */
-    public boolean goTowardsPosition(double x, double y, double speed) {
+    public boolean goTowardsPosition(double x, double y, double speed, boolean slowDownAtEnd) {
 
         double distanceToPosition = Math.hypot(globalPosition.getXinches() - x,  globalPosition.getYinches() - y);
         double absoluteAngleToPosition = Math.atan2(y - globalPosition.getYinches(), x - globalPosition.getXinches());
@@ -177,12 +187,14 @@ public class MecaBotMove {
             relativeAngleToPosition = angleWrapRad(relativeAngleToPosition + Math.PI);
         }
 
+        double drivePower = Range.clip(speed, 0.0, 1.0);
         // when within 1 feet (12 inches) of target, reduce the speed proportional to remaining distance to target
-        double drivePower = Range.clip(distanceToPosition / 12, 0.2, 1.0) * speed;
-        // however absolute minimium 0.15 power is required otherwise the robot cannot move the last couple of inches
-        if (drivePower < DRIVE_SPEED_MIN)
-            drivePower = DRIVE_SPEED_MIN;
-
+        if (slowDownAtEnd) {
+            drivePower = Range.clip(distanceToPosition / 12, 0.25, 1.0) * drivePower;
+            // however absolute minimium 0.15 power is required otherwise the robot cannot move the last couple of inches
+            if (drivePower < DRIVE_SPEED_MIN)
+                drivePower = DRIVE_SPEED_MIN;
+        }
         // set turnspeed proportional to the amount of turn required, however beyond 30 degrees turn, full speed is ok
         // note here that positive angle means turn left (since angle is measured counter clockwise from X-axis)
         // this must match the behavior of MecaBot.DriveTank() method used below.
@@ -221,13 +233,14 @@ public class MecaBotMove {
             return;
         }
 
-        // First lets point heading in the direction of movement, so we can drive straight
-        if (targetX - curX > 0) { // if we need to move towards positive X-Axis
-            gyroRotateToHeading(0.0, ROTATE_SPEED_SLOW);
-        }
-        else { // we need to move towareds negative X-Axis
-            gyroRotateToHeading(180.0, ROTATE_SPEED_SLOW);
-        }
+        // THIS CODE IS INCOMPATIBLE WITH DRIVING THE ROBOT IN REVERSE DIRECTION
+//        // First lets point heading in the direction of movement, so we can drive straight
+//        if (targetX - curX > 0) { // if we need to move towards positive X-Axis
+//            gyroRotateToHeading(0.0, ROTATE_SPEED_SLOW);
+//        }
+//        else { // we need to move towareds negative X-Axis
+//            gyroRotateToHeading(180.0, ROTATE_SPEED_SLOW);
+//        }
 
         // the gyro rotation moves the robot X,Y position, we will ignore that small amount
         // get the Y coorindate now (after gyroRotate()) so we drive stright only along X-axis
@@ -256,13 +269,14 @@ public class MecaBotMove {
             return;
         }
 
-        // First lets point heading in the direction of movement, so we can drive straight
-        if (targetY - curY > 0) { // if we need to move towards positive Y-Axis
-            gyroRotateToHeading(90.0, ROTATE_SPEED_SLOW);
-        }
-        else { // we need to move towareds negative Y-Axis (which is off the field, so never reach here)
-            gyroRotateToHeading(-90.0, ROTATE_SPEED_SLOW);
-        }
+        // THIS CODE IS INCOMPATIBLE WITH DRIVING THE ROBOT IN REVERSE DIRECTION
+//        // First lets point heading in the direction of movement, so we can drive straight
+//        if (targetY - curY > 0) { // if we need to move towards positive Y-Axis
+//            gyroRotateToHeading(90.0, ROTATE_SPEED_SLOW);
+//        }
+//        else { // we need to move towareds negative Y-Axis (which is off the field, so never reach here)
+//            gyroRotateToHeading(-90.0, ROTATE_SPEED_SLOW);
+//        }
 
         // the gyro rotation moves the robot X,Y position, we will ignore that small amount
         // get the X coorindate now (after gyroRotate()) so we drive stright only along X-axis

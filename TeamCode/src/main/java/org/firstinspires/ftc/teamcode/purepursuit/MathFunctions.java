@@ -11,7 +11,7 @@ public class MathFunctions {
      * @return angle with range -180 to 180
      */
     public static double angleWrap(double angle) {
-        while (angle < -180) {
+        while (angle <= -180) {
             angle += 360;
         }
 

@@ -105,7 +105,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
     public void runFullAutoProgram() {
 
         positionToDetectSkystone();
-        //pickupSkystone();
+        pickupSkystone();
         deliverSkystone();
         moveFoundation();
         parkAtInsideLane();
@@ -130,42 +130,68 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         // stone quarry is 47 inches from the BLUE/RED wall, 48 inches from the audience wall
         // move sideways towards the stone quarry (caution we may hit the skybridge side support)
         // movement is towards +ve Y axis LEFT for BLUE , RIGHT for RED
-        nav.odometryMoveRightLeft(flipX4Red(-27), MecaBotMove.DRIVE_SPEED_SLOW);
+        nav.odometryMoveRightLeft(flipX4Red(-25), MecaBotMove.DRIVE_SPEED_SLOW);
 
         // ensure robot direction is straight down the stone quarry
-// disabled since we have to goToPosition() anyway after this, no use of aligning to walls.
-//        nav.gyroRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS), MecaBotMove.DRIVE_SPEED_MIN);
-
+        // CAUTION CAUTION -- The GYRO Angle DOES NOT MATCH the ODOMETRY Angle for the RED side.
+        // The gyro initialization CANNOT be controlled by software. It initializes hardware at ZERO angle on program init.
+        // GYRO angle is ZERO (+ve X-Axis) towards the stone quarry for BOTH BLUE and RED sides. DO NOT flipAngle4Red() here
+        nav.gyroRotateToHeading(FieldSkystone.ANGLE_POS_X_AXIS, MecaBotMove.DRIVE_SPEED_MIN);
+        sleep(500);
     }
 
     public void pickupSkystone() {
 
+        boolean found = false;
         // look for skystone in the stone quarry containing 6 stones
+        // Notes: the color sensor is mounted 5 inches from the front of the robot
+
         // choose the correct side color sensor depending on our alliance color
         ColorSensor cs = chooseColorSensorForSkystone();
 
-        // 1st skystone position is special because it cannot be picked up straight front,
-        // the skybridge is in the way. We have to grab it at 45% angle.
-        nav.odometryMoveForwardBack(5, MecaBotMove.DRIVE_SPEED_SLOW);
-        // check for skystone
-        if (isSkystone(cs)) {
-            telemetry.addData("Detected Skystone at position # ", 1);
-            telemetry.update();
-        }
+        // first stone center is at x=26 coordinate location, robot is approximately at x=24 location
+        // color sensor is at x=18~20 location, but
+        double distanceToNextStone = 5;
 
-        // look for skystones in #2 to #6 position
-        for (int i = 2; i <= 6; i++) {
+        // look for skystones in #1 to #6 position
+        for (int i = 1; i <= 6; i++) {
             // move forward one stone length at a time
-            nav.odometryMoveForwardBack(8, MecaBotMove.DRIVE_SPEED_SLOW);
+            nav.odometryMoveForwardBack(distanceToNextStone, MecaBotMove.DRIVE_SPEED_SLOW);
             // check for skystone
             if (isSkystone(cs)) {
+                found = true;
                 // take action to pickup skystone
                 telemetry.addData("Detected Skystone at position # ", i);
                 telemetry.update();
                 break;
             }
+            distanceToNextStone = 6.6; // each stone is 8 inches long
         }
-        sleep(5000);
+
+        if (!found) {
+            // nothing to do really, we can just go to foundation, and pretend to delivery skystone
+            return;
+        }
+
+
+        // pick up the skystone
+        // move back more than 8 inches to clear the skystone (tuning done)
+        nav.odometryMoveForwardBack(-11, MecaBotMove.DRIVE_SPEED_MIN);
+        // move sideways to position green wheels in front of the skystone
+        nav.odometryMoveRightLeft(flipX4Red(-13), MecaBotMove.DRIVE_SPEED_SLOW);
+        // turn intake wheels on for grabbing the skystone
+        robot.runIntake(MecaBotMove.DRIVE_SPEED_DEFAULT);
+        // move forward to grab the skystone
+        nav.odometryMoveForwardBack(6, MecaBotMove.DRIVE_SPEED_MIN);
+        // continue to run the intake for a little bit
+        sleep(1000);
+        // stop the intake, hopefully we have picked the stone already
+        robot.stopIntake();
+        // move sideways back to the lane under the skybridge
+        nav.odometryMoveRightLeft(flipX4Red(+14), MecaBotMove.DRIVE_SPEED_SLOW);
+
+        // fingers crossed we have picked the skystone and ready to deliver
+        robot.grabStoneWithClaw();
     }
 
     public boolean isSkystone(ColorSensor cs) {
@@ -189,11 +215,11 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
 
         // Driving in reverse to avoid turn around and crashing into alliance partner robot
         robot.setFrontReversed();
-        telemetry.update(); // print the new oritentation of the robot on driver station
+        telemetry.update(); // print the new orientation of the robot on driver station
         // destination is the centered on tile in front of center of foundation
-        nav.goToPosition(flipX4Red(-47), 34, MecaBotMove.DRIVE_SPEED_SLOW);
+        //nav.goToXPosition(flipX4Red(-47), MecaBotMove.DRIVE_SPEED_SLOW);
+        nav.goToXPosition(flipX4Red(-55), MecaBotMove.DRIVE_SPEED_SLOW);
         robot.setFrontNormal();
-        sleep(1000);
 
         // turn towards foundation
         nav.gyroRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_NEG_Y_AXIS), MecaBotMove.ROTATE_SPEED_SLOW);
@@ -204,20 +230,26 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
 
         // move backwards to touch the foundation edge
         nav.odometryMoveForwardBack(-8, MecaBotMove.DRIVE_SPEED_SLOW);
-        telemetry.update(); // print the new oritentation of the robot on driver station
-        sleep(2000);
+        telemetry.update(); // print the new orientation of the robot on driver station
 
+        // deliver skystone on the foundation
+        robot.moveLiftArmOutside();
     }
 
     public void moveFoundation() {
         // clamp down on the foundation
         robot.grabFoundation();
         // DO NOT REMOVE this sleep() the clamps take a long time, if we don't sleep the robot moves away before clampiong.
-        sleep(2000);
+        sleep(1000);
+
+        // release skystone
+        robot.releaseStoneWithClaw();
+        robot.moveLiftArmInside();
 
         // bring the foundation towards the build zone. When we rotate the foundation in next step,
         // its corner will be in build zone when pushed against the scoreboard wall
-        nav.odometryMoveForwardBack(20, MecaBotMove.DRIVE_SPEED_SLOW);
+        //nav.odometryMoveForwardBack(20, MecaBotMove.DRIVE_SPEED_SLOW);
+        nav.goToPosition(flipX4Red(-38), 18, MecaBotMove.DRIVE_SPEED_DEFAULT, false);
 
         // rotate with the foundation to be square with the walls
         // CAUTION CAUTION -- The GYRO Angle DOES NOT MATCH the ODOMETRY Angle for the RED side.
@@ -228,20 +260,21 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
 
         // drive backwards to push the foundation against the scoreboard wall
         // foundation is 18.5 and half robot is 9
-        nav.encoderMoveForwardBack(-16, MecaBotMove.DRIVE_SPEED_SLOW);
+        nav.encoderMoveForwardBack(-8, MecaBotMove.DRIVE_SPEED_SLOW);
         // foundation has been repositioned, release the clamps
         robot.releaseFoundation();
+        sleep(1000);
     }
 
     public void parkAtInsideLane() {
         // go to middle of a tile in inside lane
-        nav.goToPosition(flipX4Red(-24), 33, MecaBotMove.DRIVE_SPEED_SLOW);
+        nav.goToPosition(flipX4Red(-23), 35, MecaBotMove.DRIVE_SPEED_SLOW);
         // straighten up to travel along the X-Axis or the player alliance wall
         // CAUTION CAUTION -- The GYRO Angle DOES NOT MATCH the ODOMETRY Angle for the RED side.
         // GYRO angle is ZERO towards the stone quarry for BOTH BLUE and RED sides. DO NOT flipAngle4Red() here
         nav.gyroRotateToHeading(FieldSkystone.ANGLE_POS_X_AXIS, MecaBotMove.ROTATE_SPEED_SLOW);
         // now go park under the skybridge
-        nav.goToXPosition(0.0);
+        nav.goToPosition(0.0, 35.0);
     }
 
 }
