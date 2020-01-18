@@ -11,7 +11,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalPosition;
 import org.firstinspires.ftc.teamcode.purepursuit.MathFunctions;
-import org.firstinspires.ftc.teamcode.skystone.FieldSkystone;
 
 import static java.lang.Double.NaN;
 import static org.firstinspires.ftc.teamcode.purepursuit.MathFunctions.angleWrapRad;
@@ -90,8 +89,9 @@ public class MecaBotMove {
 
         while ((delta != 0) && ((delta > 0) == (prev > 0))) { // while the sign of delta and prev is same (both +ve or both -ve)
 
-            if (Math.abs(delta) < 10) // slow down when less than 10 degrees rotation remaining
+            if ((Math.abs(delta) < 10) && (turnSpeed >= ROTATE_SPEED_DEFAULT)) { // slow down when less than 10 degrees rotation remaining
                 turnSpeed = DRIVE_SPEED_MIN;
+            }
             // the sign of turnSpeed determines the direction of rotation of robot
             robot.driveTank(0, turnSpeed * direction);
 
@@ -273,7 +273,7 @@ public class MecaBotMove {
     }
 
     public void goToYPosition(double targetY) {
-        goToXPosition(targetY, DRIVE_SPEED_DEFAULT);
+        goToYPosition(targetY, DRIVE_SPEED_DEFAULT);
     }
 
     /**
@@ -317,8 +317,8 @@ public class MecaBotMove {
         }
         double origX = globalPosition.getXinches();
         double origY = globalPosition.getYinches();
-        double curX = origX;
-        double curY = origY;
+        double curX;
+        double curY;
         double dist = 0;
 
         while (dist < Math.abs(inches)) {
@@ -376,40 +376,36 @@ public class MecaBotMove {
     /*
      * Move robot forward or backward, +ve distance moves forward, -ve distance moves backward
      */
-    public void moveForwardBack(double inches) {
-        moveDistance( inches, false, DEFAULT_SPEED);
+    public void encoderMoveForwardBack(double inches) {
+        encoderMoveDistance( inches, false, DEFAULT_SPEED);
     }
 
-    public void moveForwardBack(double inches, double speed) {
-        moveDistance( inches, false, speed);
+    public void encoderMoveForwardBack(double inches, double speed) {
+        encoderMoveDistance( inches, false, speed);
     }
 
    /*
     * Move robot left or right, +ve distance moves right, -ve distance moves left
     */
-    public void moveRightLeft(double inches) {
-        moveDistance(inches, true, DEFAULT_SPEED);
+    public void encoderMoveRightLeft(double inches) {
+        encoderMoveDistance(inches, true, DEFAULT_SPEED);
     }
 
-    public void moveRightLeft(double inches, double speed) {
-        moveDistance(inches, true, speed);
+    public void encoderMoveRightLeft(double inches, double speed) {
+        encoderMoveDistance(inches, true, speed);
     }
 
     /*
      * Move robot left or right, +ve distance moves LEFT, -ve distance moves RIGHT
      */
     @Deprecated
-    public void moveLeftRight(double inches) {
-        // maybe needed to compensate for weak movements
-        if (inches < 0){    //right over drive by a multiple
-            inches=inches * FieldSkystone.rightMultiple;
-        }
-        moveDistance(inches * -1.0, true, DEFAULT_SPEED);
+    public void encoderMoveLeftRight(double inches) {
+        encoderMoveDistance(inches * -1.0, true, DEFAULT_SPEED);
     }
 
     @Deprecated
-    public void moveLeftRight(double inches, double speed) {
-        moveDistance(inches * -1.0, true, speed);
+    public void encoderMoveLeftRight(double inches, double speed) {
+        encoderMoveDistance(inches * -1.0, true, speed);
     }
 
     /**
@@ -421,7 +417,7 @@ public class MecaBotMove {
      * @param speed             driving speed for the movement
      */
 
-    private void moveDistance(double inches, boolean mecanumSideways, double speed) {
+    private void encoderMoveDistance(double inches, boolean mecanumSideways, double speed) {
 
         //convert inches to tick counts
         int driverEncoderTarget = (int) (ENCODER_TICKS_PER_INCH * inches);
@@ -537,7 +533,7 @@ public class MecaBotMove {
         encoderTurn(inches, counterClockwise, DEFAULT_SPEED);
     }
 
-    public void waitToReachTargetPosition(WheelPosition dominantWheel, int leftFront, int leftBack, int rightFront, int rightBack) {
+    private void waitToReachTargetPosition(WheelPosition dominantWheel, int leftFront, int leftBack, int rightFront, int rightBack) {
 
         // Loop until motors are no longer busy.
         while (robot.leftFrontDrive.isBusy() || robot.rightFrontDrive.isBusy() || robot.leftBackDrive.isBusy() || robot.rightBackDrive.isBusy()) {
@@ -599,20 +595,41 @@ public class MecaBotMove {
  * 2. Since we are using odometry we cannot flip the X-axis positive direction between RED and BLUE.
  */
 
+    public static final boolean BLUESIDE =false;      //if red side, set it to false
+    public static final boolean PARK_INSIDE =true;
+    public static final boolean START_STONE_SIDE=true;  //true if start at stone side
+    public static double robotStartX= 41;      // robot origin aline with image right
+    public static double robotStartY=17.25;       //right back corner of robot
 
-/**
- *  Method to drive the robot from one point marked by coordinate curX, curY to another targetX, target Y.
- *  The coordinate origin is assumed to be at the alliance wall center (where bridge touch the wall)
- *  with Y pointing to the middle of the field and X pointing to the stone side.
- *  Robot move in Y direction first followed by X.
- *    @param targetX  target X coordinate value
- *    @param targetY  target Y coordinate value
- *    @param curX     start X coordinate value
- *    @param curY     start Y coordinate value
- *    @param headXpositive   true when robot forward heading is along positive X axis
- *                           set this to true for RED alliance, false for BLUE alliance
- */
+    public static void initRobotStartX(){
+        if (START_STONE_SIDE) {
+            if (BLUESIDE) {
+                robotStartX = 41.5;   //blue stone side: align with wall image right edge
+            } else {
+                robotStartX = 24;   //red stone side: align with tile edge
+            }
+        }else{     //foundation side
+            if (BLUESIDE) {
+                robotStartX = -24;   //blue foundation side: align tile
+            } else {
+                robotStartX = -41;   //red foundation side: align with tile edge
+            }
+        }
+    }
 
+
+    /**
+     *  Method to drive the robot from one point marked by coordinate curX, curY to another targetX, target Y.
+     *  The coordinate origin is assumed to be at the alliance wall center (where bridge touch the wall)
+     *  with Y pointing to the middle of the field and X pointing to the stone side.
+     *  Robot move in Y direction first followed by X.
+     *    @param targetX  target X coordinate value
+     *    @param targetY  target Y coordinate value
+     *    @param curX     start X coordinate value
+     *    @param curY     start Y coordinate value
+     *    @param headXpositive   true when robot forward heading is along positive X axis
+     *                           set this to true for RED alliance, false for BLUE alliance
+     */
     public void moveYX(double targetX, double targetY, double curX, double curY, boolean headXpositive){
         double distanceMarginInch=0.1;    //minimum required distance to invoke the move
         double xdist=targetX-curX;
@@ -625,12 +642,17 @@ public class MecaBotMove {
 
         myOpMode.telemetry.addData(" Xdist Ydist", "%.1f %.1f", xdist,ydist);
         if (Math.abs(ydist) > distanceMarginInch){
-            moveLeftRight(ydist);
+            encoderMoveLeftRight(ydist);
         }
         if (Math.abs(xdist) > distanceMarginInch) {
-            moveForwardBack(xdist);
+            encoderMoveForwardBack(xdist);
         }
     }
+
+    //value adjust for RED side stone pick up and return to parking
+    private static final double parkingMarginL=1;   //leave space on left side of robot at parking
+    private static final double parkingMarginR=0;   //leave space on right/arm side of robot at parking
+    private static final double bridgeY=46;
 
     /**
      *  Method to park the robot under the bridge. It used the method moveYX() method
@@ -645,8 +667,8 @@ public class MecaBotMove {
     public void goPark(double curX, double curY, boolean parkInside, boolean headXpositive){
 
         //adjusted temporarily for Red Alliance Parking
-        double toY = parkInside ? FieldSkystone.bridgeY- FieldSkystone.parkingMarginR:
-                 FieldSkystone.robotWidth+ FieldSkystone.parkingMarginL;
+        double toY = parkInside ? bridgeY- parkingMarginR:
+                 MecaBot.WIDTH+ parkingMarginL;
         double toX = headXpositive? -5:X_PARK_INNER_OUTER;
 
         myOpMode.telemetry.addData("Parking target X Y", "%.1f %.1f", toX,toY);

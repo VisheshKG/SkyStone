@@ -13,8 +13,8 @@ import org.firstinspires.ftc.teamcode.robot.MecaBot;
 import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
 
 
-@TeleOp(name = "MecaBotTeleOp", group="QT")
-public class MecaBotTeleOp extends LinearOpMode {
+@TeleOp(name = "Skystone TeleOp", group="QT")
+public class SkystoneTeleOp extends LinearOpMode {
 
     static final int    CYCLE_MS    =   50;     // period of each cycle
     static final double TURN_FACTOR =   0.6;    // slow down turning speed

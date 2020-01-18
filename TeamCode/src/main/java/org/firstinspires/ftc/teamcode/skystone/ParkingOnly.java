@@ -11,28 +11,33 @@ import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
 //@Disabled
 public class ParkingOnly extends LinearOpMode {
 
-    MecaBot robot = new MecaBot();
-    MecaBotMove nav = new MecaBotMove(this, robot);
+    //parking
+    private static final double delayParkingBySeconds = 0;
+    private static final double driveToPark=-32;
+
+
+    private MecaBot robot = new MecaBot();
+    private MecaBotMove nav = new MecaBotMove(this, robot);
 
     public void runOpMode() {
         robot.init(this.hardwareMap);
         telemetry.setAutoClear(false);
-        FieldSkystone.initRobotStartX();
-        double curX= FieldSkystone.robotStartX;
-        double curY= FieldSkystone.robotStartY;
+        MecaBotMove.initRobotStartX();
+        double curX= MecaBotMove.robotStartX;
+        double curY= MecaBotMove.robotStartY;
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         ElapsedTime opmodeRunTime = new ElapsedTime();
 
-        while (opmodeRunTime.seconds() < FieldSkystone.delayParkingBySeconds){
+        while (opmodeRunTime.seconds() < delayParkingBySeconds){
             sleep(500);
             telemetry.addData("Waiting Time (seconds)", "%.1f seconds", opmodeRunTime.seconds());
         }
         telemetry.addData("start X Y", "%.1f %.1f", curX,curY);
         telemetry.update();
 
-        nav.moveForwardBack(FieldSkystone.driveToPark);
+        nav.encoderMoveForwardBack(driveToPark);
 /*
         boolean headXpositive=!FieldSkystone.BLUESIDE;
         nav.goPark(curX,curY,FieldSkystone.PARK_INSIDE,headXpositive);
