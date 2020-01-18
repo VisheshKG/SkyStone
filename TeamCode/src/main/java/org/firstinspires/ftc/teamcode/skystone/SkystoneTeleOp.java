@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.skystone;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
@@ -104,9 +105,11 @@ public class SkystoneTeleOp extends LinearOpMode {
         if (gamepad1.x) {
             if (gamepad1.dpad_up) {  // dpad_up means NORMAL or green intake wheels is front of robot
                 robot.setFrontNormal();
+                robot.setLightGreen();
             }
             else if (gamepad1.dpad_down) {
                 robot.setFrontReversed(); // dpad_down means REVERSED or Lift face is front of robot
+                robot.setLightRed();
             }
             else if (gamepad1.left_bumper) {
                 xpos = globalPosition.getXinches();
@@ -136,9 +139,11 @@ public class SkystoneTeleOp extends LinearOpMode {
         //update speedMultiplier
         if (gamepad1.right_bumper) {
             speedMultiplier = 1.0;
+            robot.setFastBlue();
         }
         else if (gamepad1.left_bumper) {
             speedMultiplier = 0.66;
+            robot.setSlowBlue();
         }
 
         //if we want to move sideways (MECANUM)
@@ -228,7 +233,6 @@ public class SkystoneTeleOp extends LinearOpMode {
             robot.leftIntake.setPower(0);
             robot.rightIntake.setPower(0);
         }
-
     }
 
     public void bumper() {
@@ -248,4 +252,5 @@ public class SkystoneTeleOp extends LinearOpMode {
             robot.grabStoneWithSidearm();
         }
     }
+
 }
