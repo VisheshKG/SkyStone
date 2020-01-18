@@ -20,7 +20,7 @@ import org.firstinspires.ftc.teamcode.skystone.FieldSkystone.AllianceColor;
  * Robot is 18x18 square. Robot (x,y) position is at the center of the robot.
  */
 
-public abstract class MecaBotSkystoneAuto extends LinearOpMode {
+public abstract class SkystoneAutoBase extends LinearOpMode {
 
     // OpMode members here
     protected MecaBot robot;

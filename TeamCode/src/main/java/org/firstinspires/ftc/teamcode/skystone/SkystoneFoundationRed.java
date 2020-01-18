@@ -31,19 +31,17 @@ package org.firstinspires.ftc.teamcode.skystone;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.robot.MecaBot;
 import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
 
 
-@Autonomous(name="BLUE Foundation+Parking", group="QT")
+@Autonomous(name="RED Foundation+Parking", group="QT")
 @Disabled
-public class MecabotFoundationBlue extends MecaBotSkystoneAuto {
+public class SkystoneFoundationRed extends SkystoneAutoBase {
 
-    private static final boolean BLUE = true;
+    static final boolean BLUE = false;
 
     /* Declare OpMode members. */
     static final double     DRIVE_SPEED             = 0.8;
@@ -66,14 +64,15 @@ public class MecabotFoundationBlue extends MecaBotSkystoneAuto {
         // Robot back is facing the foundation (+ve Y-axis)
         // The direction of travel from starting position to foundation is backwards or reverse
         // hence robot front face (green wheels) orientation is -ve Y-axis or -90 degrees
-        globalPosition.initGlobalPosition(-47.0, 9.0, -90.0);
+        globalPosition.initGlobalPosition(47.0, 9.0, -90.0);
 
     }
 
     @Override
     public void runOpMode() {
 
-        aColor = FieldSkystone.AllianceColor.BLUE;
+
+        aColor = FieldSkystone.AllianceColor.RED;
 
         // initialize the robot hardware, navigation, IMU, Odometry and Telemetry display
         initializeOpMode();
@@ -115,20 +114,22 @@ public class MecabotFoundationBlue extends MecaBotSkystoneAuto {
         // Allow the servo some time to move
         sleep(1000);
 
-//        nav.encoderMoveForwardBack(24);
+        nav.encoderMoveForwardBack(24);
 
+        double turnDistance = BLUE ? TURN_FOUNDATION_DISTANCE : 130;
         // turn the foundation so that long edge if parallel to the build zone wall
-        nav.encoderTurn(TURN_FOUNDATION_DISTANCE, BLUE, SLOW_SPEED);
+//        nav.encoderTurn(turnDistance, BLUE ? true : false, SLOW_SPEED);
+        nav.encoderRotate(40, BLUE ? true : false, SLOW_SPEED);
 
         // drive the robot in reverse to push the foundation to the build zone wall
-        nav.encoderMoveForwardBack(-30);
+        nav.encoderMoveForwardBack(-20);
 
         robot.releaseFoundation();
         // Allow the servo some time to move
         sleep(1000);
 
         // Move towards the wall so that we allow space for alliance partner to park
-        nav.encoderMoveRightLeft(BLUE ? +12 : -12);
+        nav.encoderMoveRightLeft(BLUE ? -12 : -18);
 
         // now go park under the bridge
         nav.encoderMoveForwardBack(42);
