@@ -29,6 +29,8 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
 
     protected AllianceColor aColor;
 
+    boolean haveSkystone = false;
+
     protected double flipX4Red(double value) {
         return (aColor == AllianceColor.BLUE) ? value : -value;
     }
@@ -190,8 +192,11 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         // move sideways back to the lane under the skybridge
         nav.odometryMoveRightLeft(flipX4Red(+14), MecaBotMove.DRIVE_SPEED_SLOW);
 
-        // fingers crossed we have picked the skystone and ready to deliver
-        robot.grabStoneWithClaw();
+        cs = robot.blockColorSensor;
+        if (isSkystone(cs)) {
+            haveSkystone = true;
+            robot.grabStoneWithClaw();
+        }
     }
 
     public boolean isSkystone(ColorSensor cs) {
@@ -233,7 +238,9 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         telemetry.update(); // print the new orientation of the robot on driver station
 
         // deliver skystone on the foundation
-        robot.moveLiftArmOutside();
+        if (haveSkystone) {
+            robot.moveLiftArmOutside();
+        }
     }
 
     public void moveFoundation() {
@@ -243,9 +250,10 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         sleep(1000);
 
         // release skystone
-        robot.releaseStoneWithClaw();
-        robot.moveLiftArmInside();
-
+        if (haveSkystone) {
+            robot.releaseStoneWithClaw();
+            robot.moveLiftArmInside();
+        }
         // bring the foundation towards the build zone. When we rotate the foundation in next step,
         // its corner will be in build zone when pushed against the scoreboard wall
         //nav.odometryMoveForwardBack(20, MecaBotMove.DRIVE_SPEED_SLOW);
