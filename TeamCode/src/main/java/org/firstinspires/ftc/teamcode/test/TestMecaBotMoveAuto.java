@@ -9,7 +9,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.robot.MecaBot;
 import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
-import org.firstinspires.ftc.teamcode.skystone.FieldSkystone;
 
 @Autonomous(name = "Test MecaBotMove", group="Test")
 @Disabled
@@ -41,7 +40,7 @@ public class TestMecaBotMoveAuto extends LinearOpMode {
         sleep(2000 );
         robot.releaseStoneWithSidearm();
 
-        //nav.moveLeftRight(-12);
+        //nav.encoderMoveLeftRight(-12);
 
         //nav.goPark(24,24, false,true);
         sleep(5000);
@@ -51,9 +50,9 @@ public class TestMecaBotMoveAuto extends LinearOpMode {
 
         /*
         double inchMove=10;  //2 scan 17 apart; 3 scan
-        nav.moveForwardBack(inchMove);
+        nav.encoderMoveForwardBack(inchMove);
         sleep(2000);
-        nav.moveForwardBack(inchMove);
+        nav.encoderMoveForwardBack(inchMove);
         sleep(2000);
 
         nav.grabTheStone();
@@ -83,11 +82,11 @@ public class TestMecaBotMoveAuto extends LinearOpMode {
 
     private void testDrawBox(){
         double aInch=24;
-        nav.moveForwardBack(aInch);
-        nav.moveLeftRight(aInch);
+        nav.encoderMoveForwardBack(aInch);
+        nav.encoderMoveLeftRight(aInch);
         aInch=-24;
-        nav.moveForwardBack(aInch);
-        nav.moveLeftRight(aInch);
+        nav.encoderMoveForwardBack(aInch);
+        nav.encoderMoveLeftRight(aInch);
     }
     public void testColorSensor(){
         ColorSensor cs=robot.rightColorSensor;

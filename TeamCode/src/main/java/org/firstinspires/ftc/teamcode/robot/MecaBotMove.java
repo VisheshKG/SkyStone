@@ -11,7 +11,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalPosition;
 import org.firstinspires.ftc.teamcode.purepursuit.MathFunctions;
-import org.firstinspires.ftc.teamcode.skystone.FieldSkystone;
 
 import static java.lang.Double.NaN;
 import static org.firstinspires.ftc.teamcode.purepursuit.MathFunctions.angleWrapRad;
@@ -377,36 +376,36 @@ public class MecaBotMove {
     /*
      * Move robot forward or backward, +ve distance moves forward, -ve distance moves backward
      */
-    public void moveForwardBack(double inches) {
-        moveDistance( inches, false, DEFAULT_SPEED);
+    public void encoderMoveForwardBack(double inches) {
+        encoderMoveDistance( inches, false, DEFAULT_SPEED);
     }
 
-    public void moveForwardBack(double inches, double speed) {
-        moveDistance( inches, false, speed);
+    public void encoderMoveForwardBack(double inches, double speed) {
+        encoderMoveDistance( inches, false, speed);
     }
 
    /*
     * Move robot left or right, +ve distance moves right, -ve distance moves left
     */
-    public void moveRightLeft(double inches) {
-        moveDistance(inches, true, DEFAULT_SPEED);
+    public void encoderMoveRightLeft(double inches) {
+        encoderMoveDistance(inches, true, DEFAULT_SPEED);
     }
 
-    public void moveRightLeft(double inches, double speed) {
-        moveDistance(inches, true, speed);
+    public void encoderMoveRightLeft(double inches, double speed) {
+        encoderMoveDistance(inches, true, speed);
     }
 
     /*
      * Move robot left or right, +ve distance moves LEFT, -ve distance moves RIGHT
      */
     @Deprecated
-    public void moveLeftRight(double inches) {
-        moveDistance(inches * -1.0, true, DEFAULT_SPEED);
+    public void encoderMoveLeftRight(double inches) {
+        encoderMoveDistance(inches * -1.0, true, DEFAULT_SPEED);
     }
 
     @Deprecated
-    public void moveLeftRight(double inches, double speed) {
-        moveDistance(inches * -1.0, true, speed);
+    public void encoderMoveLeftRight(double inches, double speed) {
+        encoderMoveDistance(inches * -1.0, true, speed);
     }
 
     /**
@@ -418,7 +417,7 @@ public class MecaBotMove {
      * @param speed             driving speed for the movement
      */
 
-    private void moveDistance(double inches, boolean mecanumSideways, double speed) {
+    private void encoderMoveDistance(double inches, boolean mecanumSideways, double speed) {
 
         //convert inches to tick counts
         int driverEncoderTarget = (int) (ENCODER_TICKS_PER_INCH * inches);
@@ -643,10 +642,10 @@ public class MecaBotMove {
 
         myOpMode.telemetry.addData(" Xdist Ydist", "%.1f %.1f", xdist,ydist);
         if (Math.abs(ydist) > distanceMarginInch){
-            moveLeftRight(ydist);
+            encoderMoveLeftRight(ydist);
         }
         if (Math.abs(xdist) > distanceMarginInch) {
-            moveForwardBack(xdist);
+            encoderMoveForwardBack(xdist);
         }
     }
 

@@ -124,15 +124,15 @@ public class MecabotAutoBlue extends LinearOpMode {
     public void moveFoundationToBuildZone() {
 
         // move away from perimeter wall before moving towards build wall
-        nav.moveForwardBack(-MOVE_TOWARDS_FOUNDATION);
+        nav.encoderMoveForwardBack(-MOVE_TOWARDS_FOUNDATION);
 
         // move towards the build wall to center robot on foundation long edge
         double robotToFoundationEdge = (FieldSkystone.FOUNDATION_LENGTH - MecaBot.WIDTH) / 2;
         double moveToBuildWall = BUILD_WALL_TO_ROBOT - FieldSkystone.BUILD_WALL_TO_FOUNDATION - robotToFoundationEdge;
-        nav.moveRightLeft(BLUE ? moveToBuildWall : -moveToBuildWall);
+        nav.encoderMoveRightLeft(BLUE ? moveToBuildWall : -moveToBuildWall);
 
         // move backwards towards the foundation now, slowly
-        nav.moveForwardBack((FieldSkystone.SIDE_WALL_TO_FOUNDATION - MecaBot.LENGTH - MOVE_TOWARDS_FOUNDATION) * -1.0, SLOW_SPEED);
+        nav.encoderMoveForwardBack((FieldSkystone.SIDE_WALL_TO_FOUNDATION - MecaBot.LENGTH - MOVE_TOWARDS_FOUNDATION) * -1.0, SLOW_SPEED);
 
         // TODO: check for the contact switch activation here to tell us when robot has reached
 
@@ -140,23 +140,23 @@ public class MecabotAutoBlue extends LinearOpMode {
         // Allow the servo some time to move
         sleep(1000);
 
-//        nav.moveForwardBack(24);
+//        nav.encoderMoveForwardBack(24);
 
         // turn the foundation so that long edge if parallel to the build zone wall
         nav.encoderTurn(TURN_FOUNDATION_DISTANCE, BLUE, SLOW_SPEED);
 
         // drive the robot in reverse to push the foundation to the build zone wall
-        nav.moveForwardBack(-30);
+        nav.encoderMoveForwardBack(-30);
 
         robot.releaseFoundation();
         // Allow the servo some time to move
         sleep(1000);
 
         // Move towards the wall so that we allow space for alliance partner to park
-        nav.moveRightLeft(BLUE ? +12 : -12);
+        nav.encoderMoveRightLeft(BLUE ? +12 : -12);
 
         // now go park under the bridge
-        nav.moveForwardBack(42);
+        nav.encoderMoveForwardBack(42);
     }
 
     /*

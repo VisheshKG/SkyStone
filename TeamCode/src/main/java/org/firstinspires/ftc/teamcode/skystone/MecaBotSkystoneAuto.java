@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.skystone;
 
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 
@@ -10,7 +9,6 @@ import org.firstinspires.ftc.teamcode.purepursuit.MathFunctions;
 import org.firstinspires.ftc.teamcode.robot.MecaBot;
 import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
 
-import org.firstinspires.ftc.teamcode.skystone.FieldSkystone;
 import org.firstinspires.ftc.teamcode.skystone.FieldSkystone.AllianceColor;
 
 /**
@@ -227,7 +225,7 @@ public abstract class MecaBotSkystoneAuto extends LinearOpMode {
 
         // drive backwards to push the foundation against the scoreboard wall
         // foundation is 18.5 and half robot is 9
-        nav.moveForwardBack(-20, MecaBotMove.DRIVE_SPEED_SLOW);
+        nav.encoderMoveForwardBack(-20, MecaBotMove.DRIVE_SPEED_SLOW);
         // foundation has been repositioned, release the clamps
         robot.releaseFoundation();
     }

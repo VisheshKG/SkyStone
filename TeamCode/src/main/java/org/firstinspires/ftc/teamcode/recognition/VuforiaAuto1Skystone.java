@@ -4,7 +4,6 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.skystone.FieldSkystone;
 import org.firstinspires.ftc.teamcode.robot.MecaBot;
 import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
 
@@ -127,7 +126,7 @@ public class VuforiaAuto1Skystone extends LinearOpMode {
          */
         curY=curY+inchClosetoScan;
         telemetry.addData("Move to within Vuforia Range:",moveInches);
-        nav.moveLeftRight(moveInches, HIGH_SPEED);
+        nav.encoderMoveLeftRight(moveInches, HIGH_SPEED);
     }
 
 
@@ -190,7 +189,7 @@ public class VuforiaAuto1Skystone extends LinearOpMode {
                         telemetry.addData("====Move to new location to scan ct (seconds)", "%d %.1f", ct, curSeconds);
                         telemetry.update();
                         double inchMove = BLUESIDE ? -scanInterval : scanInterval;
-                        nav.moveForwardBack(inchMove);   //Move
+                        nav.encoderMoveForwardBack(inchMove);   //Move
                         curX = curX + scanInterval;  //track coordinate
                         lastSeconds = curSeconds;   //reset per stone view time
                         telemetry.addData("----Field Current Position {x y}=", "%.2f  %.2f", curX, curY);
@@ -231,10 +230,10 @@ public class VuforiaAuto1Skystone extends LinearOpMode {
             if (y < 0) {
                 telemetry.addData("<<<<<Stone on Left-Move Left", yinch);
                 //todo: blue side left is forward, pass positive inch
-                nav.moveForwardBack(-yinch);
+                nav.encoderMoveForwardBack(-yinch);
             } else {   //NOTE: This is where you grab the stone and move to load.
                 telemetry.addData(">>>>>Stone on Right-Move Right", yinch);
-                nav.moveForwardBack(-yinch);
+                nav.encoderMoveForwardBack(-yinch);
             }
             curX=curX-yinch;     //fixed the bug on sign
         } else {
@@ -244,7 +243,7 @@ public class VuforiaAuto1Skystone extends LinearOpMode {
         //advance to move close to stone for grabbing
         telemetry.addData("MoveToStone", xinch);
         double adv=Math.abs(xinch)- closeToStone;  //include vuforia overshot of 1 inch
-        nav.moveLeftRight(-adv);
+        nav.encoderMoveLeftRight(-adv);
         curY=curY+adv;
         telemetry.addData("Field Current Position {x y}=","%.2f  %.2f", curX,curY);
     }
@@ -253,7 +252,7 @@ public class VuforiaAuto1Skystone extends LinearOpMode {
         telemetry.addData("GRAB STONE", "None");
         robot.grabStoneWithSidearm();
         sleep(500);
-        nav.moveLeftRight(backDistToCtrBridge, LOW_SPEED);  //back off from stone to location safe to cross bridge
+        nav.encoderMoveLeftRight(backDistToCtrBridge, LOW_SPEED);  //back off from stone to location safe to cross bridge
         curY=curY-backDistToCtrBridge;
         // move across bridge from x=72-5=67 to x=72-(49-4-7.5)=36
         deliverStone();
