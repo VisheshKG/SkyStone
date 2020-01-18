@@ -7,21 +7,26 @@ package org.firstinspires.ftc.teamcode.skystone;
  */
 
 public class FieldSkystone {
+
+    // FTC Team alliance color, BLUE or RED, the field is mirror images for each side
+    // therefore lot of robot movement calculations are affected by which color you are on
+    enum AllianceColor { BLUE, RED}
+
+    public static final double  ANGLE_POS_X_AXIS = 0.0;
+    public static final double  ANGLE_POS_Y_AXIS = 90.0;
+    public static final double  ANGLE_NEG_X_AXIS = 180.0;
+    public static final double  ANGLE_NEG_Y_AXIS = -90.0;
+
     public static final boolean BLUESIDE =false;      //if red side, set it to false
     public static final boolean PARK_INSIDE =true;
     public static final boolean START_STONE_SIDE=true;  //true if start at stone side
 
     // field distances between objects
     public static final double     TILE_SIZE                   = 24.0;
-    public static final double     SIDE_WALL_TO_FOUNDATION     = 47.25;
+    public static final double     SIDE_WALL_TO_FOUNDATION     = 47.0;
     public static final double     BUILD_WALL_TO_FOUNDATION    = 4.0;
     public static final double     FOUNDATION_LENGTH           = 37.5;
     public static final double     FOUNDATION_WIDTH            = 18.5;
-
-    public static final double  ANGLE_POS_X_AXIS = 0.0;
-    public static final double  ANGLE_POS_Y_AXIS = 90.0;
-    public static final double  ANGLE_NEG_X_AXIS = 180.0;
-    public static final double  ANGLE_NEG_Y_AXIS = -90.0;
 
     public static double robotStartX= 41;      // robot origin aline with image right
     public static double robotStartY=17.25;       //right back corner of robot

@@ -90,8 +90,9 @@ public class MecaBotMove {
 
         while ((delta != 0) && ((delta > 0) == (prev > 0))) { // while the sign of delta and prev is same (both +ve or both -ve)
 
-            if (Math.abs(delta) < 10) // slow down when less than 10 degrees rotation remaining
+            if ((Math.abs(delta) < 10) && (turnSpeed >= ROTATE_SPEED_DEFAULT)) { // slow down when less than 10 degrees rotation remaining
                 turnSpeed = DRIVE_SPEED_MIN;
+            }
             // the sign of turnSpeed determines the direction of rotation of robot
             robot.driveTank(0, turnSpeed * direction);
 
