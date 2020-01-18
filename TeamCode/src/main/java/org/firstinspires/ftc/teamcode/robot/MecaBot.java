@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode.robot;
 
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -82,6 +83,11 @@ public class MecaBot {
     // [skystone] color sensors used for detecting skystone vs normal stone in quarry
     public ColorSensor leftColorSensor = null;
     public ColorSensor rightColorSensor = null;
+    public ColorSensor blockColorSensor = null;
+
+    // Lights control
+    public RevBlinkinLedDriver lights = null;
+    public RevBlinkinLedDriver.BlinkinPattern pattern = null;
 
     // Robot front and rear can be flipped for driving purposes
     // Define enum constant for whether INTAKE or LIFT is Front of the robot (and other one is Rear)
@@ -224,6 +230,12 @@ public class MecaBot {
         // color sensors
         leftColorSensor = hwMap.get(ColorSensor.class, "leftColorSensor");
         rightColorSensor = hwMap.get(ColorSensor.class, "rightColorSensor");
+        blockColorSensor = hwMap.get(ColorSensor.class, "blockColorSensor");
+
+        // lights
+        lights = hwMap.get(RevBlinkinLedDriver.class, "lights");
+        pattern = RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE;
+        lights.setPattern(pattern);
 
         // Set all motors to zero power
         stopDriving();
@@ -457,5 +469,25 @@ public class MecaBot {
     public void releaseStoneWithSidearm() {
         sideArmServo.setPosition(SIDEARM_UP); // side arm up and free
     }
+
+    // set light color methods
+    public void setLightGreen() {
+        pattern = RevBlinkinLedDriver.BlinkinPattern.COLOR_WAVES_FOREST_PALETTE;
+        lights.setPattern(pattern);
+    }
+    public void setLightRed() {
+        pattern = RevBlinkinLedDriver.BlinkinPattern.COLOR_WAVES_LAVA_PALETTE;
+        lights.setPattern(pattern);
+    }
+    public void setSlowBlue() {
+        pattern = RevBlinkinLedDriver.BlinkinPattern.BREATH_BLUE;
+        lights.setPattern(pattern);
+    }
+    public void setFastBlue() {
+        pattern = RevBlinkinLedDriver.BlinkinPattern.HEARTBEAT_BLUE;
+        lights.setPattern(pattern);
+    }
+
+
 }
 
