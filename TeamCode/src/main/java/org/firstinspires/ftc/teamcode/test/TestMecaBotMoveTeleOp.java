@@ -108,13 +108,13 @@ public class TestMecaBotMoveTeleOp extends LinearOpMode {
                 nav.encoderRotate(26, false);
             }
             else if (gamepad2.a) {
-                nav.moveForwardBack(12);
+                nav.encoderMoveForwardBack(12);
                 sleep(500);
-                nav.moveRightLeft(12);
+                nav.encoderMoveRightLeft(12);
                 sleep(500);
-                nav.moveForwardBack(-12);
+                nav.encoderMoveForwardBack(-12);
                 sleep(500);
-                nav.moveRightLeft(-12);
+                nav.encoderMoveRightLeft(-12);
             }
             else {
                 // forward press on joystick is negative, backward press (towards human) is positive

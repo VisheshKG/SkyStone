@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode.robot;
 
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -37,13 +38,7 @@ import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-
 import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalPosition;
-import org.firstinspires.ftc.teamcode.purepursuit.MathFunctions;
 
 import static java.lang.Double.NaN;
 
@@ -88,11 +83,16 @@ public class MecaBot {
     // [skystone] color sensors used for detecting skystone vs normal stone in quarry
     public ColorSensor leftColorSensor = null;
     public ColorSensor rightColorSensor = null;
+    public ColorSensor blockColorSensor = null;
+
+    // Lights control
+    public RevBlinkinLedDriver lights = null;
+    public RevBlinkinLedDriver.BlinkinPattern pattern = null;
 
     // Robot front and rear can be flipped for driving purposes
     // Define enum constant for whether INTAKE or LIFT is Front of the robot (and other one is Rear)
-    public static enum DIRECTION { NORMAL, REVERSE};
-    private DIRECTION frontFace;
+    static enum DIRECTION { NORMAL, REVERSE};
+    DIRECTION frontFace;
 
     //constants here
     public static final double LENGTH = 17.0;
@@ -133,7 +133,20 @@ public class MecaBot {
         frontFace = DIRECTION.NORMAL;
     }
 
-    // Robot front facing direction toggle methods
+    /*
+     * Robot front facing direction toggle methods. Robot FRONT direction can be flipped.
+     * This is important to understand, to avoid unexpected behavior.
+     * When Robot front direction is toggled from NORMAL to REVERSE, the reverse driving is
+     * achieved by changing only 2 underlying methods, all other code is oblivious of this.
+     * @see MecaBot#setTargetPosition()
+     * @see MecaBot#driveWheels()
+     *
+     * MOST IMPORTANT: All driving and move methods must call one of the above methods,
+     * and must NOT set drivetrain motor power directly. Specifically the methods
+     * @see MecaBot#SetDrivePower()
+     * do NOT handle frontFace flipping and driving in reverse.
+     * They are used for non-directional movement, such as gyro rotation.
+     */
     public DIRECTION frontDirection() {
         return frontFace;
     }
@@ -145,9 +158,14 @@ public class MecaBot {
     }
     public void setFrontNormal() {
         frontFace = DIRECTION.NORMAL;
+        setLightGreen();
     }
     public void setFrontReversed() {
         frontFace = DIRECTION.REVERSE;
+        setLightRed();
+    }
+    public String getFrontDirection() {
+        return ((frontFace == DIRECTION.NORMAL) ? "NORMAL" : "REVERSE");
     }
             
     /* Initialize standard Hardware interfaces */
@@ -214,6 +232,12 @@ public class MecaBot {
         // color sensors
         leftColorSensor = hwMap.get(ColorSensor.class, "leftColorSensor");
         rightColorSensor = hwMap.get(ColorSensor.class, "rightColorSensor");
+        blockColorSensor = hwMap.get(ColorSensor.class, "blockColorSensor");
+
+        // lights
+        lights = hwMap.get(RevBlinkinLedDriver.class, "lights");
+        pattern = RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE;
+        lights.setPattern(pattern);
 
         // Set all motors to zero power
         stopDriving();
@@ -397,10 +421,26 @@ public class MecaBot {
      * Intake operation methods
      */
     public void runIntake(double speed) {
+        // we need negative power for sucking in the stones
+        if (speed > 0) {
+            speed = -speed;
+        }
         leftIntake.setPower(speed);
         rightIntake.setPower(speed);
     }
     public void stopIntake() {
+        leftIntake.setPower(0);
+        rightIntake.setPower(0);
+    }
+    public void runOuttake(double speed) {
+        // we need positive power for ejecting out the stones
+        if (speed < 0) {
+            speed = +speed;
+        }
+        leftIntake.setPower(speed);
+        rightIntake.setPower(speed);
+    }
+    public void stopOuttake() {
         leftIntake.setPower(0);
         rightIntake.setPower(0);
     }
@@ -447,5 +487,25 @@ public class MecaBot {
     public void releaseStoneWithSidearm() {
         sideArmServo.setPosition(SIDEARM_UP); // side arm up and free
     }
+
+    // set light color methods
+    public void setLightGreen() {
+        pattern = RevBlinkinLedDriver.BlinkinPattern.COLOR_WAVES_FOREST_PALETTE;
+        lights.setPattern(pattern);
+    }
+    public void setLightRed() {
+        pattern = RevBlinkinLedDriver.BlinkinPattern.COLOR_WAVES_LAVA_PALETTE;
+        lights.setPattern(pattern);
+    }
+    public void setSlowBlue() {
+        pattern = RevBlinkinLedDriver.BlinkinPattern.BREATH_BLUE;
+        lights.setPattern(pattern);
+    }
+    public void setFastBlue() {
+        pattern = RevBlinkinLedDriver.BlinkinPattern.HEARTBEAT_BLUE;
+        lights.setPattern(pattern);
+    }
+
+
 }
 

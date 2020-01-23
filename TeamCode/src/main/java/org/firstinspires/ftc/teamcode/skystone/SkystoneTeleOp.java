@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.skystone;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
@@ -12,8 +13,8 @@ import org.firstinspires.ftc.teamcode.robot.MecaBot;
 import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
 
 
-@TeleOp(name = "MecaBotTeleOp", group="QT")
-public class MecaBotTeleOp extends LinearOpMode {
+@TeleOp(name = "Skystone TeleOp", group="QT")
+public class SkystoneTeleOp extends LinearOpMode {
 
     static final int    CYCLE_MS    =   50;     // period of each cycle
     static final double TURN_FACTOR =   0.6;    // slow down turning speed
@@ -104,9 +105,11 @@ public class MecaBotTeleOp extends LinearOpMode {
         if (gamepad1.x) {
             if (gamepad1.dpad_up) {  // dpad_up means NORMAL or green intake wheels is front of robot
                 robot.setFrontNormal();
+                robot.setLightGreen();
             }
             else if (gamepad1.dpad_down) {
                 robot.setFrontReversed(); // dpad_down means REVERSED or Lift face is front of robot
+                robot.setLightRed();
             }
             else if (gamepad1.left_bumper) {
                 xpos = globalPosition.getXinches();
@@ -123,18 +126,24 @@ public class MecaBotTeleOp extends LinearOpMode {
 
     public void autodrive() {
         if (autoDriving) {
-            autoDriving = nav.goTowardsPosition(xpos, ypos, 0.5);
+            autoDriving = nav.goTowardsPosition(xpos, ypos, MecaBotMove.DRIVE_SPEED_DEFAULT, true);
             telemetry.addData("Driving Towards", "X %2.2f | Y %2.2f | Angle %3.2f", xpos, ypos, tpos);
         }
     }
 
     public void operdrive() {
+        if (autoDriving) {
+            return;
+        }
+
         //update speedMultiplier
         if (gamepad1.right_bumper) {
             speedMultiplier = 1.0;
+            robot.setFastBlue();
         }
         else if (gamepad1.left_bumper) {
             speedMultiplier = 0.66;
+            robot.setSlowBlue();
         }
 
         //if we want to move sideways (MECANUM)
@@ -142,7 +151,7 @@ public class MecaBotTeleOp extends LinearOpMode {
             robot.driveMecanum(gamepad1.left_stick_x * speedMultiplier);
         }
         // normal tank movement
-        else {  // only if joystick is active, otherwise brakes are applied during autodrive()
+        else{  // only if joystick is active, otherwise brakes are applied during autodrive()
             // forward press on joystick is negative, backward press (towards human) is positive
             // right press on joystick is positive value, left press is negative value
             // reverse sign of joystick values to match the expected sign in driveTank() method.
@@ -224,7 +233,6 @@ public class MecaBotTeleOp extends LinearOpMode {
             robot.leftIntake.setPower(0);
             robot.rightIntake.setPower(0);
         }
-
     }
 
     public void bumper() {
@@ -244,4 +252,5 @@ public class MecaBotTeleOp extends LinearOpMode {
             robot.grabStoneWithSidearm();
         }
     }
+
 }

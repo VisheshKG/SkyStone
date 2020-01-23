@@ -1,9 +1,11 @@
 package org.firstinspires.ftc.teamcode.purepursuit;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 @Autonomous(name = "Pure Pursuit Auto", group = "PurePursuit")
+@Disabled
 public class PurePursuitAuto extends LinearOpMode {
 
     PureBot robot = new PureBot();

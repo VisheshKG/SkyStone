@@ -51,7 +51,7 @@ import java.util.List;
  * is explained below.
  */
 @TeleOp(name = "Test TensorFlow Object Detection", group = "Concept")
-//@Disabled
+@Disabled
 public class testTensorFlowObjectDetection extends LinearOpMode {
     private TensorflowUtil tfUtil= new TensorflowUtil(this);
 
