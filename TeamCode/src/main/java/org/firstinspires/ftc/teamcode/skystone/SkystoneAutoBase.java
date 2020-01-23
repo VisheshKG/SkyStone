@@ -263,10 +263,13 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         // bring the foundation towards the build zone. When we rotate the foundation in next step,
         // its corner will be in build zone when pushed against the scoreboard wall
         //nav.odometryMoveForwardBack(20, MecaBotMove.DRIVE_SPEED_SLOW);
-        nav.goToPosition(flipX4Red(-38), 18, MecaBotMove.DRIVE_SPEED_DEFAULT, false);
+        //nav.goToPosition(flipX4Red(-38), 18, MecaBotMove.DRIVE_SPEED_DEFAULT, false);
+        // trying different approach
+        nav.odometryRotateToHeading(flipAngle4Red(-85), MecaBotMove.ROTATE_SPEED_DEFAULT, false);
+        nav.odometryMoveForwardBack(20, MecaBotMove.DRIVE_SPEED_FAST);
 
         // rotate with the foundation to be square with the walls
-        nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS), MecaBotMove.ROTATE_SPEED_DEFAULT, false);
+        nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS), MecaBotMove.ROTATE_SPEED_FAST, false);
 /*
         // CAUTION CAUTION -- The GYRO Angle DOES NOT MATCH the ODOMETRY Angle for the RED side.
         // The gyro initialization CANNOT be controlled by software. It initializes hardware at ZERO angle on program init.
@@ -282,16 +285,16 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         }
         // drive backwards to push the foundation against the scoreboard wall
         // foundation is 18.5 and half robot is 9
-        nav.encoderMoveForwardBack(-8, MecaBotMove.DRIVE_SPEED_DEFAULT);
+        //nav.encoderMoveForwardBack(-4);
         // foundation has been repositioned, release the clamps
         robot.releaseFoundation();
     }
 
     public void parkAtInsideLane() {
         // go to middle of a tile in inside lane
-        nav.goToPosition(flipX4Red(-23), 35);
+        //nav.goToPosition(flipX4Red(-23), 35);
         // straighten up to travel along the X-Axis or the player alliance wall
-        nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS));
+        //nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS));
 /*
         // CAUTION CAUTION -- The GYRO Angle DOES NOT MATCH the ODOMETRY Angle for the RED side.
         // GYRO angle is ZERO towards the stone quarry for BOTH BLUE and RED sides. DO NOT flipAngle4Red() here
@@ -312,23 +315,23 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
 
     public void startNearBuildZoneAndGoToFoundation() {
         //
-        // Staring position is green wheels towards quarry, back touching the tile next to build zone
+        // Staring position is green wheels towards quarry, robot placed on build zone side of the skybridge
         // BLUE: globalPosition.initGlobalPosition(-14.0, 9.0, 0.0);
         // RED : globalPosition.initGlobalPosition(+14.0, 9.0, 180.0);
         //
         // Driving in reverse to avoid turn around and crashing into alliance partner robot
         robot.setFrontReversed();
         telemetry.update(); // print the new orientation of the robot on driver station
-        nav.goToPosition(flipX4Red(-55), 35);
+        nav.goToPosition(flipX4Red(-47), 35, MecaBotMove.DRIVE_SPEED_DEFAULT); // Tried DRIVE_SPEED_FAST here, it resulted in overshooting 20% of times
         robot.setFrontNormal();
 
         // turn robot back towards foundation
         nav.odometryRotateToHeading(FieldSkystone.ANGLE_NEG_Y_AXIS);
-/*
-        nav.gyroRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_NEG_Y_AXIS), MecaBotMove.ROTATE_SPEED_DEFAULT);
-*/
+        // OBSOLETE: gyroRotate has been replaced by odometryRotate at 2nd tournament. However with timeout it could be resurrected
+        // nav.gyroRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_NEG_Y_AXIS), MecaBotMove.ROTATE_SPEED_DEFAULT);
+
         // move backwards to touch the foundation edge
-        nav.odometryMoveForwardBack(-8, MecaBotMove.DRIVE_SPEED_SLOW);
+        nav.odometryMoveForwardBack(-6, MecaBotMove.DRIVE_SPEED_SLOW);
         telemetry.update(); // print the new orientation of the robot on driver station
     }
 
