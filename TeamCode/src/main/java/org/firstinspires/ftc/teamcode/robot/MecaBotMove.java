@@ -183,8 +183,11 @@ public class MecaBotMove {
      */
     public void goToPosition(double x, double y, double speed) {
 
+        ElapsedTime runtime = new ElapsedTime();
+        runtime.reset();
+
         boolean driving = true;
-        while (driving && myOpMode.opModeIsActive()) {
+        while (driving && myOpMode.opModeIsActive() && runtime.seconds() < 5.0) {
             driving = goTowardsPosition(x, y, speed, true);
             myOpMode.telemetry.update();
         }
@@ -196,8 +199,11 @@ public class MecaBotMove {
 
     public void goToPosition(double x, double y, double speed, boolean slowDownAtEnd) {
 
+        ElapsedTime runtime = new ElapsedTime();
+        runtime.reset();
+
         boolean driving = true;
-        while (driving && myOpMode.opModeIsActive()) {
+        while (driving && myOpMode.opModeIsActive() && runtime.seconds() < 5.0) {
             driving = goTowardsPosition(x, y, speed, slowDownAtEnd);
             myOpMode.telemetry.update();
         }
