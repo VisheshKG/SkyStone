@@ -231,7 +231,7 @@ public class MecaBotMove {
         // override in case of Robot front face has been REVERSED. The motors will run swapped (left front runs as right back)
         // The only control we need to change is to calculate the turn power for driving in reverse direction
         // This is done by adding 180 degrees (or PI radians) to the relative Angle (or to the robot orientation angle)
-        if (robot.isFrontReversed()) {
+        if (robot.isFrontLiftarm()) {
             relativeAngleToPosition = angleWrapRad(relativeAngleToPosition + Math.PI);
         }
 

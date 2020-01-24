@@ -227,12 +227,12 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         // let's go to deliver the Skystone
 
         // Driving in reverse to avoid turn around and crashing into alliance partner robot
-        robot.setFrontReversed();
+        robot.setFrontLiftarm();
         telemetry.update(); // print the new orientation of the robot on driver station
         // destination is the centered on tile in front of center of foundation
         //nav.goToXPosition(flipX4Red(-47), MecaBotMove.DRIVE_SPEED_SLOW);
         nav.goToXPosition(flipX4Red(-55), MecaBotMove.DRIVE_SPEED_DEFAULT);
-        robot.setFrontNormal();
+        robot.setFrontIntake();
 
         // turn robot back towards foundation
         nav.odometryRotateToHeading(FieldSkystone.ANGLE_NEG_Y_AXIS);
@@ -320,10 +320,10 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         // RED : globalPosition.initGlobalPosition(+14.0, 9.0, 180.0);
         //
         // Driving in reverse to avoid turn around and crashing into alliance partner robot
-        robot.setFrontReversed();
+        robot.setFrontLiftarm();
         telemetry.update(); // print the new orientation of the robot on driver station
         nav.goToPosition(flipX4Red(-47), 35, MecaBotMove.DRIVE_SPEED_DEFAULT); // Tried DRIVE_SPEED_FAST here, it resulted in overshooting 20% of times
-        robot.setFrontNormal();
+        robot.setFrontIntake();
 
         // turn robot back towards foundation
         nav.odometryRotateToHeading(FieldSkystone.ANGLE_NEG_Y_AXIS);

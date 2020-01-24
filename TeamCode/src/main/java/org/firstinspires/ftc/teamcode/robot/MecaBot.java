@@ -40,8 +40,6 @@ import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 
 import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalPosition;
 
-import static java.lang.Double.NaN;
-
 /**
  * This is NOT an opmode.
  *
@@ -91,7 +89,7 @@ public class MecaBot {
 
     // Robot front and rear can be flipped for driving purposes
     // Define enum constant for whether INTAKE or LIFT is Front of the robot (and other one is Rear)
-    static enum DIRECTION { NORMAL, REVERSE};
+    static enum DIRECTION {INTAKE, LIFTARM};
     DIRECTION frontFace;
 
     //constants here
@@ -130,42 +128,41 @@ public class MecaBot {
     /* Constructor */
     public MecaBot() {
 
-        frontFace = DIRECTION.NORMAL;
+        frontFace = DIRECTION.INTAKE;
     }
 
     /*
      * Robot front facing direction toggle methods. Robot FRONT direction can be flipped.
      * This is important to understand, to avoid unexpected behavior.
-     * When Robot front direction is toggled from NORMAL to REVERSE, the reverse driving is
+     * When Robot front direction is toggled from INTAKE to LIFTARM, the direction change is
      * achieved by changing only 2 underlying methods, all other code is oblivious of this.
      * @see MecaBot#setTargetPosition()
      * @see MecaBot#driveWheels()
      *
      * MOST IMPORTANT: All driving and move methods must call one of the above methods,
      * and must NOT set drivetrain motor power directly. Specifically the methods
-     * @see MecaBot#SetDrivePower()
-     * do NOT handle frontFace flipping and driving in reverse.
+     * @see MecaBot#SetDrivePower()  do NOT handle frontFace flipping.
      * They are used for non-directional movement, such as gyro rotation.
      */
     public DIRECTION frontDirection() {
         return frontFace;
     }
-    public boolean isFrontNormal() {
-        return (frontFace == DIRECTION.NORMAL);
+    public boolean isFrontIntake() {
+        return (frontFace == DIRECTION.INTAKE);
     }
-    public boolean isFrontReversed() {
-        return (frontFace == DIRECTION.REVERSE);
+    public boolean isFrontLiftarm() {
+        return (frontFace == DIRECTION.LIFTARM);
     }
-    public void setFrontNormal() {
-        frontFace = DIRECTION.NORMAL;
+    public void setFrontIntake() {
+        frontFace = DIRECTION.INTAKE;
         setLightGreen();
     }
-    public void setFrontReversed() {
-        frontFace = DIRECTION.REVERSE;
+    public void setFrontLiftarm() {
+        frontFace = DIRECTION.LIFTARM;
         setLightRed();
     }
     public String getFrontDirection() {
-        return ((frontFace == DIRECTION.NORMAL) ? "NORMAL" : "REVERSE");
+        return ((frontFace == DIRECTION.INTAKE) ? "INTAKE" : "LIFTARM");
     }
             
     /* Initialize standard Hardware interfaces */
@@ -295,14 +292,27 @@ public class MecaBot {
     /*
      * Driving movement methods
      */
+
+    /**
+     * Set encoder position for each wheel in preparation for a RUN_USING_ENCODERS movement
+     * This method DOES take into account the frontFace of the robot, whether Intake or Liftarm
+     * and corresponding to robot front direction, sets the target encoder value on the wheels
+     * Note: {@link MecaBot#driveWheels(double, double, double, double)} also accounts for frontFace
+     * Note: {@link MecaBot#setDrivePower(double)} does NOT consider frontFace of the robot, the most
+     * common use of that method is after {@link MecaBot#setTargetPosition(int, int, int, int)} has been called
+     * @param leftFront  Left front wheel target encoder count
+     * @param leftBack   Left back wheel target encoder count
+     * @param rightFront Right front wheel target encoder count
+     * @param rightBack  Right back wheel target encoder count
+     */
     public void setTargetPosition(int leftFront, int leftBack, int rightFront, int rightBack) {
-        if (isFrontNormal()) {
+        if (isFrontIntake()) {
             leftFrontDrive.setTargetPosition(leftFront);
             leftBackDrive.setTargetPosition(leftBack);
             rightFrontDrive.setTargetPosition(rightFront);
             rightBackDrive.setTargetPosition(rightBack);
         }
-        else { // isFrontReversed()
+        else { // isFrontLiftarm()
             leftFrontDrive.setTargetPosition(-rightBack);
             leftBackDrive.setTargetPosition(-rightFront);
             rightFrontDrive.setTargetPosition(-leftBack);
@@ -391,6 +401,18 @@ public class MecaBot {
         driveWheels(leftFront, leftBack, rightFront, rightBack);
     }
 
+    /**
+     * Set drive wheels power to specified values, which are normalized to -1.0 <= power <= 1.0 range
+     * This method DOES take into account the frontFace of the robot, whether Intake or Liftarm
+     * and corresponding to robot front direction, sets the power on front/back wheels consistent with frontFace
+     * Note: {@link MecaBot#setTargetPosition(int, int, int, int)} also accounts for frontFace
+     * Note: {@link MecaBot#setDrivePower(double)} does NOT consider frontFace of the robot, the most
+     * common use of that method is after {@link MecaBot#setTargetPosition(int, int, int, int)} has been called
+     * @param leftFront  Left front wheel target encoder count
+     * @param leftBack   Left back wheel target encoder count
+     * @param rightFront Right front wheel target encoder count
+     * @param rightBack  Right back wheel target encoder count
+     */
     public void driveWheels(double leftFront, double leftBack, double rightFront, double rightBack) {
         // find the highest power motor and divide all motors by that to preserve the ratio
         // while also keeping the maximum power at 1
@@ -403,13 +425,13 @@ public class MecaBot {
         }
 
         //set drive train motor's power to the values calculated
-        if (isFrontNormal()) {
+        if (isFrontIntake()) {
             leftFrontDrive.setPower(leftFront);
             leftBackDrive.setPower(leftBack);
             rightFrontDrive.setPower(rightFront);
             rightBackDrive.setPower(rightBack);
         }
-        else { // isFrontReversed()
+        else { // isFrontLiftarm()
             leftFrontDrive.setPower(-rightBack);
             leftBackDrive.setPower(-rightFront);
             rightFrontDrive.setPower(-leftBack);

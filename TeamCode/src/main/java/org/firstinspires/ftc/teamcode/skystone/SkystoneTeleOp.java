@@ -103,13 +103,11 @@ public class SkystoneTeleOp extends LinearOpMode {
         }
         // The A button on gamepad1 (driver) allows to toggle which face of the Robot is front for driving
         if (gamepad1.x) {
-            if (gamepad1.dpad_up) {  // dpad_up means NORMAL or green intake wheels is front of robot
-                robot.setFrontNormal();
-                robot.setLightGreen();
+            if (gamepad1.dpad_up) {  // dpad_up means INTAKE or green intake wheels is front of robot
+                robot.setFrontIntake();
             }
             else if (gamepad1.dpad_down) {
-                robot.setFrontReversed(); // dpad_down means REVERSED or Lift face is front of robot
-                robot.setLightRed();
+                robot.setFrontLiftarm(); // dpad_down means REVERSED or Lift face is front of robot
             }
             else if (gamepad1.left_bumper) {
                 xpos = globalPosition.getXinches();
