@@ -65,6 +65,12 @@ public class SkystoneTeleOp extends LinearOpMode {
                         return globalPosition.getOrientationDegrees();
                     }
                 });
+        telemetry.addLine("Lift Servo ")
+                .addData("Pos", "%5.2f", new Func<Double>() {
+                    @Override public Double value() {
+                        return robot.liftServo.getPosition();
+                    }
+                });
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
@@ -91,23 +97,21 @@ public class SkystoneTeleOp extends LinearOpMode {
         /*
          * Use special key combinations to toggle override controls
          */
-        // The X button on both gamepads allows the lift stops to be overridden
+        // Allow the lift stops to be overridden
         // This is necessary and useful when Robot is powered off with lift still raised high
         // and next power up initializes the lift bottom stop in that raised position
         if ((gamepad1.x) && (gamepad2.x)) {
             bIgnoreLiftStops = true;
         }
-        // The Y button on both gamepads enforces the lift stops (top and bottom) as normal function
+        // Enforces the lift stops (top and bottom) as normal function
         if ((gamepad1.y) && (gamepad2.y)) {
             bIgnoreLiftStops = false;
         }
-        // The A button on gamepad1 (driver) allows to toggle which face of the Robot is front for driving
-        if (gamepad1.x) {
-            if ((gamepad1.dpad_up) || (gamepad1.dpad_right)) {  // dpad_up means INTAKE or green intake wheels is front of robot
-                robot.setFrontIntake();
-            } else if ((gamepad1.dpad_down) || (gamepad1.dpad_left)) {
-                robot.setFrontLiftarm(); // dpad_down means REVERSED or Lift face is front of robot
-            }
+        // Toggle which face of the Robot is front for driving
+        if ((gamepad1.dpad_up) || (gamepad1.dpad_right)) {  // dpad_right means green INTAKE wheels is front of robot
+            robot.setFrontIntake();
+        } else if ((gamepad1.dpad_down) || (gamepad1.dpad_left)) {
+            robot.setFrontLiftarm(); // dpad_left means Liftarm face is front of robot
         }
         if ((gamepad1.x) && (!gamepad2.x)) {
             xpos = globalPosition.getXinches();
@@ -116,6 +120,7 @@ public class SkystoneTeleOp extends LinearOpMode {
             telemetry.addData("Locked Position", "X %2.2f | Y %2.2f | Angle %3.2f", xpos, ypos, tpos);
         }
         if ((gamepad1.y) && (!gamepad2.y)){
+            robot.setFrontLiftarm();
             autoDriving = true;
         }
     }
@@ -145,21 +150,22 @@ public class SkystoneTeleOp extends LinearOpMode {
         double drive_x = gamepad1.left_stick_x;
         double drive_y = gamepad1.left_stick_y;
         double turn_x = gamepad1.right_stick_x;
-        double sign_x = drive_x / Math.abs(drive_x);
-        double sign_y = drive_y / Math.abs(drive_y);
-        double sign_turn_x = turn_x / Math.abs(turn_x);
-        
+
+        // square the joystick values to change from linear to logarithmic scale
+        // this allows more movement of joystick for less movement of robot, thus more precision at lower speeds
+        // at the expense of some loss of precision at higher speeds, where it is not required.
+
         //if we want to move sideways (MECANUM)
         if (Math.abs(drive_x) > Math.abs(drive_y)) {
-            robot.driveMecanum(sign_x * drive_x * drive_x * speedMultiplier);
+            robot.driveMecanum(drive_x * Math.abs(drive_x) * speedMultiplier);
         }
         // normal tank movement
         else{  // only if joystick is active, otherwise brakes are applied during autodrive()
             // forward press on joystick is negative, backward press (towards human) is positive
             // right press on joystick is positive value, left press is negative value
             // reverse sign of joystick values to match the expected sign in driveTank() method.
-            robot.driveTank(-sign_y * drive_y * drive_y * speedMultiplier,
-                    -sign_turn_x * turn_x * turn_x * speedMultiplier * TURN_FACTOR);
+            robot.driveTank(-drive_y * Math.abs(drive_y) * speedMultiplier,
+                    -turn_x * Math.abs(turn_x) * speedMultiplier * TURN_FACTOR);
         }
     }
 
@@ -196,7 +202,7 @@ public class SkystoneTeleOp extends LinearOpMode {
          */
         if (gamepad2.right_stick_y != 0) {
             double newpos;
-            // forwared press on joystick is negative, backward press (towards human) is positive
+            // forward press on joystick is negative, backward press (towards human) is positive
             // If operator joystick is pushed forwards/upwards, move the lift arm inside the robot
             if (gamepad2.right_stick_y < 0) {
                 newpos = robot.liftServo.getPosition() - MecaBot.ARM_STEP; // outside to inside is counter-clockwise
@@ -205,7 +211,7 @@ public class SkystoneTeleOp extends LinearOpMode {
             }
             newpos = Range.clip(newpos, MecaBot.ARM_INSIDE, MecaBot.ARM_OUTSIDE);
             robot.liftServo.setPosition(newpos);
-            telemetry.addData(">", "lift servo new pos %5.2f", newpos);
+            //telemetry.addData(">", "lift servo new pos %5.2f", newpos);
         }
 
         if (gamepad2.x) {
