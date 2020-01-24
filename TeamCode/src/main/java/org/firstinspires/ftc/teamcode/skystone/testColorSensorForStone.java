@@ -14,7 +14,7 @@ import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
 public class testColorSensorForStone extends LinearOpMode {
 
     MecaBot robot = new MecaBot();
-    MecaBotMove nav = new MecaBotMove(this, robot);
+    //MecaBotMove nav = new MecaBotMove(this, robot);
     private LinearOpMode myOpMode=this;       // Access to the OpMode object
 
 

@@ -64,32 +64,29 @@ public class testTensorFlowObjectDetection extends LinearOpMode {
         telemetry.addData(">", "Press Play to start op mode");
         telemetry.update();
         waitForStart();
-        if (opModeIsActive()){
+        if (opModeIsActive()) {
             while (opModeIsActive()) {
-                if (tfUtil.skystoneIsVisible()){
-                    Recognition recognition=tfUtil.getSkystoneInfo();
+                if (tfUtil.skystoneIsVisible()) {
+                    Recognition recognition = tfUtil.getSkystoneInfo();
                     float heightPercent;
-                    int i=1;
-                    telemetry.addData(String.format("label (%d)",i), recognition.getLabel());
-                            telemetry.addData("Found ", "Skystone!!!!");
-                            telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
-                                    recognition.getLeft(), recognition.getTop());
-                            telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
-                                    recognition.getRight(), recognition.getBottom());
-                            telemetry.addData(String.format("  image height,box height (%d)", i), "%d , %.03f",
-                                    recognition.getImageHeight(), recognition.getHeight());
-                            heightPercent=recognition.getHeight()/recognition.getImageHeight();
-                            telemetry.addData(String.format("DISTANCE:stone height percentage (%d)", i), "%.03f",
-                                    heightPercent);
-
-                            float rightLeftPercent=(recognition.getImageWidth()-recognition.getRight())/recognition.getLeft();
-                            telemetry.addData("right/left =", "%.2f",rightLeftPercent);
-                 telemetry.addData("total width =", recognition.getImageWidth());
-                      telemetry.update();
-                    }
+                    int i = 1;
+                    telemetry.addData("Skystone ", "Measures:");
+                    telemetry.addData("  left,top", "%.03f , %.03f",
+                            recognition.getLeft(), recognition.getTop());
+                    telemetry.addData("  right,bottom", "%.03f , %.03f",
+                            recognition.getRight(), recognition.getBottom());
+                    telemetry.addData("  image height,box height", "%d , %.03f",
+                            recognition.getImageHeight(), recognition.getHeight());
+                    heightPercent = recognition.getHeight() / recognition.getImageHeight();
+                    telemetry.addData("DISTANCE:stone height percentage", "%.03f",
+                            heightPercent);
+                    float rightLeftPercent = (recognition.getImageWidth() - recognition.getRight()) / recognition.getLeft();
+                    telemetry.addData("CENTER:right/left =", "%.2f", rightLeftPercent);
+                    telemetry.addData("total width =", recognition.getImageWidth());
+                    telemetry.update();
                 }
             }
-
+        }
         tfUtil.stopTF();
     }
 
