@@ -103,21 +103,19 @@ public class SkystoneTeleOp extends LinearOpMode {
         }
         // The A button on gamepad1 (driver) allows to toggle which face of the Robot is front for driving
         if (gamepad1.x) {
-            if (gamepad1.dpad_up) {  // dpad_up means INTAKE or green intake wheels is front of robot
+            if ((gamepad1.dpad_up) || (gamepad1.dpad_right)) {  // dpad_up means INTAKE or green intake wheels is front of robot
                 robot.setFrontIntake();
-            }
-            else if (gamepad1.dpad_down) {
+            } else if ((gamepad1.dpad_down) || (gamepad1.dpad_left)) {
                 robot.setFrontLiftarm(); // dpad_down means REVERSED or Lift face is front of robot
             }
-            else if (gamepad1.left_bumper) {
-                xpos = globalPosition.getXinches();
-                ypos = globalPosition.getYinches();
-                tpos = globalPosition.getOrientationDegrees();
-                telemetry.addData("Locked Position", "X %2.2f | Y %2.2f | Angle %3.2f", xpos, ypos, tpos);
-
-            }
         }
-        if (gamepad1.y) {
+        if ((gamepad1.x) && (!gamepad2.x)) {
+            xpos = globalPosition.getXinches();
+            ypos = globalPosition.getYinches();
+            tpos = globalPosition.getOrientationDegrees();
+            telemetry.addData("Locked Position", "X %2.2f | Y %2.2f | Angle %3.2f", xpos, ypos, tpos);
+        }
+        if ((gamepad1.y) && (!gamepad2.y)){
             autoDriving = true;
         }
     }
@@ -144,16 +142,24 @@ public class SkystoneTeleOp extends LinearOpMode {
             robot.setSlowBlue();
         }
 
+        double drive_x = gamepad1.left_stick_x;
+        double drive_y = gamepad1.left_stick_y;
+        double turn_x = gamepad1.right_stick_x;
+        double sign_x = drive_x / Math.abs(drive_x);
+        double sign_y = drive_y / Math.abs(drive_y);
+        double sign_turn_x = turn_x / Math.abs(turn_x);
+        
         //if we want to move sideways (MECANUM)
-        if (Math.abs(gamepad1.left_stick_x) > Math.abs(gamepad1.left_stick_y)) {
-            robot.driveMecanum(gamepad1.left_stick_x * speedMultiplier);
+        if (Math.abs(drive_x) > Math.abs(drive_y)) {
+            robot.driveMecanum(sign_x * drive_x * drive_x * speedMultiplier);
         }
         // normal tank movement
         else{  // only if joystick is active, otherwise brakes are applied during autodrive()
             // forward press on joystick is negative, backward press (towards human) is positive
             // right press on joystick is positive value, left press is negative value
             // reverse sign of joystick values to match the expected sign in driveTank() method.
-            robot.driveTank(-gamepad1.left_stick_y * speedMultiplier, -gamepad1.right_stick_x * speedMultiplier * TURN_FACTOR);
+            robot.driveTank(-sign_y * drive_y * drive_y * speedMultiplier,
+                    -sign_turn_x * turn_x * turn_x * speedMultiplier * TURN_FACTOR);
         }
     }
 
