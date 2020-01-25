@@ -101,11 +101,6 @@ public class VuforiaAuto1Skystone extends LinearOpMode {
         }
         telemetry.addData("<End Look for Stone", "%.1f seconds", opmodeRunTime.seconds());
         telemetry.update();
-        telemetry.addData("Go parking","none");
-        telemetry.addData("{curX, curY} =", "%.2f, %.2f",curX,curY);
-        telemetry.update();
-        nav.goPark(curX,curY,MecaBotMove.PARK_INSIDE,!BLUESIDE);
-        telemetry.update();
         vUtil.stopTracking();
         while (!isStopRequested()) {  //just loop
         }

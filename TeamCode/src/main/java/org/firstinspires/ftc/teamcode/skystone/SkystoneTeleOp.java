@@ -2,12 +2,9 @@ package org.firstinspires.ftc.teamcode.skystone;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.ColorSensor;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Func;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalPosition;
 import org.firstinspires.ftc.teamcode.robot.MecaBot;
 import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
@@ -65,10 +62,11 @@ public class SkystoneTeleOp extends LinearOpMode {
                         return globalPosition.getOrientationDegrees();
                     }
                 });
-        telemetry.addLine("Lift Servo ")
-                .addData("Pos", "%5.2f", new Func<Double>() {
-                    @Override public Double value() {
-                        return robot.liftServo.getPosition();
+        telemetry.addLine("Move ")
+                .addData("", new Func<String>() {
+                    @Override
+                    public String value() {
+                        return nav.getMovementStatus();
                     }
                 });
 
@@ -127,8 +125,11 @@ public class SkystoneTeleOp extends LinearOpMode {
 
     public void autodrive() {
         if (autoDriving) {
-            autoDriving = nav.goTowardsPosition(xpos, ypos, MecaBotMove.DRIVE_SPEED_DEFAULT, true);
             telemetry.addData("Driving Towards", "X %2.2f | Y %2.2f | Angle %3.2f", xpos, ypos, tpos);
+            double distance = nav.goTowardsPosition(xpos, ypos, MecaBotMove.DRIVE_SPEED_DEFAULT, true);
+            if (distance < MecaBotMove.DIST_MARGIN) { // we have reached
+                autoDriving = false;
+            }
         }
     }
 
