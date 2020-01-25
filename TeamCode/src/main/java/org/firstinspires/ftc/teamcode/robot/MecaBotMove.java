@@ -6,14 +6,9 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalPosition;
 import org.firstinspires.ftc.teamcode.purepursuit.MathFunctions;
 
-import static java.lang.Double.NaN;
 import static org.firstinspires.ftc.teamcode.purepursuit.MathFunctions.angleWrapRad;
 
 
@@ -22,17 +17,17 @@ public class MecaBotMove {
     enum WheelPosition { LEFT_FRONT, LEFT_BACK, RIGHT_FRONT, RIGHT_BACK }
     enum DriveType {TANK, MECANUM, DIAGONAL}
 
+    // Encoder based movement calculation constants
     static final int    MOTOR_TICK_COUNT    = 560; // we are using REV HD Hex Planetary 20:1 for drive train
     static final float  mmPerInch           = 25.4f;
     static final double WHEEL_DIA           = 75 / mmPerInch;  // REV mecanum wheels have 75 millimeter diameter
     static final double WHEEL_CIRCUMFERENCE = Math.PI * WHEEL_DIA;
     static final double ENCODER_TICKS_PER_INCH      = MOTOR_TICK_COUNT / WHEEL_CIRCUMFERENCE;
     static final int    ENCODER_TICKS_ERR_MARGIN    = 50;
-    static final double DEFAULT_SPEED       = 0.6;  //default wheel speed, same as motor power
     static final double OUTER_TO_INNER_TURN_SPEED_RATIO = 6.0;
-    static final double X_PARK_INNER_OUTER  = 9.0;
 
-    public static final double DRIVE_SPEED_MIN     = 0.15;
+    // Driving speeds
+    public static final double DRIVE_SPEED_MIN     = 0.2;
     public static final double DRIVE_SPEED_SLOW    = 0.3;
     public static final double DRIVE_SPEED_DEFAULT = 0.6;
     public static final double DRIVE_SPEED_FAST    = 0.8;
@@ -40,12 +35,22 @@ public class MecaBotMove {
     public static final double ROTATE_SPEED_SLOW   = 0.2;
     public static final double ROTATE_SPEED_DEFAULT= 0.3;
     public static final double ROTATE_SPEED_FAST   = 0.5;
+    static final double DEFAULT_SPEED       = 0.6;  //default wheel speed, same as motor power
 
+    // Distance and Time thresholds
+    public static final double DIST_MARGIN          = 1.0; // inches
+    public static final double DIST_NEAR            = 4.0; // inches
+    public static final double DIST_SLOWDOWN        = 16.0; // inches
+    public static final double TIMEOUT_DEFAULT      = 5.0; // seconds
+    public static final double TIMEOUT_SHORT        = 3.0; // seconds
+
+    // member variables for state
     private LinearOpMode        myOpMode;       // Access to the OpMode object
     private MecaBot             robot;          // Access to the Robot hardware
     private OdometryGlobalPosition globalPosition; // Robot global position tracker
     private Thread              globalPositionThread;
-    private Orientation         angles;         // Robot heading angle obtained from gyro in IMU sensor
+    //private Orientation         angles;         // Robot heading angle obtained from gyro in IMU sensor
+    private String              movementStatus          = "";
 
 
     /* Constructor */
@@ -70,6 +75,10 @@ public class MecaBotMove {
     public void stopOdometry() {
 
         globalPosition.stop();
+    }
+
+    public String getMovementStatus() {
+        return movementStatus;
     }
 
     /**
@@ -124,20 +133,20 @@ public class MecaBotMove {
      * @return The angle reading in degrees. Positive value is counter clockwise from initial zero position
      * Negative value is clock wise from initial zero. Angle value wraps around at 180 and -180 degrees.
      */
-    public double getGyroHeading() {
+/*    public double getGyroHeading() {
         if (angles == null) {
             return NaN;
         }
         return angles.firstAngle;
     }
-
+*/
     /**
      * Rotate the robot to desired angle position using the odometry position feedback
      *
      * @param targetAngle   The desired target angle position in degrees
      * @param turnSpeed     The speed at which to drive the motors for the rotation. 0.0 < turnSpeed <= 1.0
      */
-    public void odometryRotateToHeading(double targetAngle, double turnSpeed, boolean slowDownAtEnd) {
+    public void odometryRotateToHeading(double targetAngle, double turnSpeed, double timeout, boolean slowDownAtEnd) {
 
         ElapsedTime runtime = new ElapsedTime();
 
@@ -147,11 +156,12 @@ public class MecaBotMove {
         double prev = delta;
         double direction = (delta >= 0) ? 1.0 : -1.0; // positive angle requires CCW rotation, negative angle requires CW
 
+        movementStatus = String.format("Rotate To Angle =%.1f, Spd=%1.1f TO=%1.1f", targetAngle, turnSpeed, timeout);
         runtime.reset();
         // while the sign of delta and prev is same (both +ve or both -ve) run loop
-        while ((delta != 0) && ((delta > 0) == (prev > 0)) && myOpMode.opModeIsActive() && runtime.seconds() < 3.0) {
+        while (myOpMode.opModeIsActive() && runtime.seconds() < timeout && ((delta > 0) == (prev > 0))) {
 
-            if (slowDownAtEnd && (Math.abs(delta) < 6)) { // slow down when less than 10 degrees rotation remaining
+            if (slowDownAtEnd && (Math.abs(delta) < 5)) { // slow down when last few degrees rotation remaining
                 turnSpeed = DRIVE_SPEED_MIN;
             }
             // the sign of turnSpeed determines the direction of rotation of robot
@@ -161,17 +171,15 @@ public class MecaBotMove {
             prev = delta;
             delta = MathFunctions.angleWrap(targetAngle - robotAngle);
 
-            myOpMode.telemetry.addLine("Odo Rotate ")
-                    .addData("target", "%.2f", targetAngle)
-                    .addData("robot", "%.2f", robotAngle)
-                    .addData("delta", "%.2f", delta);
+            myOpMode.telemetry.addData("Rotate", "Robot=%.2f, Rel Angle=%.2f", robotAngle, delta);
             myOpMode.telemetry.update();
         }
         robot.stopDriving();
+        movementStatus = String.format("Done To Angle=%.1f, Spd=%1.1f in T=%1.1f", targetAngle, turnSpeed, runtime.seconds());
     }
 
     public void odometryRotateToHeading(double targetAngle) {
-        odometryRotateToHeading(targetAngle, ROTATE_SPEED_DEFAULT, true);
+        odometryRotateToHeading(targetAngle, ROTATE_SPEED_DEFAULT, TIMEOUT_SHORT, true);
     }
 
     /**
@@ -180,34 +188,43 @@ public class MecaBotMove {
      *
      * @param x     Target position global x coordinate value (inches)
      * @param y     Target position global y coordinate value (inches)
-     * @param speed Speed/Power used to drive. Must be in range of -1.0 <= speed <= 1.0
+     * @param speed Speed/Power used to drive. Must be in range of -1.0 <= speed <= 1.0a
+     * @param timeout Time (seconds) to complete the move or abort
+     * @param slowDownAtEnd true if robot should slow down close to destination, to avoid overshooting
      */
-    public void goToPosition(double x, double y, double speed) {
+    public void goToPosition(double x, double y, double speed, double timeout, boolean slowDownAtEnd) {
 
         ElapsedTime runtime = new ElapsedTime();
-        runtime.reset();
+        double distance = 200; // greater than the diagonal length of the FTC field
+        double previous;
 
-        boolean driving = true;
-        while (driving && myOpMode.opModeIsActive() && runtime.seconds() < 5.0) {
-            driving = goTowardsPosition(x, y, speed, true);
-            myOpMode.telemetry.update();
+        movementStatus = String.format("GoToPos X=%3.2f, Y=%2.2f, Spd=%1.1f, TO=%1.1f", x, y, speed, timeout);
+        speed = Range.clip(speed, DRIVE_SPEED_MIN, DRIVE_SPEED_MAX);
+        runtime.reset();
+        // we consider reaching the destination (x,y) position if less than DIST_MARGIN inches away OR
+        // if the distance from the destination starts increases from its previous value
+        while (myOpMode.opModeIsActive() && (runtime.seconds() < timeout) && (distance >= DIST_MARGIN)) {
+            previous = distance;
+            distance = goTowardsPosition(x, y, speed, slowDownAtEnd);
+            // Avoid oscillations at the end, near the target destination (DIST_NEAR threshold)
+            // If the distance from the destination starts increasing from its previous value,
+            // then robot may have overshot the target coordinate location, stop there
+            if  (distance < DIST_NEAR && distance > previous) {
+                break;
+            }
         }
+        robot.stopDriving();
+        movementStatus = String.format("Reached X=%3.2f, Y=%2.2f, Spd=%1.1f in T=%1.1f", x, y, speed, runtime.seconds());
+    }
+
+    public void goToPosition(double x, double y, double speed, double timeout) {
+
+        goToPosition(x, y, speed, timeout, true);
     }
 
     public void goToPosition(double x, double y) {
-        goToPosition(x, y, DRIVE_SPEED_DEFAULT);
-    }
 
-    public void goToPosition(double x, double y, double speed, boolean slowDownAtEnd) {
-
-        ElapsedTime runtime = new ElapsedTime();
-        runtime.reset();
-
-        boolean driving = true;
-        while (driving && myOpMode.opModeIsActive() && runtime.seconds() < 5.0) {
-            driving = goTowardsPosition(x, y, speed, slowDownAtEnd);
-            myOpMode.telemetry.update();
-        }
+        goToPosition(x, y, DRIVE_SPEED_DEFAULT, TIMEOUT_DEFAULT);
     }
 
     /**
@@ -223,48 +240,50 @@ public class MecaBotMove {
      * @param speed Speed/Power used to drive. Must be in range of -1.0 <= speed <= 1.0
      * @return <em>true</em> if sucessfully issued command to robot to drive, <em>false</em> if reached the destination
      */
-    public boolean goTowardsPosition(double x, double y, double speed, boolean slowDownAtEnd) {
+    public double goTowardsPosition(double x, double y, double speed, boolean slowDownAtEnd) {
 
         double distanceToPosition = Math.hypot(globalPosition.getXinches() - x,  globalPosition.getYinches() - y);
         double absoluteAngleToPosition = Math.atan2(y - globalPosition.getYinches(), x - globalPosition.getXinches());
-        double relativeAngleToPosition = angleWrapRad(absoluteAngleToPosition - globalPosition.getOrientationRadians());
+        double relativeAngleToPosition;
 
+        if (robot.isFrontIntake()) {
+            relativeAngleToPosition = angleWrapRad(absoluteAngleToPosition - globalPosition.getOrientationRadians());
+        }
+        else { // (robot.isFrontLiftarm())
         // override in case of Robot front face has been REVERSED. The motors will run swapped (left front runs as right back)
         // The only control we need to change is to calculate the turn power for driving in reverse direction
         // This is done by adding 180 degrees (or PI radians) to the relative Angle (or to the robot orientation angle)
-        if (robot.isFrontLiftarm()) {
-            relativeAngleToPosition = angleWrapRad(relativeAngleToPosition + Math.PI);
+            relativeAngleToPosition = angleWrapRad(absoluteAngleToPosition - globalPosition.getOrientationRadians() + Math.PI);
         }
 
-        double drivePower = Range.clip(speed, 0.0, 1.0);
-        // when within 1 feet (12 inches) of target, reduce the speed proportional to remaining distance to target
-        if (slowDownAtEnd) {
-            drivePower = Range.clip(distanceToPosition / 12, 0.25, 1.0) * drivePower;
-            // however absolute minimium 0.15 power is required otherwise the robot cannot move the last couple of inches
-            if (drivePower < DRIVE_SPEED_MIN)
-                drivePower = DRIVE_SPEED_MIN;
+        double drivePower = speed;
+        // when within DIST_SLOWDOWN inches of target, reduce the speed proportional to remaining distance to target
+        if (slowDownAtEnd && distanceToPosition < DIST_SLOWDOWN) {
+            // however absolute minimum power is required otherwise the robot cannot move the last couple of inches
+            double slowPower = Range.clip(distanceToPosition / DIST_SLOWDOWN, DRIVE_SPEED_MIN, DRIVE_SPEED_MAX);
+            drivePower = Math.min(speed, slowPower);
         }
         // set turnspeed proportional to the amount of turn required, however beyond 30 degrees turn, full speed is ok
         // note here that positive angle means turn left (since angle is measured counter clockwise from X-axis)
         // this must match the behavior of MecaBot.DriveTank() method used below.
-        double turnPower = Range.clip(relativeAngleToPosition / Math.toRadians(30), -1.0, 1.0) * speed;
+        double turnPower = Range.clip(relativeAngleToPosition / Math.toRadians(30), -1.0, 1.0) * drivePower;
         // no minimum for turnPower until robot auto driving tests indicate a need.
 
-        myOpMode.telemetry.addData("Driving to location ", "(X %3.2f, Y %3.2f)", x, y);
-        myOpMode.telemetry.addLine("Target ").addData("Distance", " %4.2f in", distanceToPosition).addData("Angle", " %4.2f deg", Math.toDegrees(relativeAngleToPosition));
-        myOpMode.telemetry.addLine("Power: ").addData("drive", " %.2f", drivePower).addData("turn", "%.2f", turnPower);
+        myOpMode.telemetry.addLine("GoToPos ").addData("Dist", " %4.2f in", distanceToPosition).addData("Rel Angle", " %4.2f deg", Math.toDegrees(relativeAngleToPosition));
+        myOpMode.telemetry.addLine("Power ").addData("drive", " %.2f", drivePower).addData("turn", "%.2f", turnPower);
+        myOpMode.telemetry.update();
 
         // let's stop driving when within a short distance of the destination. This threshold may need to be tuned.
         // A threshold is necessary to avoid oscillations caused by overshooting of target position.
         // This check could be done early in the method, however it is done towards end deliberately to get telemetry readouts
-        if (distanceToPosition < 1.0) {
+        if (distanceToPosition < DIST_MARGIN) {
             robot.stopDriving();
-            return false;
+        }
+        else {
+            robot.driveTank(drivePower, turnPower);
         }
 
-        robot.driveTank(drivePower, turnPower);
-
-        return true;
+        return distanceToPosition;
     }
 
     /**
@@ -273,12 +292,12 @@ public class MecaBotMove {
      * @param targetX   the target X coordinate position
      * @param speed     driving speed for movement
      */
-    public void goToXPosition(double targetX, double speed) {
+    public void goToXPosition(double targetX, double speed, double timeout) {
 
         double curX = globalPosition.getXinches();
 
         // do not move less than 1 inch, that is our margin threshold for reaching the target coordinate.
-        if (Math.abs(targetX - curX) < 1.0) {
+        if (Math.abs(targetX - curX) < DIST_MARGIN) {
             return;
         }
 
@@ -296,11 +315,11 @@ public class MecaBotMove {
         double curY = globalPosition.getYinches();
 
         // Now lets go to the target destination coordinate
-        goToPosition(targetX, curY, speed);
+        goToPosition(targetX, curY, speed, timeout);
     }
 
     public void goToXPosition(double targetX) {
-        goToXPosition(targetX, DRIVE_SPEED_DEFAULT);
+        goToXPosition(targetX, DRIVE_SPEED_DEFAULT, TIMEOUT_DEFAULT);
     }
 
     /**
@@ -309,12 +328,12 @@ public class MecaBotMove {
      * @param targetY   the target Y coordinate position
      * @param speed     driving speed for movement
      */
-    public void goToYPosition(double targetY, double speed) {
+    public void goToYPosition(double targetY, double speed, double timeout) {
 
         double curY = globalPosition.getYinches();
 
         // do not move less than 1 inch, that is our margin threshold for reaching the target coordinate.
-        if (Math.abs(targetY - curY) < 1.0) {
+        if (Math.abs(targetY - curY) < DIST_MARGIN) {
             return;
         }
 
@@ -332,10 +351,11 @@ public class MecaBotMove {
         double curX = globalPosition.getXinches();
 
         // Now lets go to the target destination coordinate
-        goToPosition(curX, targetY, speed);
+        goToPosition(curX, targetY, speed, timeout);
     }
 
     public void goToYPosition(double targetY) {
+<<<<<<< HEAD
         goToYPosition(targetY, DRIVE_SPEED_DEFAULT);
     }
 
@@ -352,6 +372,9 @@ public class MecaBotMove {
      */
     public void odometryMoveDistance(double inches, boolean mecanumSideways) {
         odometryMoveDistance(inches, DriveType.MECANUM, DRIVE_SPEED_DEFAULT);
+=======
+        goToYPosition(targetY, DRIVE_SPEED_DEFAULT, TIMEOUT_DEFAULT);
+>>>>>>> fd316f1e26f770bee26d599a766637c78dc1aa2d
     }
 
     /**
@@ -365,10 +388,15 @@ public class MecaBotMove {
      * @param inches            distance to move
      * @param driveType         driving method (tank, mecanum, and diagonal)
      * @param speed             driving speed for the movement
+     * @param timeout           Time (seconds) to complete the move or abort
      */
+<<<<<<< HEAD
     public void odometryMoveDistance(double inches, DriveType driveType, double speed) {
+=======
+    public void odometryMoveDistance(double inches, boolean mecanumSideways, double speed, double timeout) {
+>>>>>>> fd316f1e26f770bee26d599a766637c78dc1aa2d
         // do not move less than 1 inch, that is our margin threshold for reaching the target coordinate.
-        if (Math.abs(inches) < 1.0) {
+        if (Math.abs(inches) < DIST_MARGIN) {
             return;
         }
         robot.setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -382,8 +410,12 @@ public class MecaBotMove {
         double origY = globalPosition.getYinches();
         double curX;
         double curY;
-        double dist = 0;
+        double distance = 0;
+        ElapsedTime runtime = new ElapsedTime();
 
+        movementStatus = String.format("Dist %.1f in, from (%.1f, %.1f) S=%1.1f TO=%1.1f", inches, origX, origY, speed, timeout);
+
+<<<<<<< HEAD
         while (dist < Math.abs(inches)) {
             switch (driveType) {
                 case MECANUM:
@@ -396,16 +428,46 @@ public class MecaBotMove {
                     robot.driveTank(speed, 0.0);
                     break;
 
+=======
+        runtime.reset();
+        while (myOpMode.opModeIsActive() && (runtime.seconds() < timeout) && (distance < Math.abs(inches))) {
+            if (mecanumSideways) {
+                robot.driveMecanum(speed);
+            }
+            else {
+                robot.driveTank(speed, 0.0);
+>>>>>>> fd316f1e26f770bee26d599a766637c78dc1aa2d
             }
             curX = globalPosition.getXinches();
             curY = globalPosition.getYinches();
-            dist = Math.hypot((curX - origX), (curY - origY));
+            distance = Math.hypot((curX - origX), (curY - origY));
 
-            myOpMode.telemetry.addLine("odoMoveDist() ").addData("Moved ", "%.2f", dist).addData("Target ", "%.2f inches", inches);
+            myOpMode.telemetry.addLine("MoveDist ").addData("now at", "%.1f of %.1f in", distance, inches);
             myOpMode.telemetry.update();
         }
         // Reached within threshold of target distance.
         robot.stopDriving();
+        movementStatus = String.format("Done D=%.1f in, from (%.1f, %.1f) S=%1.1f in T=%1.1f", distance, origX, origY, speed, runtime.seconds());
+
+    }
+
+    public void odometryMoveDistance(double inches, boolean mecanumSideways, double speed) {
+        odometryMoveDistance(inches, mecanumSideways, speed, TIMEOUT_DEFAULT);
+    }
+
+    /**
+     * Move the specified distance (in inches), either normal or mecanum sideways movement.
+     * The movement direction is controlled by the sign of the first parameter, distance in inches to move
+     * This method uses odometry feedback to determine Robot current position during movement
+     * Move FORWARD : inches +ve value, mecanumSideways = false;
+     * Move REVERSE : inches -ve value, mecanumSideways = false;
+     * Move RIGHT   : inches +ve value, mecanumSideways = true;
+     * Move LEFT    : inches -ve value, mecanumSideways = true;
+     * @param inches            distance to move
+     * @param mecanumSideways   Mecanum sideways movement if true, Normal tank movement if false
+     */
+    public void odometryMoveDistance(double inches, boolean mecanumSideways) {
+        odometryMoveDistance(inches, mecanumSideways, DRIVE_SPEED_DEFAULT, TIMEOUT_DEFAULT);
     }
 
     /**
@@ -413,7 +475,11 @@ public class MecaBotMove {
      * @param inches distance to move
      */
     public void odometryMoveForwardBack(double inches) {
+<<<<<<< HEAD
         odometryMoveDistance(inches, DriveType.TANK, DRIVE_SPEED_DEFAULT);
+=======
+        odometryMoveDistance(inches, false);
+>>>>>>> fd316f1e26f770bee26d599a766637c78dc1aa2d
     }
 
     /**
@@ -422,7 +488,11 @@ public class MecaBotMove {
      * @param speed  speed of movement
      */
     public void odometryMoveForwardBack(double inches, double speed) {
+<<<<<<< HEAD
         odometryMoveDistance(inches, DriveType.TANK, speed);
+=======
+        odometryMoveDistance(inches, false, speed, TIMEOUT_DEFAULT);
+>>>>>>> fd316f1e26f770bee26d599a766637c78dc1aa2d
     }
 
     /**
@@ -430,7 +500,11 @@ public class MecaBotMove {
      * @param inches distance to move
      */
     public void odometryMoveRightLeft(double inches) {
+<<<<<<< HEAD
         odometryMoveDistance(inches, DriveType.MECANUM, DRIVE_SPEED_DEFAULT);
+=======
+        odometryMoveDistance(inches, true);
+>>>>>>> fd316f1e26f770bee26d599a766637c78dc1aa2d
     }
 
     /**
@@ -439,7 +513,11 @@ public class MecaBotMove {
      * @param speed  speed of movement
      */
     public void odometryMoveRightLeft(double inches, double speed) {
+<<<<<<< HEAD
         odometryMoveDistance(inches, DriveType.MECANUM, speed);
+=======
+        odometryMoveDistance(inches, true, speed, TIMEOUT_DEFAULT);
+>>>>>>> fd316f1e26f770bee26d599a766637c78dc1aa2d
     }
 
     /*
@@ -665,10 +743,11 @@ public class MecaBotMove {
  */
 
     public static final boolean BLUESIDE =false;      //if red side, set it to false
-    public static final boolean PARK_INSIDE =true;
-    public static final boolean START_STONE_SIDE=true;  //true if start at stone side
     public static double robotStartX= 41;      // robot origin aline with image right
     public static double robotStartY=17.25;       //right back corner of robot
+
+    private static final boolean START_STONE_SIDE=true;  //true if start at stone side
+    private static final double X_PARK_INNER_OUTER  = 9.0;
 
     public static void initRobotStartX(){
         if (START_STONE_SIDE) {

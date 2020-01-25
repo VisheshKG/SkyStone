@@ -95,6 +95,13 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
                         return robot.getFrontDirection();
                     }
                 });
+        telemetry.addLine("Move ")
+                .addData("", new Func<String>() {
+                    @Override
+                    public String value() {
+                        return nav.getMovementStatus();
+                    }
+                });
         telemetry.update();
 
         // start the thread to calculate robot position continuously
@@ -138,7 +145,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         nav.odometryMoveRightLeft(flipX4Red(-26), MecaBotMove.DRIVE_SPEED_SLOW);
 
         // ensure robot direction is straight down the stone quarry
-        nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS), MecaBotMove.ROTATE_SPEED_SLOW, true);
+        nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS));
 /*
         // CAUTION CAUTION -- The GYRO Angle DOES NOT MATCH the ODOMETRY Angle for the RED side.
         // The gyro initialization CANNOT be controlled by software. It initializes hardware at ZERO angle on program init.
@@ -193,12 +200,13 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         // move forward to grab the skystone
         nav.odometryMoveForwardBack(6, MecaBotMove.DRIVE_SPEED_MIN);
         // continue to run the intake for a little bit
+        sleep(1000);
         // stop the intake, hopefully we have picked the stone already
         robot.stopIntake();
         // move sideways back to the lane under the skybridge
         nav.odometryMoveRightLeft(flipX4Red(+15), MecaBotMove.DRIVE_SPEED_DEFAULT);
         // line up in the lane
-        nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS), MecaBotMove.ROTATE_SPEED_SLOW, true);
+        nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS));
 
         cs = robot.blockColorSensor;
         if (isSkystone(cs)) {
@@ -231,7 +239,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         telemetry.update(); // print the new orientation of the robot on driver station
         // destination is the centered on tile in front of center of foundation
         //nav.goToXPosition(flipX4Red(-47), MecaBotMove.DRIVE_SPEED_SLOW);
-        nav.goToXPosition(flipX4Red(-55), MecaBotMove.DRIVE_SPEED_DEFAULT);
+        nav.goToXPosition(flipX4Red(-55));
         robot.setFrontIntake();
 
         // turn robot back towards foundation
@@ -265,11 +273,11 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         //nav.odometryMoveForwardBack(20, MecaBotMove.DRIVE_SPEED_SLOW);
         //nav.goToPosition(flipX4Red(-38), 18, MecaBotMove.DRIVE_SPEED_DEFAULT, false);
         // trying different approach
-        nav.odometryRotateToHeading(flipAngle4Red(-85), MecaBotMove.ROTATE_SPEED_DEFAULT, false);
+        nav.odometryRotateToHeading(flipAngle4Red(-85), MecaBotMove.ROTATE_SPEED_DEFAULT, MecaBotMove.TIMEOUT_SHORT, false);
         nav.odometryMoveForwardBack(20, MecaBotMove.DRIVE_SPEED_FAST);
 
         // rotate with the foundation to be square with the walls
-        nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS), MecaBotMove.ROTATE_SPEED_FAST, false);
+        nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS), MecaBotMove.ROTATE_SPEED_FAST, MecaBotMove.TIMEOUT_SHORT, false);
 /*
         // CAUTION CAUTION -- The GYRO Angle DOES NOT MATCH the ODOMETRY Angle for the RED side.
         // The gyro initialization CANNOT be controlled by software. It initializes hardware at ZERO angle on program init.
@@ -322,7 +330,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         // Driving in reverse to avoid turn around and crashing into alliance partner robot
         robot.setFrontLiftarm();
         telemetry.update(); // print the new orientation of the robot on driver station
-        nav.goToPosition(flipX4Red(-47), 35, MecaBotMove.DRIVE_SPEED_DEFAULT); // Tried DRIVE_SPEED_FAST here, it resulted in overshooting 20% of times
+        nav.goToPosition(flipX4Red(-47), 35); // Tried DRIVE_SPEED_FAST here, it resulted in overshooting 20% of times
         robot.setFrontIntake();
 
         // turn robot back towards foundation
