@@ -20,6 +20,7 @@ import static org.firstinspires.ftc.teamcode.purepursuit.MathFunctions.angleWrap
 public class MecaBotMove {
 
     enum WheelPosition { LEFT_FRONT, LEFT_BACK, RIGHT_FRONT, RIGHT_BACK }
+    enum DriveType {TANK, MECANUM, DIAGONAL}
 
     static final int    MOTOR_TICK_COUNT    = 560; // we are using REV HD Hex Planetary 20:1 for drive train
     static final float  mmPerInch           = 25.4f;
@@ -350,7 +351,7 @@ public class MecaBotMove {
      * @param mecanumSideways   Mecanum sideways movement if true, Normal tank movement if false
      */
     public void odometryMoveDistance(double inches, boolean mecanumSideways) {
-        odometryMoveDistance(inches, mecanumSideways, DRIVE_SPEED_DEFAULT);
+        odometryMoveDistance(inches, DriveType.MECANUM, DRIVE_SPEED_DEFAULT);
     }
 
     /**
@@ -362,10 +363,10 @@ public class MecaBotMove {
      * Move RIGHT   : inches +ve value, mecanumSideways = true;
      * Move LEFT    : inches -ve value, mecanumSideways = true;
      * @param inches            distance to move
-     * @param mecanumSideways   Mecanum sideways movement if true, Normal tank movement if false
+     * @param driveType         driving method (tank, mecanum, and diagonal)
      * @param speed             driving speed for the movement
      */
-    public void odometryMoveDistance(double inches, boolean mecanumSideways, double speed) {
+    public void odometryMoveDistance(double inches, DriveType driveType, double speed) {
         // do not move less than 1 inch, that is our margin threshold for reaching the target coordinate.
         if (Math.abs(inches) < 1.0) {
             return;
@@ -384,11 +385,17 @@ public class MecaBotMove {
         double dist = 0;
 
         while (dist < Math.abs(inches)) {
-            if (mecanumSideways) {
-                robot.driveMecanum(speed);
-            }
-            else {
-                robot.driveTank(speed, 0.0);
+            switch (driveType) {
+                case MECANUM:
+                    robot.driveMecanum(speed);
+                    break;
+                case DIAGONAL:
+                    robot.driveDiagonal(speed);
+                    break;
+                case TANK:
+                    robot.driveTank(speed, 0.0);
+                    break;
+
             }
             curX = globalPosition.getXinches();
             curY = globalPosition.getYinches();
@@ -406,7 +413,7 @@ public class MecaBotMove {
      * @param inches distance to move
      */
     public void odometryMoveForwardBack(double inches) {
-        odometryMoveDistance(inches, false, DRIVE_SPEED_DEFAULT);
+        odometryMoveDistance(inches, DriveType.TANK, DRIVE_SPEED_DEFAULT);
     }
 
     /**
@@ -415,7 +422,7 @@ public class MecaBotMove {
      * @param speed  speed of movement
      */
     public void odometryMoveForwardBack(double inches, double speed) {
-        odometryMoveDistance(inches, false, speed);
+        odometryMoveDistance(inches, DriveType.TANK, speed);
     }
 
     /**
@@ -423,7 +430,7 @@ public class MecaBotMove {
      * @param inches distance to move
      */
     public void odometryMoveRightLeft(double inches) {
-        odometryMoveDistance(inches, true, DRIVE_SPEED_DEFAULT);
+        odometryMoveDistance(inches, DriveType.MECANUM, DRIVE_SPEED_DEFAULT);
     }
 
     /**
@@ -432,7 +439,7 @@ public class MecaBotMove {
      * @param speed  speed of movement
      */
     public void odometryMoveRightLeft(double inches, double speed) {
-        odometryMoveDistance(inches, true, speed);
+        odometryMoveDistance(inches, DriveType.MECANUM, speed);
     }
 
     /*

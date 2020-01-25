@@ -402,6 +402,31 @@ public class MecaBot {
     }
 
     /**
+     * Drives the robot diagonally
+     * Positive values of speed drive it forwards and right
+     * Negative values of speed drive it forwards and left
+     * @param speed
+     */
+    public void driveDiagonal(double speed) {
+        double leftFront = 0;
+        double leftBack = 0;
+        double rightFront = 0;
+        double rightBack = 0;
+
+        if (speed > 0) {
+            leftFront = speed;
+            rightBack = speed;
+        }
+        else if (speed < 0) {
+            leftBack = Math.abs(speed);
+            rightFront = Math.abs(speed);
+        }
+
+        driveWheels(leftFront, leftBack, rightFront, rightBack);
+    }
+
+
+    /**
      * Set drive wheels power to specified values, which are normalized to -1.0 <= power <= 1.0 range
      * This method DOES take into account the frontFace of the robot, whether Intake or Liftarm
      * and corresponding to robot front direction, sets the power on front/back wheels consistent with frontFace
