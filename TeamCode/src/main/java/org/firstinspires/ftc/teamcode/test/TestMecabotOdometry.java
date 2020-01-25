@@ -62,17 +62,17 @@ public class TestMecabotOdometry extends LinearOpMode {
         nav.goToYPosition(23.5);
         nav.odometryRotateToHeading(FieldSkystone.ANGLE_NEG_Y_AXIS);
 
-        nav.odometryMoveDistance(-12.0, false, MecaBotMove.DRIVE_SPEED_SLOW);
+        nav.odometryMoveDistance(-12.0, MecaBotMove.DriveType.TANK, MecaBotMove.DRIVE_SPEED_SLOW);
         sleep(200);
-        nav.odometryMoveDistance(-12.0, true, MecaBotMove.DRIVE_SPEED_SLOW);
+        nav.odometryMoveDistance(-12.0, MecaBotMove.DriveType.MECANUM, MecaBotMove.DRIVE_SPEED_SLOW);
         sleep(200);
-        nav.odometryMoveDistance(+12.0, false, MecaBotMove.DRIVE_SPEED_SLOW);
+        nav.odometryMoveDistance(+12.0, MecaBotMove.DriveType.TANK, MecaBotMove.DRIVE_SPEED_SLOW);
         sleep(200);
         nav.odometryRotateToHeading(FieldSkystone.ANGLE_NEG_X_AXIS);
         sleep(10000);
         nav.goToPosition(14, 24);
         nav.odometryRotateToHeading(FieldSkystone.ANGLE_POS_X_AXIS);
-        nav.odometryMoveDistance(+15, true, MecaBotMove.DRIVE_SPEED_SLOW);
+        nav.odometryMoveDistance(+15, MecaBotMove.DriveType.MECANUM, MecaBotMove.DRIVE_SPEED_SLOW);
         nav.odometryRotateToHeading(FieldSkystone.ANGLE_POS_X_AXIS);
 
 

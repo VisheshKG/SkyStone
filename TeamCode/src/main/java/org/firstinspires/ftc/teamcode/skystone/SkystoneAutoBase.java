@@ -138,7 +138,6 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         // Staring position is
         // BLUE: globalPosition.initGlobalPosition(14.0, 9.0, 0.0);
         // RED: globalPosition.initGlobalPosition(-14.0, 9.0, 180.0);
-        //
         // stone quarry is 47 inches from the BLUE/RED wall, 48 inches from the audience wall
         // move sideways towards the stone quarry (caution we may hit the skybridge side support)
         // movement is towards +ve Y axis LEFT for BLUE , RIGHT for RED
