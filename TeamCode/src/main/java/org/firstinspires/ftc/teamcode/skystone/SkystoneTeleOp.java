@@ -46,6 +46,17 @@ public class SkystoneTeleOp extends LinearOpMode {
         waitForStart();
         nav.startOdometry();
 
+        telemetry.addLine("Encoder ")
+                .addData("Lift", "%d", new Func<Integer>() {
+                    @Override public Integer value() {
+                        return robot.liftMotor.getCurrentPosition();
+                    }
+                })
+                .addData("Arm", "%d", new Func<Integer>() {
+                    @Override public Integer value() {
+                        return robot.liftArmMotor.getCurrentPosition();
+                    }
+                });
         telemetry.addLine("Global Position ")
                 .addData("X", "%3.2f", new Func<Double>() {
                     @Override public Double value() {
@@ -78,7 +89,7 @@ public class SkystoneTeleOp extends LinearOpMode {
             lift();
             intake();
             bumper();
-            sidearm();
+            capstone();
             telemetry.update();
             sleep(CYCLE_MS);
             idle();
@@ -172,47 +183,65 @@ public class SkystoneTeleOp extends LinearOpMode {
 
     public void lift() {
 
-        // The game pad joystick is negative when pushed forwards or upwards.
-        // We want this direction to raise the lift upwards, therefore flip the sign to positive.
-        float power = -gamepad2.left_stick_y;
-        // current position of lift can be positive or negative depending on FORWARD or REVERSE rotation setting
-        // The reference position (lift collapsed or at bottom) = 0 encoder count, initialized at power up
-        double pos = robot.liftMotor.getCurrentPosition();
+        /*
+         * Vertical Lift control
+         */
+        if (gamepad2.left_stick_y != 0) {
+            // The game pad joystick is negative when pushed forwards or upwards.
+            // We want this direction to raise the lift upwards, therefore flip the sign.
+            double power = -gamepad2.left_stick_y;
+            // Square the number but retain the sign - to convert to logarithmic scale
+            power *= Math.abs(power);
 
-        // if lift stops are being ignored then simply apply the joystick power to the motor
-        if (bIgnoreLiftStops) {
-            robot.liftMotor.setPower(power);
-        }
-        // move lift upwards direction but respect the stop to avoid breaking string
-        else if (power > 0 && pos < robot.LIFT_TOP) {
-            robot.liftMotor.setPower(power);
-        }
-        // move lift downwards direction but respect the stop to avoid winding string in opposite direction on the spool
-        else if (power < 0 && pos > robot.LIFT_BOTTOM) {
-            robot.liftMotor.setPower(power);
+            // current position of lift can be positive or negative depending on FORWARD or REVERSE rotation setting
+            // The reference position (lift collapsed or at bottom) = 0 encoder count, initialized at power up
+            int pos = robot.liftMotor.getCurrentPosition();
+
+            // if lift stops are being ignored then simply apply the joystick power to the motor
+            if (bIgnoreLiftStops) {
+                robot.liftMotor.setPower(power);
+            }
+            // move lift upwards direction but respect the stop to avoid breaking string
+            else if (power > 0 && pos < robot.LIFT_TOP) {
+                robot.liftMotor.setPower(power);
+            }
+            // move lift downwards direction but respect the stop to avoid winding string in opposite direction on the spool
+            else if (power < 0 && pos > robot.LIFT_BOTTOM) {
+                robot.liftMotor.setPower(power);
+            }
         }
         // stop the lift movement
         else {
             robot.liftMotor.setPower(0);
         }
 
-        telemetry.addData(">", "Lift encoder count = " + pos);
-
         /*
          * Lift Arm control
          */
         if (gamepad2.right_stick_y != 0) {
-            double newpos;
             // forward press on joystick is negative, backward press (towards human) is positive
+            // We want this direction to raise the arm outside, therefore flip the sign to positive.
+            double power = -gamepad2.right_stick_y;
+            // Square the number but retain the sign - to convert to logarithmic scale
+            power *= Math.abs(power);
+
+            int pos = robot.liftArmMotor.getCurrentPosition();
             // If operator joystick is pushed forwards/upwards, move the lift arm inside the robot
-            if (gamepad2.right_stick_y < 0) {
-                newpos = robot.liftServo.getPosition() - MecaBot.ARM_STEP; // outside to inside is counter-clockwise
-            } else {
-                newpos = robot.liftServo.getPosition() + MecaBot.ARM_STEP; // inside to outside is clockwise
+            // if lift stops are being ignored then simply apply the joystick power to the motor
+            if (bIgnoreLiftStops) {
+                robot.liftArmMotor.setPower(power);
             }
-            newpos = Range.clip(newpos, MecaBot.ARM_INSIDE, MecaBot.ARM_OUTSIDE);
-            robot.liftServo.setPosition(newpos);
-            //telemetry.addData(">", "lift servo new pos %5.2f", newpos);
+            // move lift arm outside direction but respect the stop to avoid breaking string
+            else if (power > 0 && pos < robot.ARM_OUTSIDE) {
+                robot.liftArmMotor.setPower(power);
+            }
+            // move lift arm inside direction but respect the stop to avoid winding string in opposite direction on the spool
+            else if (power < 0 && pos > robot.ARM_INSIDE) {
+                robot.liftArmMotor.setPower(power);
+            }
+        }
+        else {
+            robot.liftArmMotor.setPower(0);
         }
 
         if (gamepad2.x) {
@@ -227,6 +256,13 @@ public class SkystoneTeleOp extends LinearOpMode {
         }
         else if (gamepad2.left_bumper) {
             robot.releaseStoneWithClaw(); // left is release the stone, claw open
+        }
+
+        if (gamepad2.dpad_right) {
+            robot.moveLiftArmOutside();
+        }
+        else if (gamepad2.dpad_left) {
+            robot.moveLiftArmInside();
         }
     }
 
@@ -255,12 +291,12 @@ public class SkystoneTeleOp extends LinearOpMode {
         }
     }
 
-    public void sidearm() {
+    public void capstone() {
         if (gamepad1.a) {
-            robot.releaseStoneWithSidearm();
+            robot.resetCapstoneClips();
         }
         else if (gamepad1.b) {
-            robot.grabStoneWithSidearm();
+            robot.dropCapstoneClips();
         }
     }
 

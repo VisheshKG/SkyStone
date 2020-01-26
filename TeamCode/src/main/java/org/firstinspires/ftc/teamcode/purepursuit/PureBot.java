@@ -126,7 +126,7 @@ public class PureBot {
         liftServo = hwMap.get(Servo.class, "liftServo");
         clawRotate = hwMap.get(Servo.class, "clawRotate");
         clawGrab = hwMap.get(Servo.class, "clawGrab");
-        sideArmServo = hwMap.get(Servo.class, "sideArmServo");
+        sideArmServo = hwMap.get(Servo.class, "capstoneServo");
         groundColorSensor = hwMap.get(ColorSensor.class, "groundColorSensor");
         leftClamp = hwMap.get(Servo.class, "leftClamp");
         rightClamp = hwMap.get(Servo.class, "rightClamp");

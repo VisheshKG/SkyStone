@@ -667,26 +667,6 @@ public class MecaBotMove {
 
     }
 
-    public boolean isUnderBridge(){
-        ColorSensor cs = robot.rightColorSensor;
-
-        myOpMode.telemetry.addData("Blue Reading=", cs.blue());
-        myOpMode.telemetry.addData("Red Reading=", cs.red());
-        //myOpMode.telemetry.addData("Alpha Reading=", cs.alpha());
-        myOpMode.telemetry.update();
-
-        if (cs.blue() > 1000) {
-            myOpMode.telemetry.addData("Ground is BLUE--Bridge reached", cs.blue());
-            return true;
-        }
-        if (cs.red() > 1000){
-            myOpMode.telemetry.addData("Ground is RED--Bridge reached", cs.red());
-            return true;
-        }
-
-        return false;
-    }
-
 /*
  * The code below is obsolete after the 24-NOV-2019 Qualifying Tournament.
  * 1. The Robot does not have a side arm, the robot heading will always towards the stone side for both RED and BLUE
