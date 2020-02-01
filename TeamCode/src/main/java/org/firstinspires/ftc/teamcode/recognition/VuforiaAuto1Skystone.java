@@ -245,13 +245,13 @@ public class VuforiaAuto1Skystone extends LinearOpMode {
 
     private void grabStoneNship(){
         telemetry.addData("GRAB STONE", "None");
-        robot.grabStoneWithSidearm();
+        robot.dropCapstoneClips();
         sleep(500);
         nav.encoderMoveLeftRight(backDistToCtrBridge, LOW_SPEED);  //back off from stone to location safe to cross bridge
         curY=curY-backDistToCtrBridge;
         // move across bridge from x=72-5=67 to x=72-(49-4-7.5)=36
         deliverStone();
-        robot.releaseStoneWithSidearm();
+        robot.resetCapstoneClips();
     }
 
     //robot right back wheel corner is the dot for robot location

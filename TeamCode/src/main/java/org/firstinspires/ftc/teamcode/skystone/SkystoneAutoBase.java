@@ -108,21 +108,6 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         nav.startOdometry();
     }
 
-    /**
-     * do everything in autonomous mode
-     * detect a skystone, pick it up, transport and delivery to the foundation,
-     * move the foundation, go park itself under the skybridge
-     */
-    public void runFullAutoProgram() {
-
-        positionToDetectSkystone();
-        pickupSkystone();
-        deliverSkystone();
-        moveFoundation();
-        parkAtInsideLane();
-
-    }
-
     // for testing mainly, at the end wait for driver to press STOP, meanwhile
     // continue updating odometry position of the manual movement of the robot
     public void waitForStop() {
@@ -133,7 +118,65 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         }
     }
 
-    public void positionToDetectSkystone() {
+    /**
+     * do everything in autonomous mode
+     * detect a skystone, pick it up, transport and delivery to the foundation,
+     * move the foundation, go park itself under the skybridge
+     */
+    public void runFullAutoProgram() {
+
+// replacing color sensor detection by camera detection
+//        positionToDetectSkystoneWithColorSensor();
+//        pickupSkystoneWithColorSensor();
+        pickupSkystoneAtPosition(4);  // hard coded for 4th position until camera detection is ready
+        deliverSkystone();
+        moveFoundation();
+        parkAtInsideLane();
+
+    }
+
+    /**
+     * Pickup skystone at known position number, which is determined by camera recognition
+     *
+     * @param pos   Skystone position number in the quarry. Position #1 is adjacent to wall.
+     *              Position #6 is near the skybridge in center of field.
+     */
+    public void pickupSkystoneAtPosition(int pos) {
+
+        // Starting position is (green wheels facing the center of the field, +ve Y-Axis)
+        globalPosition.initGlobalPosition(flipX4Red(+33.0), +8.5,90.0);
+        robot.setFrontIntake();
+
+        // stone quarry is 47 inches from the BLUE/RED wall, 48 inches from the audience wall
+        // move forwards towards the stone quarry corresponding to skystone position number
+        // (assumption: skystone position has been detected by camera visual recognition)
+        double xpos = FieldSkystone.HALF_LENGTH - (pos * FieldSkystone.STONE_LENGTH + 8);
+        double ypos = FieldSkystone.TILE_LENGTH * 1.5;  // middle of 2nd tile
+        nav.goToPosition(flipX4Red(xpos), ypos);
+
+        // Rotate to a diagonal heading so one green wheel will clear skystone and wrap around
+        nav.odometryRotateToHeading(flipAngle4Red(48.0));
+        // start the intake green wheels for stone pickup
+        robot.runIntake(0.5);
+        // Move the robot diagonal to position intake in front of skystone
+        nav.odometryMoveDistance(flipX4Red(-6.0), MecaBotMove.DriveType.DIAGONAL);
+        // Turn robot intake around the skystone to pick it up
+        nav.odometryRotateToHeading(flipAngle4Red(20));  // no need to turn to zero degrees, the block is picked up before that and we need to go back at an angle
+
+        // Go back to the 2nd tile lane in preparation for run to deliver the skystone
+        // This should be enough time to fully move the stone inside the robot, stop the intake wheels
+        robot.setFrontLiftarm();
+        nav.goToPosition(flipX4Red(xpos-12), ypos);
+        robot.stopIntake();
+
+        ColorSensor cs = robot.blockColorSensor;
+        if (isSkystone(cs)) {
+            haveSkystone = true;
+            robot.grabStoneWithClaw();
+        }
+    }
+
+    public void positionToDetectSkystoneWithColorSensor() {
         //
         // Staring position is
         // BLUE: globalPosition.initGlobalPosition(14.0, 9.0, 0.0);
@@ -155,7 +198,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
 
     }
 
-    public void pickupSkystone() {
+    public void pickupSkystoneWithColorSensor() {
 
         boolean found = false;
         // look for skystone in the stone quarry containing 6 stones
@@ -284,7 +327,6 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         nav.gyroRotateToHeading(FieldSkystone.ANGLE_POS_X_AXIS, MecaBotMove.ROTATE_SPEED_DEFAULT);
         //nav.encoderTurn(40, true, MecaBotMove.DRIVE_SPEED_SLOW);
 */
-
         // enough time elapsed in foundation movement, the lift arm must be out now, release skystone
         if (haveSkystone) {
             robot.releaseStoneWithClaw();
@@ -292,7 +334,9 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         }
         // drive backwards to push the foundation against the scoreboard wall
         // foundation is 18.5 and half robot is 9
+        //disabled
         //nav.encoderMoveForwardBack(-4);
+
         // foundation has been repositioned, release the clamps
         robot.releaseFoundation();
     }
@@ -302,13 +346,9 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         //nav.goToPosition(flipX4Red(-23), 35);
         // straighten up to travel along the X-Axis or the player alliance wall
         //nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS));
-/*
-        // CAUTION CAUTION -- The GYRO Angle DOES NOT MATCH the ODOMETRY Angle for the RED side.
-        // GYRO angle is ZERO towards the stone quarry for BOTH BLUE and RED sides. DO NOT flipAngle4Red() here
-        nav.gyroRotateToHeading(FieldSkystone.ANGLE_POS_X_AXIS, MecaBotMove.ROTATE_SPEED_DEFAULT);
-*/
+
         // now go park under the skybridge
-        nav.goToPosition(0.0, 35.0);
+        nav.goToPosition(FieldSkystone.X_ORIGIN, FieldSkystone.TILE_2_CENTER);
     }
 
     public void parkAtOutsideLane() {
@@ -317,7 +357,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         // therefore we are fairly straight angle to the outside lane
         //
         // now go park under the skybridge
-        nav.goToPosition(0.0, 12.0);
+        nav.goToPosition(FieldSkystone.X_ORIGIN, FieldSkystone.TILE_1_CENTER);
     }
 
     public void startNearBuildZoneAndGoToFoundation() {
@@ -329,7 +369,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         // Driving in reverse to avoid turn around and crashing into alliance partner robot
         robot.setFrontLiftarm();
         telemetry.update(); // print the new orientation of the robot on driver station
-        nav.goToPosition(flipX4Red(-47), 35); // Tried DRIVE_SPEED_FAST here, it resulted in overshooting 20% of times
+        nav.goToPosition(flipX4Red(-2.0*FieldSkystone.TILE_LENGTH), FieldSkystone.TILE_2_CENTER); // Tried DRIVE_SPEED_FAST here, it resulted in overshooting 20% of times
         robot.setFrontIntake();
 
         // turn robot back towards foundation

@@ -367,21 +367,6 @@ public class MecaBotMove {
      * Move RIGHT   : inches +ve value, mecanumSideways = true;
      * Move LEFT    : inches -ve value, mecanumSideways = true;
      * @param inches            distance to move
-     * @param mecanumSideways   Mecanum sideways movement if true, Normal tank movement if false
-     */
-    public void odometryMoveDistance(double inches, boolean mecanumSideways) {
-        odometryMoveDistance(inches, DriveType.MECANUM, DRIVE_SPEED_DEFAULT);
-    }
-
-    /**
-     * Move the specified distance (in inches), either normal or mecanum sideways movement.
-     * The movement direction is controlled by the sign of the first parameter, distance in inches to move
-     * This method uses odometry feedback to determine Robot current position during movement
-     * Move FORWARD : inches +ve value, mecanumSideways = false;
-     * Move REVERSE : inches -ve value, mecanumSideways = false;
-     * Move RIGHT   : inches +ve value, mecanumSideways = true;
-     * Move LEFT    : inches -ve value, mecanumSideways = true;
-     * @param inches            distance to move
      * @param driveType         driving method (tank, mecanum, and diagonal)
      * @param speed             driving speed for the movement
      * @param timeout           Time (seconds) to complete the move or abort
@@ -680,26 +665,6 @@ public class MecaBotMove {
 
         myOpMode.sleep(250);
 
-    }
-
-    public boolean isUnderBridge(){
-        ColorSensor cs = robot.rightColorSensor;
-
-        myOpMode.telemetry.addData("Blue Reading=", cs.blue());
-        myOpMode.telemetry.addData("Red Reading=", cs.red());
-        //myOpMode.telemetry.addData("Alpha Reading=", cs.alpha());
-        myOpMode.telemetry.update();
-
-        if (cs.blue() > 1000) {
-            myOpMode.telemetry.addData("Ground is BLUE--Bridge reached", cs.blue());
-            return true;
-        }
-        if (cs.red() > 1000){
-            myOpMode.telemetry.addData("Ground is RED--Bridge reached", cs.red());
-            return true;
-        }
-
-        return false;
     }
 
 /*

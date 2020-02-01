@@ -18,10 +18,17 @@ public class FieldSkystone {
     public static final double  ANGLE_NEG_Y_AXIS = -90.0;
 
     // field distances between objects
-    static final double     TILE_SIZE                   = 24.0;
+    static final double     X_ORIGIN                    = 0.0;
+    static final double     HALF_LENGTH                 = 70.25;
+    static final double     TILE_LENGTH                 = 23.5;
+    static final double     TILE_1_CENTER               = TILE_LENGTH * 0.5;
+    static final double     TILE_2_CENTER               = TILE_LENGTH * 1.5;
     static final double     SIDE_WALL_TO_FOUNDATION     = 47.0;
     static final double     BUILD_WALL_TO_FOUNDATION    = 4.0;
+
+    // field elements
     static final double     FOUNDATION_LENGTH           = 37.5;
     static final double     FOUNDATION_WIDTH            = 18.5;
-
+    static final double     STONE_LENGTH                = 8.0;
+    static final double     STONE_WIDTH                 = 4.0;
 }

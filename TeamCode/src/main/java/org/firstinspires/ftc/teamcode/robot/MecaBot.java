@@ -34,11 +34,14 @@ import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 
 import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalPosition;
+
+import static java.lang.Thread.sleep;
 
 /**
  * This is NOT an opmode.
@@ -69,10 +72,10 @@ public class MecaBot {
 
     // [skystone] lift and arm and claw for picking and delivering stones (blocks)
     public DcMotor liftMotor = null;
-    public Servo liftServo = null;
+    public DcMotor liftArmMotor = null;
     public Servo clawRotate = null;
     public Servo clawGrab = null;
-    public Servo sideArmServo = null;
+    public Servo capstoneServo = null;
 
     // [skystone] foundation bumper clamps on rear of the robot
     public Servo leftClamp = null;
@@ -97,13 +100,12 @@ public class MecaBot {
     public static final double WIDTH = 18.0;
     public static final double HALF_WIDTH = WIDTH / 2;
 
-    public static final double LIFT_TOP = 11400;
-    public static final double LIFT_BOTTOM = 0;
-    public static final double ARM_INSIDE = 0.0;
-    public static final double ARM_OUTSIDE = 0.3;
-    public static final double ARM_STEP = 0.05;
+    public static final int    LIFT_TOP = 11400;
+    public static final int    LIFT_BOTTOM = 0;
+    public static final int    ARM_INSIDE = 0;
+    public static final int    ARM_OUTSIDE = 400;
     public static final double CLAW_INSIDE = Servo.MAX_POSITION;
-    public static final double CLAW_OUTSIDE = 0.15;
+    public static final double CLAW_OUTSIDE = 0.20;
     public static final double CLAW_OPEN = Servo.MAX_POSITION;
     public static final double CLAW_CLOSE = Servo.MIN_POSITION;
     public static final double RT_BUMPER_UP = Servo.MAX_POSITION;
@@ -111,8 +113,8 @@ public class MecaBot {
     public static final double LT_BUMPER_UP = Servo.MIN_POSITION;
     public static final double LT_BUMPER_DOWN = Servo.MAX_POSITION;
 
-    public static final double SIDEARM_UP = Servo.MAX_POSITION;
-    public static final double SIDEARM_DOWN = Servo.MIN_POSITION;
+    public static final double CLIPS_LOOSE = Servo.MAX_POSITION;
+    public static final double CLIPS_PULLED = Servo.MIN_POSITION;
 
     //The amount of encoder ticks for each inch the robot moves. THIS WILL CHANGE FOR EACH ROBOT AND NEEDS TO BE UPDATED HERE
     public static final double ODOMETRY_COUNT_PER_INCH = 242.552133272048492;  // FTC Team 13345 MecaBot encoder has 1440 ticks per rotation, wheel has 48mm diameter
@@ -205,22 +207,24 @@ public class MecaBot {
         // Odometry encoders
         leftEncoder = leftIntake;   // we are using the encoder port of intake motor for odometry
         rightEncoder = rightIntake; // we are using the encoder port of intake motor for odometry
-        horizontalEncoder = hwMap.dcMotor.get("horizontalEncoder");
-        horizontalEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        horizontalEncoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        // We are not driving any motor using encoder, the odometry wheels are free to rotate, the encoders will still read correct values
+        horizontalEncoder = leftBackDrive; // we are using the encoder port of left Back Drivetrain motor
 
         // Lift, arm and claw
         liftMotor = hwMap.get(DcMotor.class, "liftMotor");
-        liftMotor.setDirection(DcMotor.Direction.REVERSE);
+        //liftMotor.setDirection(DcMotor.Direction.REVERSE);
         liftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        liftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        liftServo = hwMap.get(Servo.class, "liftServo");
+        liftArmMotor = hwMap.get(DcMotor.class, "liftArmMotor");
+        liftArmMotor.setDirection(DcMotor.Direction.REVERSE);
+        liftArmMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        liftArmMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        liftArmMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
         clawRotate = hwMap.get(Servo.class, "clawRotate");
         clawGrab = hwMap.get(Servo.class, "clawGrab");
-        sideArmServo = hwMap.get(Servo.class, "sideArmServo");
+        capstoneServo = hwMap.get(Servo.class, "capstoneServo");
 
         // foundation bumper clamps
         leftClamp = hwMap.get(Servo.class, "leftClamp");
@@ -242,10 +246,9 @@ public class MecaBot {
         stopLift();
 
         // set all servos to their resting position
-        moveLiftArmInside();
         rotateClawInside();
         releaseStoneWithClaw();
-        releaseStoneWithSidearm();
+        resetCapstoneClips();
         releaseFoundation();
     }
 
@@ -498,12 +501,31 @@ public class MecaBot {
     public void stopLift() {
         liftMotor.setPower(0);
     }
+    public void stopLiftArm() {
+        liftArmMotor.setPower(0);
+    }
+
+    public void moveLiftArm(int position) {
+        liftArmMotor.setTargetPosition(position);
+        liftArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftArmMotor.setPower(0.5);
+        ElapsedTime runTime = new ElapsedTime();
+        runTime.reset();
+        while (liftArmMotor.isBusy() && runTime.seconds() < 1.5) {
+            // do nothing only wait
+        }
+        liftArmMotor.setPower(0.0);
+        liftArmMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
+
     public void moveLiftArmInside() {
-        liftServo.setPosition(ARM_INSIDE);
+        moveLiftArm(MecaBot.ARM_INSIDE);
     }
+    
     public void moveLiftArmOutside() {
-        liftServo.setPosition(ARM_OUTSIDE);
+        moveLiftArm(MecaBot.ARM_OUTSIDE);
     }
+
     public void rotateClawInside() {
         clawRotate.setPosition(CLAW_INSIDE);
     }
@@ -528,11 +550,11 @@ public class MecaBot {
         leftClamp.setPosition(LT_BUMPER_UP); // clamp up to release the foundation
         rightClamp.setPosition(RT_BUMPER_UP);
     }
-    public void grabStoneWithSidearm() {
-        sideArmServo.setPosition(SIDEARM_DOWN); // side arm down to engage the stone
+    public void dropCapstoneClips() {
+        capstoneServo.setPosition(CLIPS_PULLED); // side arm down to engage the stone
     }
-    public void releaseStoneWithSidearm() {
-        sideArmServo.setPosition(SIDEARM_UP); // side arm up and free
+    public void resetCapstoneClips() {
+        capstoneServo.setPosition(CLIPS_LOOSE); // side arm up and free
     }
 
     // set light color methods
