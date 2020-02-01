@@ -49,7 +49,7 @@ public class SkystoneTeleOp extends LinearOpMode {
         telemetry.addLine("Encoder ")
                 .addData("Lift", "%d", new Func<Integer>() {
                     @Override public Integer value() {
-                        return robot.liftMotor.getCurrentPosition();
+                        return robot.getLiftCurrentPosition();
                     }
                 })
                 .addData("Arm", "%d", new Func<Integer>() {
@@ -91,7 +91,7 @@ public class SkystoneTeleOp extends LinearOpMode {
             bumper();
             capstone();
             telemetry.update();
-            sleep(CYCLE_MS);
+            //sleep(CYCLE_MS);
             idle();
         }
 
@@ -183,23 +183,24 @@ public class SkystoneTeleOp extends LinearOpMode {
 
     public void lift() {
 
-        /*
-         * Vertical Lift control
-         */
+        //
+        // Vertical Lift control
+        //
         if (gamepad2.left_stick_y != 0) {
             // The game pad joystick is negative when pushed forwards or upwards.
-            // We want this direction to raise the lift upwards, therefore flip the sign.
+            // Our lift motor raises the lift when negative power is applied so do not flip the sign
             double power = -gamepad2.left_stick_y;
             // Square the number but retain the sign - to convert to logarithmic scale
             power *= Math.abs(power);
 
             // current position of lift can be positive or negative depending on FORWARD or REVERSE rotation setting
             // The reference position (lift collapsed or at bottom) = 0 encoder count, initialized at power up
-            int pos = robot.liftMotor.getCurrentPosition();
+            int pos = robot.getLiftCurrentPosition();
 
             // if lift stops are being ignored then simply apply the joystick power to the motor
             if (bIgnoreLiftStops) {
                 robot.liftMotor.setPower(power);
+                telemetry.addData("LIFT ", "at %3d, IGNORING STOPS", pos);
             }
             // move lift upwards direction but respect the stop to avoid breaking string
             else if (power > 0 && pos < robot.LIFT_TOP) {
@@ -209,15 +210,25 @@ public class SkystoneTeleOp extends LinearOpMode {
             else if (power < 0 && pos > robot.LIFT_BOTTOM) {
                 robot.liftMotor.setPower(power);
             }
+            else {
+                robot.stopLift();
+            }
         }
-        // stop the lift movement
+        else if (gamepad2.dpad_up) {
+            // temporarily disabled since lift motor encoder is not working as expected
+            //nav.moveLiftUp();
+        }
+        else if (gamepad2.dpad_down) {
+            // temporarily disabled since lift motor encoder is not working as expected
+            //nav.moveLiftDown();
+        }
         else {
-            robot.liftMotor.setPower(0);
+            robot.stopLift();
         }
 
-        /*
-         * Lift Arm control
-         */
+        //
+        // Lift Arm control
+        //
         if (gamepad2.right_stick_y != 0) {
             // forward press on joystick is negative, backward press (towards human) is positive
             // We want this direction to raise the arm outside, therefore flip the sign to positive.
@@ -230,27 +241,39 @@ public class SkystoneTeleOp extends LinearOpMode {
             // if lift stops are being ignored then simply apply the joystick power to the motor
             if (bIgnoreLiftStops) {
                 robot.liftArmMotor.setPower(power);
+                telemetry.addData("ARM ", "at %3d, IGNORING STOPS", pos);
             }
             // move lift arm outside direction but respect the stop to avoid breaking string
-            else if (power > 0 && pos < robot.ARM_OUTSIDE) {
+            else if (power > 0 && pos < MecaBot.ARM_OUTSIDE) {
                 robot.liftArmMotor.setPower(power);
             }
             // move lift arm inside direction but respect the stop to avoid winding string in opposite direction on the spool
-            else if (power < 0 && pos > robot.ARM_INSIDE) {
+            else if (power < 0 && pos > MecaBot.ARM_INSIDE) {
                 robot.liftArmMotor.setPower(power);
             }
+            else {
+                robot.stopLiftArm();
+            }
+        }
+        else if (gamepad2.dpad_left) {
+            nav.moveLiftArmOutside();
+        }
+        else if (gamepad2.dpad_right) {
+            nav.moveLiftArmInside();
         }
         else {
-            robot.liftArmMotor.setPower(0);
+            robot.stopLiftArm();
         }
 
+        //
+        // Claw control for pickup and delivery of stone
+        //
         if (gamepad2.x) {
             robot.rotateClawInside();
         }
         else if (gamepad2.y) {
             robot.rotateClawOutside();
         }
-
         if (gamepad2.right_bumper) {
             robot.grabStoneWithClaw(); // right is grab the stone, claw closed
         }
@@ -258,12 +281,6 @@ public class SkystoneTeleOp extends LinearOpMode {
             robot.releaseStoneWithClaw(); // left is release the stone, claw open
         }
 
-        if (gamepad2.dpad_right) {
-            robot.moveLiftArmOutside();
-        }
-        else if (gamepad2.dpad_left) {
-            robot.moveLiftArmInside();
-        }
     }
 
     public void intake() {

@@ -295,7 +295,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
 
         // deliver skystone on the foundation, the lift arm will take time to move, meanwhile we will grab and move foundation.
         if (haveSkystone) {
-            robot.moveLiftArmOutside();
+            nav.moveLiftArmOutside();
         }
 
         // move backwards to touch the foundation edge
@@ -330,7 +330,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         // enough time elapsed in foundation movement, the lift arm must be out now, release skystone
         if (haveSkystone) {
             robot.releaseStoneWithClaw();
-            robot.moveLiftArmInside();
+            nav.moveLiftArmInside();
         }
         // drive backwards to push the foundation against the scoreboard wall
         // foundation is 18.5 and half robot is 9

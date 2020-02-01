@@ -34,7 +34,6 @@ import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
@@ -100,21 +99,24 @@ public class MecaBot {
     public static final double WIDTH = 18.0;
     public static final double HALF_WIDTH = WIDTH / 2;
 
-    public static final int    LIFT_TOP = 11400;
-    public static final int    LIFT_BOTTOM = 0;
-    public static final int    ARM_INSIDE = 0;
+    public static final int    LIFT_TOP = 5700;
+    public static final int    LIFT_BOTTOM = 50;        // Motor overshoots when software stop kicks in, allow some margin to ZERO position stops
+    public static final int    ARM_INSIDE = 10;         // Motor overshoots when software stop kicks in, allow some margin to ZERO position stops
     public static final int    ARM_OUTSIDE = 400;
     public static final double CLAW_INSIDE = Servo.MAX_POSITION;
-    public static final double CLAW_OUTSIDE = 0.20;
+    public static final double CLAW_OUTSIDE = 0.20;     // adjustment to make the stone square with the robot and foundation
     public static final double CLAW_OPEN = Servo.MAX_POSITION;
     public static final double CLAW_CLOSE = Servo.MIN_POSITION;
     public static final double RT_BUMPER_UP = Servo.MAX_POSITION;
     public static final double RT_BUMPER_DOWN = Servo.MIN_POSITION;
     public static final double LT_BUMPER_UP = Servo.MIN_POSITION;
     public static final double LT_BUMPER_DOWN = Servo.MAX_POSITION;
-
     public static final double CLIPS_LOOSE = Servo.MAX_POSITION;
     public static final double CLIPS_PULLED = Servo.MIN_POSITION;
+
+    public static final double MOTOR_STOP_SPEED = 0.0;
+    public static final double LIFT_DEF_SPEED = 1.0;
+    public static final double ARM_DEF_SPEED = 1.0;
 
     //The amount of encoder ticks for each inch the robot moves. THIS WILL CHANGE FOR EACH ROBOT AND NEEDS TO BE UPDATED HERE
     public static final double ODOMETRY_COUNT_PER_INCH = 242.552133272048492;  // FTC Team 13345 MecaBot encoder has 1440 ticks per rotation, wheel has 48mm diameter
@@ -211,7 +213,7 @@ public class MecaBot {
 
         // Lift, arm and claw
         liftMotor = hwMap.get(DcMotor.class, "liftMotor");
-        //liftMotor.setDirection(DcMotor.Direction.REVERSE);
+        liftMotor.setDirection(DcMotor.Direction.REVERSE);
         liftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -244,6 +246,7 @@ public class MecaBot {
         stopDriving();
         stopIntake();
         stopLift();
+        stopLiftArm();
 
         // set all servos to their resting position
         rotateClawInside();
@@ -479,8 +482,8 @@ public class MecaBot {
         rightIntake.setPower(speed);
     }
     public void stopIntake() {
-        leftIntake.setPower(0);
-        rightIntake.setPower(0);
+        leftIntake.setPower(MOTOR_STOP_SPEED);
+        rightIntake.setPower(MOTOR_STOP_SPEED);
     }
     public void runOuttake(double speed) {
         // we need positive power for ejecting out the stones
@@ -491,39 +494,40 @@ public class MecaBot {
         rightIntake.setPower(speed);
     }
     public void stopOuttake() {
-        leftIntake.setPower(0);
-        rightIntake.setPower(0);
+        leftIntake.setPower(MOTOR_STOP_SPEED);
+        rightIntake.setPower(MOTOR_STOP_SPEED);
     }
 
     /*
      * Lift, arm and claw operation methods
      */
-    public void stopLift() {
-        liftMotor.setPower(0);
-    }
-    public void stopLiftArm() {
-        liftArmMotor.setPower(0);
+    public int getLiftCurrentPosition() {
+        return (-1 * this.liftMotor.getCurrentPosition());
     }
 
-    public void moveLiftArm(int position) {
-        liftArmMotor.setTargetPosition(position);
-        liftArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        liftArmMotor.setPower(0.5);
-        ElapsedTime runTime = new ElapsedTime();
-        runTime.reset();
-        while (liftArmMotor.isBusy() && runTime.seconds() < 1.5) {
-            // do nothing only wait
-        }
-        liftArmMotor.setPower(0.0);
+    public void stopLift() {
+        liftMotor.setPower(MOTOR_STOP_SPEED);
+        // Get out of the RunMode RUN_TO_POSITION, so manual player control is possible
+        liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
+    public void moveLift(int position) {
+        position = Range.clip(position, LIFT_BOTTOM, LIFT_TOP);
+        liftMotor.setTargetPosition(position);
+        liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftMotor.setPower(LIFT_DEF_SPEED);
+    }
+
+    public void stopLiftArm() {
+        liftArmMotor.setPower(MOTOR_STOP_SPEED);
+        // Get out of the RunMode RUN_TO_POSITION, so manual player control is possible
         liftArmMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
-    public void moveLiftArmInside() {
-        moveLiftArm(MecaBot.ARM_INSIDE);
-    }
-    
-    public void moveLiftArmOutside() {
-        moveLiftArm(MecaBot.ARM_OUTSIDE);
+    public void moveLiftArm(int position) {
+        position = Range.clip(position, ARM_INSIDE, ARM_OUTSIDE);
+        liftArmMotor.setTargetPosition(position);
+        liftArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftArmMotor.setPower(ARM_DEF_SPEED);
     }
 
     public void rotateClawInside() {

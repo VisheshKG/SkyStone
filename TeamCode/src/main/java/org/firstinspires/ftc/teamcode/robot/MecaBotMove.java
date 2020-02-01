@@ -52,6 +52,7 @@ public class MecaBotMove {
     //private Orientation         angles;         // Robot heading angle obtained from gyro in IMU sensor
     private String              movementStatus          = "";
 
+    private int[]               liftStops = {MecaBot.LIFT_BOTTOM, 150, 800, 1450, 2100, 2750, 3400, 4050, 4700, 5350, MecaBot.LIFT_TOP};
 
     /* Constructor */
     public MecaBotMove(LinearOpMode opMode, MecaBot aRobot) {
@@ -667,7 +668,64 @@ public class MecaBotMove {
 
     }
 
-/*
+    public void moveLiftToPosition(int position) {
+
+        robot.moveLift(position);
+        ElapsedTime runTime = new ElapsedTime();
+        while (myOpMode.opModeIsActive() && robot.liftMotor.isBusy() && runTime.seconds() < 1.5) {
+            myOpMode.telemetry.addData("LIFT ", "auto moving to %d", position);
+            myOpMode.telemetry.update();
+        }
+        robot.stopLift();
+    }
+
+    public void moveLiftDown() {
+        int pos = robot.liftMotor.getCurrentPosition();
+        int target = pos;
+        for (int i=0; i<liftStops.length - 1; i++) {
+            // whatever lift stop is higher or equal to current position, go down one stop below
+            if (liftStops[i+1] - pos > -100) {
+                target = liftStops[i];
+                break;
+            }
+        }
+        this.moveLiftToPosition(target);
+    }
+
+    public void moveLiftUp() {
+        int pos = robot.liftMotor.getCurrentPosition();
+        int target = pos;
+        // whatever lift stop is higher than current position, go up to that stop
+        for (int i=0; i<liftStops.length; i++) {
+            if (liftStops[i] - pos > 100) {
+                target = liftStops[i];
+                break;
+            }
+        }
+        this.moveLiftToPosition(target);
+    }
+
+    public void moveLiftArmToPosition(int position) {
+
+        robot.moveLiftArm(position);
+        ElapsedTime runTime = new ElapsedTime();
+        while (myOpMode.opModeIsActive() && robot.liftArmMotor.isBusy() && runTime.seconds() < 1.5) {
+            myOpMode.telemetry.addData("ARM ", "auto moving to %d", position);
+            myOpMode.telemetry.update();
+        }
+        robot.stopLiftArm();
+    }
+
+    public void moveLiftArmInside() {
+        this.moveLiftArmToPosition(MecaBot.ARM_INSIDE);
+    }
+
+    public void moveLiftArmOutside() {
+        this.moveLiftArmToPosition(MecaBot.ARM_OUTSIDE);
+    }
+
+
+    /*
  * The code below is obsolete after the 24-NOV-2019 Qualifying Tournament.
  * 1. The Robot does not have a side arm, the robot heading will always towards the stone side for both RED and BLUE
  * 2. Since we are using odometry we cannot flip the X-axis positive direction between RED and BLUE.
