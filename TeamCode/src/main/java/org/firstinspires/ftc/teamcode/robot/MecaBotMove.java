@@ -27,7 +27,7 @@ public class MecaBotMove {
     static final double OUTER_TO_INNER_TURN_SPEED_RATIO = 6.0;
 
     // Driving speeds
-    public static final double DRIVE_SPEED_MIN     = 0.2;
+    public static final double DRIVE_SPEED_MIN     = 0.15;
     public static final double DRIVE_SPEED_SLOW    = 0.3;
     public static final double DRIVE_SPEED_DEFAULT = 0.6;
     public static final double DRIVE_SPEED_FAST    = 0.8;
@@ -52,7 +52,10 @@ public class MecaBotMove {
     //private Orientation         angles;         // Robot heading angle obtained from gyro in IMU sensor
     private String              movementStatus          = "";
 
-    private int[]               liftStops = {MecaBot.LIFT_BOTTOM, 150, 800, 1450, 2100, 2750, 3400, 4050, 4700, 5350, MecaBot.LIFT_TOP};
+    // This setting for goBilda 5202 series 26.9:1 motor, encoder counts per rotation = 753.2
+    //private int[]               liftStops = {MecaBot.LIFT_BOTTOM, 159, 846, 1533, 2220, 2907, 3594, 4281, 4968, 5655, MecaBot.LIFT_TOP};
+    // This setting for goBilda 5202 series 50.9:1 motor, encoder counts per rotation = 1425.2
+    private int[]               liftStops = {MecaBot.LIFT_BOTTOM, 300, 1600, 2900, 4200, 5500, 6800, 8100, 9400, 10700, MecaBot.LIFT_TOP};
 
     /* Constructor */
     public MecaBotMove(LinearOpMode opMode, MecaBot aRobot) {
@@ -261,8 +264,14 @@ public class MecaBotMove {
         // when within DIST_SLOWDOWN inches of target, reduce the speed proportional to remaining distance to target
         if (slowDownAtEnd && distanceToPosition < DIST_SLOWDOWN) {
             // however absolute minimum power is required otherwise the robot cannot move the last couple of inches
-            double slowPower = Range.clip(distanceToPosition / DIST_SLOWDOWN, DRIVE_SPEED_MIN, DRIVE_SPEED_MAX);
-            drivePower = Math.min(speed, slowPower);
+
+            // enable this code for delayed aggressive braking - overshoots target but saves some time
+            //double slowPower = Range.clip(distanceToPosition / DIST_SLOWDOWN, DRIVE_SPEED_MIN, DRIVE_SPEED_MAX);
+            //drivePower = Math.min(speed, slowPower);
+
+            // enable this code instead for more gentle slow down at end - stop closer to target position
+            double slowPower = (distanceToPosition / DIST_SLOWDOWN) * speed;
+            drivePower = Math.max(DRIVE_SPEED_MIN, slowPower);
         }
         // set turnspeed proportional to the amount of turn required, however beyond 30 degrees turn, full speed is ok
         // note here that positive angle means turn left (since angle is measured counter clockwise from X-axis)

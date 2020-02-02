@@ -25,7 +25,7 @@ public class SkystoneTeleOp extends LinearOpMode {
     // record position that we need to return to repeatedly
     double xpos, ypos, tpos;
     boolean autoDriving = false;
-    double speedMultiplier = 1.0;
+    double speedMultiplier = MecaBotMove.DRIVE_SPEED_MAX;
 
     @Override
     public void runOpMode() {
@@ -91,7 +91,6 @@ public class SkystoneTeleOp extends LinearOpMode {
             bumper();
             capstone();
             telemetry.update();
-            //sleep(CYCLE_MS);
             idle();
         }
 
@@ -132,6 +131,20 @@ public class SkystoneTeleOp extends LinearOpMode {
             robot.setFrontLiftarm();
             autoDriving = true;
         }
+        //update speedMultiplier
+        if (gamepad1.right_bumper) {
+            speedMultiplier = MecaBotMove.DRIVE_SPEED_MAX;
+            robot.setFastBlue();
+            // as a dual action of this button stop autodriving
+            autoDriving = false;
+        }
+        else if (gamepad1.left_bumper) {
+            speedMultiplier = MecaBotMove.DRIVE_SPEED_DEFAULT;
+            robot.setSlowBlue();
+            // as a dual action of this button stop autodriving
+            autoDriving = false;
+        }
+
     }
 
     public void autodrive() {
@@ -145,39 +158,57 @@ public class SkystoneTeleOp extends LinearOpMode {
     }
 
     public void operdrive() {
+        // if joystick is inactive brakes will be applied during autodrive() therefore don't go in
         if (autoDriving) {
             return;
         }
 
-        //update speedMultiplier
-        if (gamepad1.right_bumper) {
-            speedMultiplier = 1.0;
-            robot.setFastBlue();
-        }
-        else if (gamepad1.left_bumper) {
-            speedMultiplier = 0.66;
-            robot.setSlowBlue();
-        }
-
-        double drive_x = gamepad1.left_stick_x;
-        double drive_y = gamepad1.left_stick_y;
-        double turn_x = gamepad1.right_stick_x;
+        double power, turn;
 
         // square the joystick values to change from linear to logarithmic scale
         // this allows more movement of joystick for less movement of robot, thus more precision at lower speeds
         // at the expense of some loss of precision at higher speeds, where it is not required.
 
-        //if we want to move sideways (MECANUM)
-        if (Math.abs(drive_x) > Math.abs(drive_y)) {
-            robot.driveMecanum(drive_x * Math.abs(drive_x) * speedMultiplier);
+        // when we want to move sideways (MECANUM)
+        if (gamepad1.left_trigger > 0) {
+            power = -gamepad1.left_trigger; // negative power to move LEFT
+            // Square the number but retain the sign to convert to logarithmic scale
+            // scale the range to 0.30 <= abs(power) <= 1.0 and preserve the sign
+            power = Math.signum(power) * (0.25 + (0.75 * power * power)) * speedMultiplier;
+            robot.driveMecanum(power);
+            telemetry.addData("Mecanum Left ", "%.2f", power);
+        }
+        else if (gamepad1.right_trigger > 0) {
+            power = gamepad1.right_trigger; // positive power to move RIGHT
+            // Square the number but retain the sign to convert to logarithmic scale
+            // scale the range to 0.30 <= abs(power) <= 1.0 and preserve the sign
+            power = Math.signum(power) * (0.25 + (0.75 * power * power)) * speedMultiplier;
+            robot.driveMecanum(power);
+            telemetry.addData("Mecanum Right  ", "%.2f", power);
         }
         // normal tank movement
-        else{  // only if joystick is active, otherwise brakes are applied during autodrive()
+        else {  // when joystick is inactive, this applies brakes, be careful to avoid during autodrive
             // forward press on joystick is negative, backward press (towards human) is positive
             // right press on joystick is positive value, left press is negative value
             // reverse sign of joystick values to match the expected sign in driveTank() method.
-            robot.driveTank(-drive_y * Math.abs(drive_y) * speedMultiplier,
-                    -turn_x * Math.abs(turn_x) * speedMultiplier * TURN_FACTOR);
+            power = -gamepad1.left_stick_y;
+            turn = -gamepad1.right_stick_x;
+
+            // Square the number but retain the sign to convert to logarithmic scale
+            // scale the range to 0.25 <= abs(power) <= 1.0 and preserve the sign
+            power = Math.signum(power) * (0.2 + (0.8 * power * power));
+            // OR
+            // use this to scale the range without squaring the power value
+            //power = Math.signum(power) * (0.25 + (0.75 * Math.abs(power)));
+            // OR
+            // use this to square the power while preserving the sign, without scaling the range
+            //power *= Math.abs(power);
+
+            // similarly for turn power, except also slow down by TURN_FACTOR
+            turn = Math.signum(turn) * (0.1 + (TURN_FACTOR * turn * turn));
+
+            robot.driveTank(power, turn);
+            telemetry.addData("Tank Power", "Drive=%.2f Turn=%.2f", power, turn);
         }
     }
 
@@ -188,10 +219,18 @@ public class SkystoneTeleOp extends LinearOpMode {
         //
         if (gamepad2.left_stick_y != 0) {
             // The game pad joystick is negative when pushed forwards or upwards.
-            // Our lift motor raises the lift when negative power is applied so do not flip the sign
+            // Our lift motor raises the lift when positive power is applied
+            // To raise the lift with a forward/upwards push of joystick, flip the sign
             double power = -gamepad2.left_stick_y;
-            // Square the number but retain the sign - to convert to logarithmic scale
-            power *= Math.abs(power);
+            // Square the number but retain the sign to convert to logarithmic scale
+            // scale the range to 0.15 <= abs(power) <= 1.0 and preserve the sign
+            power = Math.signum(power) * (0.15 + (0.85 * power * power));
+            // OR
+            // use this to scale the range without squaring the power value
+            //power = Math.signum(power) * (0.15 + (0.85 * Math.abs(power)));
+            // OR
+            // use this to square the power while preserving the sign, without scaling the range
+            //power *= Math.abs(power);
 
             // current position of lift can be positive or negative depending on FORWARD or REVERSE rotation setting
             // The reference position (lift collapsed or at bottom) = 0 encoder count, initialized at power up
@@ -205,22 +244,22 @@ public class SkystoneTeleOp extends LinearOpMode {
             // move lift upwards direction but respect the stop to avoid breaking string
             else if (power > 0 && pos < robot.LIFT_TOP) {
                 robot.liftMotor.setPower(power);
+                telemetry.addData("Lift Up", "%.2f", power);
             }
             // move lift downwards direction but respect the stop to avoid winding string in opposite direction on the spool
             else if (power < 0 && pos > robot.LIFT_BOTTOM) {
                 robot.liftMotor.setPower(power);
+                telemetry.addData("Lift Down", "%.2f", power);
             }
             else {
                 robot.stopLift();
             }
         }
         else if (gamepad2.dpad_up) {
-            // temporarily disabled since lift motor encoder is not working as expected
-            //nav.moveLiftUp();
+            nav.moveLiftUp();
         }
         else if (gamepad2.dpad_down) {
-            // temporarily disabled since lift motor encoder is not working as expected
-            //nav.moveLiftDown();
+            nav.moveLiftDown();
         }
         else {
             robot.stopLift();
@@ -231,25 +270,27 @@ public class SkystoneTeleOp extends LinearOpMode {
         //
         if (gamepad2.right_stick_y != 0) {
             // forward press on joystick is negative, backward press (towards human) is positive
-            // We want this direction to raise the arm outside, therefore flip the sign to positive.
-            double power = -gamepad2.right_stick_y;
-            // Square the number but retain the sign - to convert to logarithmic scale
+            // Positive power moves the lift arm outside, negative power moves the lift arm inside the robot
+            // This works out for us, no need to flip the sign
+            double power = gamepad2.right_stick_y;
+            // Square the number but retain the sign, to convert to logarithmic scale
             power *= Math.abs(power);
 
             int pos = robot.liftArmMotor.getCurrentPosition();
-            // If operator joystick is pushed forwards/upwards, move the lift arm inside the robot
             // if lift stops are being ignored then simply apply the joystick power to the motor
             if (bIgnoreLiftStops) {
                 robot.liftArmMotor.setPower(power);
-                telemetry.addData("ARM ", "at %3d, IGNORING STOPS", pos);
+                telemetry.addData("ARM", "at %3d, IGNORING STOPS", pos);
             }
             // move lift arm outside direction but respect the stop to avoid breaking string
             else if (power > 0 && pos < MecaBot.ARM_OUTSIDE) {
                 robot.liftArmMotor.setPower(power);
+                telemetry.addData("Arm Out", "%.2f", power);
             }
             // move lift arm inside direction but respect the stop to avoid winding string in opposite direction on the spool
             else if (power < 0 && pos > MecaBot.ARM_INSIDE) {
                 robot.liftArmMotor.setPower(power);
+                telemetry.addData("Arm In", "%.2f", power);
             }
             else {
                 robot.stopLiftArm();
@@ -310,10 +351,10 @@ public class SkystoneTeleOp extends LinearOpMode {
 
     public void capstone() {
         if (gamepad1.a) {
-            robot.resetCapstoneClips();
+            robot.holdCapstone();
         }
         else if (gamepad1.b) {
-            robot.dropCapstoneClips();
+            robot.releaseCapstone();
         }
     }
 

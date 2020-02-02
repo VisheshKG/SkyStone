@@ -99,7 +99,10 @@ public class MecaBot {
     public static final double WIDTH = 18.0;
     public static final double HALF_WIDTH = WIDTH / 2;
 
-    public static final int    LIFT_TOP = 5700;
+    // for goBilda 5202 series 26.9:1 gear ratio motor, encoder counts per rotation = 753.2
+    // public static final int    LIFT_TOP = 6342;
+    // for goBilda 5202 series 50.9:1 gear ratio motor, encoder counts per rotation = 1425.2
+    public static final int    LIFT_TOP = 12000;
     public static final int    LIFT_BOTTOM = 50;        // Motor overshoots when software stop kicks in, allow some margin to ZERO position stops
     public static final int    ARM_INSIDE = 10;         // Motor overshoots when software stop kicks in, allow some margin to ZERO position stops
     public static final int    ARM_OUTSIDE = 400;
@@ -111,8 +114,8 @@ public class MecaBot {
     public static final double RT_BUMPER_DOWN = Servo.MIN_POSITION;
     public static final double LT_BUMPER_UP = Servo.MIN_POSITION;
     public static final double LT_BUMPER_DOWN = Servo.MAX_POSITION;
-    public static final double CLIPS_LOOSE = Servo.MAX_POSITION;
-    public static final double CLIPS_PULLED = Servo.MIN_POSITION;
+    public static final double CAP_LOCKED = Servo.MAX_POSITION;
+    public static final double CAP_RELEASED = Servo.MIN_POSITION;
 
     public static final double MOTOR_STOP_SPEED = 0.0;
     public static final double LIFT_DEF_SPEED = 1.0;
@@ -213,7 +216,7 @@ public class MecaBot {
 
         // Lift, arm and claw
         liftMotor = hwMap.get(DcMotor.class, "liftMotor");
-        liftMotor.setDirection(DcMotor.Direction.REVERSE);
+        //liftMotor.setDirection(DcMotor.Direction.REVERSE);
         liftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -251,7 +254,7 @@ public class MecaBot {
         // set all servos to their resting position
         rotateClawInside();
         releaseStoneWithClaw();
-        resetCapstoneClips();
+        holdCapstone();
         releaseFoundation();
     }
 
@@ -502,7 +505,7 @@ public class MecaBot {
      * Lift, arm and claw operation methods
      */
     public int getLiftCurrentPosition() {
-        return (-1 * this.liftMotor.getCurrentPosition());
+        return liftMotor.getCurrentPosition();
     }
 
     public void stopLift() {
@@ -544,7 +547,7 @@ public class MecaBot {
     }
 
     /*
-     * Foundation bumper clamps operataion methods
+     * Foundation bumper clamps operation methods
      */
     public void grabFoundation() {
         leftClamp.setPosition(LT_BUMPER_DOWN); // clamp down to engage the foundation
@@ -554,11 +557,13 @@ public class MecaBot {
         leftClamp.setPosition(LT_BUMPER_UP); // clamp up to release the foundation
         rightClamp.setPosition(RT_BUMPER_UP);
     }
-    public void dropCapstoneClips() {
-        capstoneServo.setPosition(CLIPS_PULLED); // side arm down to engage the stone
+
+    // Capstone release on top of Stone inside robot
+    public void holdCapstone() {
+        capstoneServo.setPosition(CAP_LOCKED);
     }
-    public void resetCapstoneClips() {
-        capstoneServo.setPosition(CLIPS_LOOSE); // side arm up and free
+    public void releaseCapstone() {
+        capstoneServo.setPosition(CAP_RELEASED);
     }
 
     // set light color methods

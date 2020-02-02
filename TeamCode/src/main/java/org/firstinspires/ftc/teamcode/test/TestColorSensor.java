@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.skystone;
+package org.firstinspires.ftc.teamcode.test;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
@@ -9,9 +9,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.robot.MecaBot;
 import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
 
-@Autonomous(name = "Sense Stone Only", group="QT")
+@Autonomous(name = "Test Color Sensor 4 Stone", group="Test")
 @Disabled
-public class testColorSensorForStone extends LinearOpMode {
+public class TestColorSensor extends LinearOpMode {
 
     MecaBot robot = new MecaBot();
     //MecaBotMove nav = new MecaBotMove(this, robot);

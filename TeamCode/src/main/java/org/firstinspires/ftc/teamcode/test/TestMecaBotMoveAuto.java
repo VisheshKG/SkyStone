@@ -36,10 +36,6 @@ public class TestMecaBotMoveAuto extends LinearOpMode {
         //testDrawBox();
         testMoveYX();
 
-        robot.dropCapstoneClips();
-        sleep(2000 );
-        robot.resetCapstoneClips();
-
         //nav.encoderMoveLeftRight(-12);
 
         //nav.goPark(24,24, false,true);
