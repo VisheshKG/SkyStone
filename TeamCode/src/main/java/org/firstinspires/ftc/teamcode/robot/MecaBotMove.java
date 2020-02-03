@@ -27,6 +27,7 @@ public class MecaBotMove {
     static final double OUTER_TO_INNER_TURN_SPEED_RATIO = 6.0;
 
     // Driving speeds
+    public static final double DRIVE_SPEED_BRAKE   = 0.0;
     public static final double DRIVE_SPEED_MIN     = 0.15;
     public static final double DRIVE_SPEED_SLOW    = 0.3;
     public static final double DRIVE_SPEED_DEFAULT = 0.6;
@@ -722,7 +723,8 @@ public class MecaBotMove {
             myOpMode.telemetry.addData("ARM ", "auto moving to %d", position);
             myOpMode.telemetry.update();
         }
-        robot.stopLiftArm();
+        robot.liftArmMotor.setPower(DRIVE_SPEED_BRAKE);
+        robot.liftArmMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     public void moveLiftArmInside() {

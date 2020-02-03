@@ -522,8 +522,6 @@ public class MecaBot {
 
     public void stopLiftArm() {
         liftArmMotor.setPower(MOTOR_STOP_SPEED);
-        // Get out of the RunMode RUN_TO_POSITION, so manual player control is possible
-        liftArmMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     public void moveLiftArm(int position) {

@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.skystone;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Func;
@@ -297,10 +298,12 @@ public class SkystoneTeleOp extends LinearOpMode {
             }
         }
         else if (gamepad2.dpad_left) {
-            nav.moveLiftArmOutside();
+            //nav.moveLiftArmOutside();
+            robot.rotateClawOutside();
         }
         else if (gamepad2.dpad_right) {
-            nav.moveLiftArmInside();
+            //nav.moveLiftArmInside();
+            robot.rotateClawInside();
         }
         else {
             robot.stopLiftArm();
@@ -309,11 +312,18 @@ public class SkystoneTeleOp extends LinearOpMode {
         //
         // Claw control for pickup and delivery of stone
         //
+        // temporarily override the x and y buttons to move the lift arm and not the claw
+        // this is because the lift arm encoder is drifting causing trouble with software stops
+        // so we need some button to reset the encoder count when lift arm is at resting position
         if (gamepad2.x) {
-            robot.rotateClawInside();
+            //robot.rotateClawInside(); // disabled
+            //nav.moveLiftArmInside();
+            robot.liftArmMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         }
         else if (gamepad2.y) {
-            robot.rotateClawOutside();
+            //robot.rotateClawOutside(); // disabled
+            //robot.liftArmMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            nav.moveLiftArmOutside();
         }
         if (gamepad2.right_bumper) {
             robot.grabStoneWithClaw(); // right is grab the stone, claw closed
