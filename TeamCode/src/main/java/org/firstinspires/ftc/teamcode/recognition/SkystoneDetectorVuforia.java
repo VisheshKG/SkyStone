@@ -20,7 +20,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 
-public class VuforiaUtil {
+public class SkystoneDetectorVuforia {
     private LinearOpMode  myOpMode;       // Access to the OpMode object
     //private MecaBot       robot;        // Access to the Robot hardware
 
@@ -75,7 +75,7 @@ public class VuforiaUtil {
     float  robotZ;
 
     /* Constructor */
-    public VuforiaUtil(LinearOpMode opMode) {
+    public SkystoneDetectorVuforia(LinearOpMode opMode) {
         // Save reference to OpMode and Hardware map
         myOpMode = opMode;
         //robot = aRobot;

@@ -45,7 +45,7 @@ import java.util.List;
  *
  */
 
-public class TensorflowUtil {
+public class SkystoneDetectorTensorflow {
     private LinearOpMode  myOpMode;
     private static final String TFOD_MODEL_ASSET = "Skystone.tflite";
     private static final String LABEL_FIRST_ELEMENT = "Stone";
@@ -67,7 +67,7 @@ public class TensorflowUtil {
     private TFObjectDetector tfod;
     
     /* Constructor */
-    TensorflowUtil(LinearOpMode opMode) {
+    public SkystoneDetectorTensorflow(LinearOpMode opMode) {
         // Save reference to OpMode and Hardware map
         myOpMode = opMode;
         //robot = aRobot;

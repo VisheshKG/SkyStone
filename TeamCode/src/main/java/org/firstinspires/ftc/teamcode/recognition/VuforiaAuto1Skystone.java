@@ -60,7 +60,7 @@ public class VuforiaAuto1Skystone extends LinearOpMode {
 
     MecaBot robot = new MecaBot();   // Use Omni-Directional drive system
     MecaBotMove nav = new MecaBotMove(this, robot);
-    VuforiaUtil vUtil= new VuforiaUtil(this);
+    SkystoneDetectorVuforia vUtil= new SkystoneDetectorVuforia(this);
 
     @Override
     public void runOpMode() {

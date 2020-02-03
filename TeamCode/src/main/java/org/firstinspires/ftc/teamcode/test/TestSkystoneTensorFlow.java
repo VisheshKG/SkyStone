@@ -27,19 +27,14 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode.recognition;
+package org.firstinspires.ftc.teamcode.test;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.robotcore.external.ClassFactory;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
-import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
-
-import java.util.List;
+import org.firstinspires.ftc.teamcode.recognition.SkystoneDetectorTensorflow;
 
 /**
  * This 2019-2020 OpMode illustrates the basics of using the TensorFlow Object Detection API to
@@ -50,10 +45,10 @@ import java.util.List;
  * IMPORTANT: In order to use this OpMode, you need to obtain your own Vuforia license key as
  * is explained below.
  */
-@TeleOp(name = "Test TensorFlow Object Detection", group = "Concept")
+@TeleOp(name = "Test TensorFlow Skystone Detection", group = "Test")
 @Disabled
-public class testTensorFlowObjectDetection extends LinearOpMode {
-    private TensorflowUtil tfUtil= new TensorflowUtil(this);
+public class TestSkystoneTensorFlow extends LinearOpMode {
+    private SkystoneDetectorTensorflow tfUtil= new SkystoneDetectorTensorflow(this);
 
     @Override
     public void runOpMode() {
