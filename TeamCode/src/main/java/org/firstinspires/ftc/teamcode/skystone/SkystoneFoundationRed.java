@@ -37,18 +37,11 @@ import org.firstinspires.ftc.teamcode.robot.MecaBot;
 import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
 
 
-@Autonomous(name="RED Foundation+Parking", group="QT")
+@Autonomous(name="RED Foundation+Park Inside", group="QT")
 public class SkystoneFoundationRed extends SkystoneAutoBase {
 
-    static final boolean BLUE = false;
-
-    /* Declare OpMode members. */
-    static final double     DRIVE_SPEED             = 0.8;
-    static final double     TURN_SPEED              = 0.5;
-    static final double     SLOW_SPEED              = 0.3;
-    static final double     BUILD_WALL_TO_ROBOT     = 24.0;
-    static final double     MOVE_TOWARDS_FOUNDATION = 24.0;
-    static final double     TURN_FOUNDATION_DISTANCE= 64.0;
+    @Override
+    public String getColorString() { return "RED"; }
 
     @Override
     public void setOdometryStartingPosition() {
@@ -94,16 +87,19 @@ public class SkystoneFoundationRed extends SkystoneAutoBase {
      */
     public void encoderMoveFoundationAndPark() {
 
+        double BUILD_WALL_TO_ROBOT = 24.0;      // determined by robot positioning at start of the match
+        double MOVE_TOWARDS_FOUNDATION = 24.0;  // constant used only in this method
+
         // move away from perimeter wall before moving towards build wall
         nav.encoderMoveForwardBack(-MOVE_TOWARDS_FOUNDATION);
 
         // move towards the build wall to center robot on foundation long edge
         double robotToFoundationEdge = (FieldSkystone.FOUNDATION_LENGTH - MecaBot.WIDTH) / 2;
         double moveToBuildWall = BUILD_WALL_TO_ROBOT - FieldSkystone.BUILD_WALL_TO_FOUNDATION - robotToFoundationEdge;
-        nav.encoderMoveRightLeft(BLUE ? moveToBuildWall : -moveToBuildWall);
+        nav.encoderMoveRightLeft(flipX4Red(moveToBuildWall));
 
         // move backwards towards the foundation now, slowly
-        nav.encoderMoveForwardBack((FieldSkystone.SIDE_WALL_TO_FOUNDATION - MecaBot.LENGTH - MOVE_TOWARDS_FOUNDATION) * -1.0, SLOW_SPEED);
+        nav.encoderMoveForwardBack((FieldSkystone.SIDE_WALL_TO_FOUNDATION - MecaBot.LENGTH - MOVE_TOWARDS_FOUNDATION) * -1.0, MecaBotMove.DRIVE_SPEED_SLOW);
 
         // TODO: check for the contact switch activation here to tell us when robot has reached
 
@@ -113,10 +109,9 @@ public class SkystoneFoundationRed extends SkystoneAutoBase {
 
         nav.encoderMoveForwardBack(24);
 
-        double turnDistance = BLUE ? TURN_FOUNDATION_DISTANCE : 130;
         // turn the foundation so that long edge if parallel to the build zone wall
-//        nav.encoderTurn(turnDistance, BLUE ? true : false, SLOW_SPEED);
-        nav.encoderRotate(40, BLUE ? true : false, SLOW_SPEED);
+        // first 2 parameters are different for BLUE vs RED
+        nav.encoderRotate(40, false, MecaBotMove.DRIVE_SPEED_SLOW);
 
         // drive the robot in reverse to push the foundation to the build zone wall
         nav.encoderMoveForwardBack(-20);
@@ -126,7 +121,7 @@ public class SkystoneFoundationRed extends SkystoneAutoBase {
         sleep(1000);
 
         // Move towards the wall so that we allow space for alliance partner to park
-        nav.encoderMoveRightLeft(BLUE ? -12 : -18);
+        nav.encoderMoveRightLeft(flipX4Red(+12));
 
         // now go park under the bridge
         nav.encoderMoveForwardBack(42);

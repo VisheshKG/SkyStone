@@ -2,14 +2,23 @@ package org.firstinspires.ftc.teamcode.skystone;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.opencv.core.Rect;
+import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraRotation;
+import org.openftc.easyopencv.OpenCvInternalCamera;
+import org.firstinspires.ftc.teamcode.recognition.SkystoneDetectorDogeCV;
 
 import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalPosition;
 import org.firstinspires.ftc.teamcode.purepursuit.MathFunctions;
 import org.firstinspires.ftc.teamcode.robot.MecaBot;
 import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
-
 import org.firstinspires.ftc.teamcode.skystone.FieldSkystone.AllianceColor;
+
+import java.util.ArrayList;
+import java.util.Locale;
 
 /**
  * Each floor tile is 23.5 inch square (counting tabs on one side and not on the other side)
@@ -22,14 +31,45 @@ import org.firstinspires.ftc.teamcode.skystone.FieldSkystone.AllianceColor;
 
 public abstract class SkystoneAutoBase extends LinearOpMode {
 
+    // constants
+    private static final int IMG_WIDTH = 640;
+    private static final int IMG_HEIGHT = 360;
+    private static final int STONE_RECT_AREA_MIN = 4000;
+    private static final int STONE_RECT_AREA_MAX = 10000;
+
     // OpMode members here
     protected MecaBot robot;
     protected MecaBotMove nav;
     protected OdometryGlobalPosition globalPosition;
+    private OpenCvCamera phoneCam;
+    private SkystoneDetectorDogeCV skystoneDetector;
+//    private StoneDetector stoneDetector;
 
     protected AllianceColor aColor;
-
+    protected String actionString = "Inactive";
+    protected String message = "NO";
+    private int previousCount = 0;
     boolean haveSkystone = false;
+
+    /*
+     * Abstract methods, must be implemented by the sub-classes
+     */
+    public abstract void setOdometryStartingPosition();
+
+    public abstract String getColorString();
+
+    public ColorSensor chooseColorSensorForSkystone() {
+        // random choice, the RED and BLUE subclasses should override this method
+        return robot.leftColorSensor;
+    }
+
+    public String getAction() {
+        return actionString;
+    }
+
+    public String getMessage() {
+        return message;
+    }
 
     protected double flipX4Red(double value) {
         return (aColor == AllianceColor.BLUE) ? value : -value;
@@ -41,36 +81,84 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         }
         return value;
     }
-    /*
-     * Abstract method, must be implemented by the sub-classes
-     */
-    public abstract void setOdometryStartingPosition();
-
-    public ColorSensor chooseColorSensorForSkystone() {
-        // random choice, the RED and BLUE subclasses should override this method
-        return robot.leftColorSensor;
-    }
 
     /**
      * Initialize all hardware and software data structures
      */
     public void initializeOpMode() {
-        /*
-         * Initialize the drive system variables.
-         * The init() method of the hardware class does all the work here
-         */
+
+        // Initialize the robot hardware and drive system variables.
         robot = new MecaBot();
         robot.init(hardwareMap);
-        // lof of problems with gyro rotation crashing the problem, disable it
+        // disabled: lof of problems with gyro rotation crashing the problem
         // robot.initIMU();
-        //
-
+        // initialize the OpenCV image recognition for skystone detection
+        initSkystoneDetectionOpenCV();
+        // initialize movement algorithms variables
         nav = new MecaBotMove(this, robot);
+        // odometry is initialize inside drive system MecaBotMove class
         globalPosition = nav.getPosition();
+        // this method is overridden by sub-classes to set starting coordinates for RED/BLUE side of field
         setOdometryStartingPosition();
+        // start the thread to calculate robot position continuously
+        nav.startOdometry();
+        // start printing messages to driver station asap
+        setupTelemetry();
+    }
 
-        telemetry.addData("Status", "Initialized");
+    // for testing mainly, at the end wait for driver to press STOP, meanwhile
+    // continue updating odometry position of the manual movement of the robot
+    public void waitForStop() {
 
+        while (opModeIsActive()) {
+
+            telemetry.update();
+        }
+    }
+
+    /**
+     * do everything in autonomous mode
+     * detect a skystone, pick it up, transport and delivery to the foundation,
+     * move the foundation, go park itself under the skybridge
+     */
+    public void runFullAutoProgram() {
+
+// disabled: color sensor detection does not allow robot movement accuracy
+// replaced with camera detection, using image recognition
+//        positionToDetectSkystoneWithColorSensor();
+//        pickupSkystoneWithColorSensor();
+
+        printSkystoneDetection(1.0);
+        int pos = skystoneDetector.getSkystoneLocationInQuarry();
+        pickupSkystoneAtPosition(pos);
+        deliverSkystone();
+        moveFoundation();
+        parkAtInsideLane();
+    }
+
+    protected void setupTelemetry() {
+
+        actionString = "Telemetry";
+        telemetry.addLine("Auto ")
+                .addData(getColorString(), new Func<String>() {
+                    @Override
+                    public String value() {
+                        return getAction();
+                    }
+                })
+                .addData("msg", new Func<String>() {
+                    @Override
+                    public String value() {
+                        return getMessage();
+                    }
+                });
+        telemetry.addLine("Move ")
+                .addData("", new Func<String>() {
+                    @Override
+                    public String value() {
+                        return nav.getMovementStatus();
+                    }
+                });
         telemetry.addLine("Position ")
                 .addData("X", "%3.2f", new Func<Double>() {
                     @Override
@@ -95,44 +183,94 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
                         return robot.getFrontDirection();
                     }
                 });
-        telemetry.addLine("Move ")
-                .addData("", new Func<String>() {
-                    @Override
-                    public String value() {
-                        return nav.getMovementStatus();
-                    }
-                });
+        message = "Done";
         telemetry.update();
-
-        // start the thread to calculate robot position continuously
-        nav.startOdometry();
     }
+    protected void initSkystoneDetectionOpenCV() {
 
-    // for testing mainly, at the end wait for driver to press STOP, meanwhile
-    // continue updating odometry position of the manual movement of the robot
-    public void waitForStop() {
+        // Instantiate an OpenCvCamera object for the camera we'll be using.
+        //we're using the phone's internal camera and selected the BACK camera.
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        phoneCam = new OpenCvInternalCamera(OpenCvInternalCamera.CameraDirection.BACK, cameraMonitorViewId);
 
-        while (opModeIsActive()) {
+        // OR...  Do Not Activate the Camera Monitor View
+        //phoneCam = new OpenCvInternalCamera(OpenCvInternalCamera.CameraDirection.BACK);
 
-            telemetry.update();
-        }
+        // Open the connection to the camera device
+        phoneCam.openCameraDevice();
+
+        // Specify the image processing pipeline we wish to invoke upon receipt
+        // of a frame from the camera. Note that switching pipelines on-the-fly
+        // (while a streaming session is in flight) *IS* supported.
+        skystoneDetector = new SkystoneDetectorDogeCV();
+        skystoneDetector.setTargetAreaSize(STONE_RECT_AREA_MIN,STONE_RECT_AREA_MAX);
+        phoneCam.setPipeline(skystoneDetector);
+
+        // OR StoneDetector if we are interested in Stone only (not interested in Skystone)
+        //stoneDetector = new StoneDetector();
+        //phoneCam.setPipeline(stoneDetector);
+
+        /*
+         * Tell the camera to start streaming images to us! Note that you must make sure
+         * the resolution you specify is supported by the camera. If it is not, an exception
+         * will be thrown.
+         *
+         * Also, we specify the rotation that the camera is used in. This is so that the image
+         * from the camera sensor can be rotated such that it is always displayed with the image upright.
+         * For a front facing camera, rotation is defined assuming the user is looking at the screen.
+         * For a rear facing camera or a webcam, rotation is defined assuming the camera is facing
+         * away from the user.
+         */
+        phoneCam.startStreaming(IMG_WIDTH, IMG_HEIGHT, OpenCvCameraRotation.UPRIGHT);
+
     }
 
     /**
-     * do everything in autonomous mode
-     * detect a skystone, pick it up, transport and delivery to the foundation,
-     * move the foundation, go park itself under the skybridge
+     * printSkystoneDetection()
+     * This method prints all the internal variables using OpenCV for image recognition and
+     * calculating the best position of the skystone in the quarry. Useful for development.
+     * In final program this method is not used, when the skystone detection is working reliably.
      */
-    public void runFullAutoProgram() {
+    public void printSkystoneDetection(double timeout) {
 
-// replacing color sensor detection by camera detection
-//        positionToDetectSkystoneWithColorSensor();
-//        pickupSkystoneWithColorSensor();
-        pickupSkystoneAtPosition(4);  // hard coded for 4th position until camera detection is ready
-        deliverSkystone();
-        moveFoundation();
-        parkAtInsideLane();
+        actionString = "Skystone Detection";
+        message = "Detecting";
+        ElapsedTime runTime = new ElapsedTime();
+        while (opModeIsActive() && runTime.seconds() < timeout) {
+            // if we have already analyzed the current picture frame, then simply return
+            int currentCount = skystoneDetector.getRectangleDetectionCount();
+            if (currentCount == previousCount) {
+                sleep(50);
+                continue;
+            }
+            telemetry.addData("Detection Count", "Current=%d, Previous=%d", currentCount, previousCount);
 
+            int[] quarry = skystoneDetector.getStoneQuarryCounts();
+            telemetry.addData("Quarry", "6:[%d  %d  %d  %d  %d  %d]:1", quarry[6], quarry[5], quarry[4], quarry[3], quarry[2], quarry[1]);
+            int pos = skystoneDetector.getSkystoneLocationInQuarry();
+            message = "Location " + pos;
+            telemetry.addData("Skystone Detected", "%d  %d  %d  %d  %d  %d  %d  %d  %d  %d", pos, pos, pos, pos, pos, pos, pos, pos, pos, pos);
+            int[] reject = skystoneDetector.getRejectCounts();
+            telemetry.addData("Rejected", "ratio=%d, distance=%d, pan=%d", reject[1], reject[2], reject[3]);
+
+            Rect rect;
+            ArrayList<Rect> skystoneRects = skystoneDetector.getSkystoneCandidates();
+            for (int i = 0; i < skystoneRects.size(); i++) {
+                rect = skystoneRects.get(i);
+                telemetry.addData("SkyStone " + i, "{y=%03d, x=%03d, %03dx%03d} area=%.0f", rect.y, rect.x, rect.width, rect.height, rect.area());
+            }
+            ArrayList<Rect> stoneRects = skystoneDetector.getStoneCandidates();
+            for (int j = 0; j < stoneRects.size(); j++) {
+                rect = stoneRects.get(j);
+                telemetry.addData("Stone " + j, "{y=%03d, x=%03d, %03dx%03d} area=%.0f", rect.y, rect.x, rect.width, rect.height, rect.area());
+            }
+            // Display other image pipeline statistics if needed for debugging
+            telemetry.addData("Image Size", "w=%.0f x h=%.0f", skystoneDetector.getSize().width, skystoneDetector.getSize().height);
+            telemetry.addData("Frame Count", phoneCam.getFrameCount());
+            telemetry.addData("FPS", String.format(Locale.US, "%.2f", phoneCam.getFps()));
+            telemetry.update();
+            previousCount = currentCount;
+        }
     }
 
     /**
@@ -143,8 +281,13 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
      */
     public void pickupSkystoneAtPosition(int pos) {
 
+        actionString = "Skystone Pickup";
+        message = "Location" + pos;
+
         // Starting position is (green wheels facing the center of the field, +ve Y-Axis)
-        globalPosition.initGlobalPosition(flipX4Red(+33.0), +8.5,90.0);
+        // this must be set in the setOdometryStartingPosition() method
+        //globalPosition.initGlobalPosition(flipX4Red(+33.0), +8.5, 90.0);
+
         robot.setFrontIntake();
 
         // stone quarry is 47 inches from the BLUE/RED wall, 48 inches from the audience wall
@@ -155,16 +298,22 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         nav.goToPosition(flipX4Red(xpos), ypos);
 
         // Rotate to a diagonal heading so one green wheel will clear skystone and wrap around
+        message = String.format("rotate (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
         nav.odometryRotateToHeading(flipAngle4Red(48.0));
         // start the intake green wheels for stone pickup
-        robot.runIntake(0.5);
+        robot.runIntake(0.6);
+
         // Move the robot diagonal to position intake in front of skystone
+        message = String.format("diagonal (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
         nav.odometryMoveDistance(flipX4Red(-6.0), MecaBotMove.DriveType.DIAGONAL);
+
         // Turn robot intake around the skystone to pick it up
+        message = String.format("rotate (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
         nav.odometryRotateToHeading(flipAngle4Red(20));  // no need to turn to zero degrees, the block is picked up before that and we need to go back at an angle
 
         // Go back to the 2nd tile lane in preparation for run to deliver the skystone
         // This should be enough time to fully move the stone inside the robot, stop the intake wheels
+        message = String.format("start (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
         robot.setFrontLiftarm();
         nav.goToPosition(flipX4Red(xpos-12), ypos);
         robot.stopIntake();
@@ -173,6 +322,10 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         if (isSkystone(cs)) {
             haveSkystone = true;
             robot.grabStoneWithClaw();
+            message = "Stone secure with claw";
+        }
+        else {
+            message = "Stone not detected";
         }
     }
 
@@ -275,15 +428,17 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
 
     public void deliverSkystone() {
         // let's go to deliver the Skystone
-
+        actionString = "Deliver Skystone";
+        message = String.format("start (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
         // Driving in reverse to avoid turn around and crashing into alliance partner robot
         robot.setFrontLiftarm();
         telemetry.update(); // print the new orientation of the robot on driver station
         // destination is the centered on tile in front of center of foundation
         //nav.goToXPosition(flipX4Red(-47), MecaBotMove.DRIVE_SPEED_SLOW);
-        nav.goToXPosition(flipX4Red(-55));
+        nav.goToXPosition(flipX4Red(-9)); // 9 is for indoor test only, full field value = 55
         robot.setFrontIntake();
 
+        message = String.format("rotate (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
         // turn robot back towards foundation
         nav.odometryRotateToHeading(FieldSkystone.ANGLE_NEG_Y_AXIS);
 /*
@@ -300,6 +455,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
 
         // move backwards to touch the foundation edge
         nav.odometryMoveForwardBack(-8, MecaBotMove.DRIVE_SPEED_SLOW);
+        message = String.format("backup (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
         telemetry.update(); // print the new orientation of the robot on driver station
 
     }
@@ -307,7 +463,11 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
     public void moveFoundation() {
         // clamp down on the foundation
         robot.grabFoundation();
-        // DO NOT REMOVE this sleep() the clamps take a long time, if we don't sleep the robot moves away before clampiong.
+
+        actionString = "Move Foundation";
+        message = String.format("turn (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
+
+        // DO NOT REMOVE this sleep() the clamps take a long time, if we don't sleep the robot moves away before clamping.
         sleep(1000);
 
         // bring the foundation towards the build zone. When we rotate the foundation in next step,
@@ -316,8 +476,11 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         //nav.goToPosition(flipX4Red(-38), 18, MecaBotMove.DRIVE_SPEED_DEFAULT, false);
         // trying different approach
         nav.odometryRotateToHeading(flipAngle4Red(-85), MecaBotMove.ROTATE_SPEED_DEFAULT, MecaBotMove.TIMEOUT_SHORT, false);
+
+        message = String.format("start (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
         nav.odometryMoveForwardBack(20, MecaBotMove.DRIVE_SPEED_FAST);
 
+        message = String.format("rotate (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
         // rotate with the foundation to be square with the walls
         nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS), MecaBotMove.ROTATE_SPEED_FAST, MecaBotMove.TIMEOUT_SHORT, false);
 /*
@@ -327,6 +490,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         nav.gyroRotateToHeading(FieldSkystone.ANGLE_POS_X_AXIS, MecaBotMove.ROTATE_SPEED_DEFAULT);
         //nav.encoderTurn(40, true, MecaBotMove.DRIVE_SPEED_SLOW);
 */
+        message = String.format("release (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
         // enough time elapsed in foundation movement, the lift arm must be out now, release skystone
         if (haveSkystone) {
             robot.releaseStoneWithClaw();
@@ -342,22 +506,29 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
     }
 
     public void parkAtInsideLane() {
+        actionString = "Park";
+        message = String.format("start (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
         // go to middle of a tile in inside lane
         //nav.goToPosition(flipX4Red(-23), 35);
         // straighten up to travel along the X-Axis or the player alliance wall
         //nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS));
 
         // now go park under the skybridge
-        nav.goToPosition(FieldSkystone.X_ORIGIN, FieldSkystone.TILE_2_CENTER);
+        //nav.goToPosition(FieldSkystone.X_ORIGIN, FieldSkystone.TILE_2_CENTER);
+        nav.goToPosition(FieldSkystone.TILE_2_CENTER, FieldSkystone.TILE_2_CENTER);
+        message = String.format("end (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
     }
 
     public void parkAtOutsideLane() {
+        actionString = "Park";
+        message = String.format("start (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
         //
         // assumption is that starting position is approximately ( -43, 18)
         // therefore we are fairly straight angle to the outside lane
         //
         // now go park under the skybridge
         nav.goToPosition(FieldSkystone.X_ORIGIN, FieldSkystone.TILE_1_CENTER);
+            message = String.format("end (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
     }
 
     public void startNearBuildZoneAndGoToFoundation() {

@@ -10,6 +10,9 @@ import org.firstinspires.ftc.teamcode.skystone.FieldSkystone.AllianceColor;
 public class SkystoneAutoRed extends SkystoneAutoBase {
 
     @Override
+    public String getColorString() { return "RED"; }
+
+    @Override
     public ColorSensor chooseColorSensorForSkystone() {
         return robot.rightColorSensor;
     }
@@ -18,10 +21,10 @@ public class SkystoneAutoRed extends SkystoneAutoBase {
     public void setOdometryStartingPosition() {
 
         // Robot is 18x18 square, robot position (x,y) is center of the robot
-        // starting position is against the wall (y=0), hence robot center is y = 9 inches
-        // facing the quarry (-ve X-axis on RED side) hence orientation is 180 degrees
-        // touching the floor tile edge on stone quarry side (hence X = 23 - 9 = 14 inches)
-        globalPosition.initGlobalPosition(-16.0, 9.0, 180.0);
+        // starting position is against the wall (y=0), hence robot center is y = 8.5 inches
+        // green wheels facing the quarry (+ve Y-axis) hence orientation is 90 degrees
+        // touching the middle floor tile edge on stone quarry side (hence X = 0.375 + 23.5 + 9 = 33 inches)
+        globalPosition.initGlobalPosition(-33.0, 8.5, 90.0);
 
     }
 

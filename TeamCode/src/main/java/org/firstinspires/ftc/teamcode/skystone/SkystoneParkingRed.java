@@ -2,8 +2,11 @@ package org.firstinspires.ftc.teamcode.skystone;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-@Autonomous(name = "RED Parking Only", group="QT")
+@Autonomous(name = "RED Park Outside Lane", group="QT")
 public class SkystoneParkingRed extends SkystoneAutoBase {
+
+    @Override
+    public String getColorString() { return "RED"; }
 
     @Override
     public void setOdometryStartingPosition() {
