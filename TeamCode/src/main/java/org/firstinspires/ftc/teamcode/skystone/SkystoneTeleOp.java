@@ -316,12 +316,11 @@ public class SkystoneTeleOp extends LinearOpMode {
         // this is because the lift arm encoder is drifting causing trouble with software stops
         // so we need some button to reset the encoder count when lift arm is at resting position
         if (gamepad2.x) {
-            //robot.rotateClawInside(); // disabled
             //nav.moveLiftArmInside();
             robot.liftArmMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            robot.liftArmMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }
         else if (gamepad2.y) {
-            //robot.rotateClawOutside(); // disabled
             //robot.liftArmMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             nav.moveLiftArmOutside();
         }
