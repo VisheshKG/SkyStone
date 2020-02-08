@@ -27,7 +27,7 @@ public class TestSkystoneDogeCV extends LinearOpMode {
 
     private static final int IMG_WIDTH = 640;
     private static final int IMG_HEIGHT = 360;
-    private static final int NUM_STONES = 6;
+    private static final int NUM_STONES_IN_QUARRY = 6;
     private static final int STONE_RECT_AREA_MIN = 4000;
     private static final int STONE_RECT_AREA_MAX = 10000;
 
@@ -186,8 +186,8 @@ public class TestSkystoneDogeCV extends LinearOpMode {
         }
     }
 
-    int quarry[] = new int[NUM_STONES+1];
-    int count1, count2, count3;
+    int quarry[] = new int[NUM_STONES_IN_QUARRY+1];
+    int reject[] = new int[4];
 
 
     protected void calculateSkystoneLocation() {
@@ -199,30 +199,33 @@ public class TestSkystoneDogeCV extends LinearOpMode {
             double h = rect.height;
             double ratio = Math.max(Math.abs(h / w), Math.abs(w / h)); // We use max in case h and w get swapped due to image rotation
             if (ratio < 1.4 || ratio > 1.8) {
-                count1++;
+                reject[1]++;
                 continue;
             }
             // the bottom of rectangle (x value) should be close to 66% of the image dimension
             if (Math.abs(rect.x - (IMG_HEIGHT * 0.66)) > 40) {
-                count2++;
+                reject[2]++;
                 continue;
             }
-            // the left side of rectangle (y value) cannot start less than 160 out of 640 pixels
-            int leftlimit = IMG_WIDTH / 4;
-            if (rect.y < (leftlimit)) {
-                count3++;
+
+            // ignore extraneous object images on the sides
+            int stoneWidth = IMG_WIDTH * 3 / 16;
+            int leftLimit = IMG_WIDTH / 4; // first stone starts at approx at 160 out of 640 pixels wide image
+            leftLimit -= (stoneWidth / 2);   // move leftLimit by half of stone width to center of stone
+            if (rect.y < (leftLimit)) {
+                reject[3]++;
                 continue;
             }
             // if we still have a rectangle then it meets all requirements of skystone in quarry
             // calculate position (value = 0, 1, 2 or 3)
-            int pos = (rect.y - leftlimit) * 4 / (IMG_WIDTH - leftlimit);
-            // stone position in the quarry is counted from the audience wall, reverse the count
-            pos = NUM_STONES - pos;
+            int pos = (rect.y - leftLimit) / stoneWidth;
+            // stone position in the quarry is counted from the audience wall starting with 1, reverse the count
+            pos = NUM_STONES_IN_QUARRY - pos;
 
             // skystone detected at position pos in the quarry, increment count for that position
             quarry[pos]++;
         }
         telemetry.addData("Quarry", "6:[%d  %d  %d  %d  %d  %d]:1", quarry[6], quarry[5], quarry[4], quarry[3], quarry[2], quarry[1]);
-        telemetry.addData("Rejected", "ratio=%d, distance=%d, pan=%d", count1, count2, count3);
+        telemetry.addData("Rejected", "ratio=%d, distance=%d, pan=%d", reject[1], reject[2], reject[3]);
     }
 }

@@ -228,19 +228,19 @@ public class SkystoneDetectorDogeCV extends DogeCVDetector {
                 reject[2]++;
                 continue;
             }
-            int img_width = (int)getSize().width;
-            // the left side of rectangle (y value) cannot start less than 160 out of 640 pixels
-            //int leftlimit = IMG_WIDTH / 4;
-            int leftlimit = 100;
-            if (rect.y < (leftlimit)) {
+
+            // ignore extraneous object images on the sides
+            int stoneWidth = IMG_WIDTH * 3 / 16;
+            int leftLimit = IMG_WIDTH / 4; // first stone starts at approx at 160 out of 640 pixels wide image
+            leftLimit -= (stoneWidth / 2);   // move leftLimit by half of stone width to center of stone
+            if (rect.y < (leftLimit)) {
                 reject[3]++;
                 continue;
             }
             // if we still have a rectangle then it meets all requirements of skystone in quarry
             // calculate position (value = 0, 1, 2 or 3)
-            //int pos = (rect.y - leftlimit) * 4 / (IMG_WIDTH - leftlimit);
-            int pos = (rect.y - leftlimit) * 4 / 480;
-            // stone position in the quarry is counted from the audience wall, reverse the count
+            int pos = (rect.y - leftLimit) / stoneWidth;
+            // stone position in the quarry is counted from the audience wall starting with 1, reverse the count
             pos = NUM_STONES_IN_QUARRY - pos;
 
             // skystone detected at position pos in the quarry, increment count for that position
@@ -248,13 +248,11 @@ public class SkystoneDetectorDogeCV extends DogeCVDetector {
         }
         // increment the process counter for this iteration
         currentCount++;
-        //telemetry.addData("Quarry", "[%d,%d,%d,%d,%d,%d]", quarry[6], quarry[5], quarry[4], quarry[3], quarry[2], quarry[1]);
-        //telemetry.addData("Rejected", "ratio=%d, distance=%d, pan=%d", count1, count2, count3);
     }
 
     public int getSkystoneLocationInQuarry() {
         int largest = 0;
-        int pos = 0; // random default initialization, actual value should be set in loop below
+        int pos = 4; // actual value will be set in loop below, default value here if loop fails
         for (int i = 6; i > 3; i--) {
             if (quarry[i] > largest) {
                 largest = quarry[i];
