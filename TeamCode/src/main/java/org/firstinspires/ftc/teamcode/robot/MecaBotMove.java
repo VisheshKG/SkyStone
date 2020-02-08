@@ -42,8 +42,10 @@ public class MecaBotMove {
     public static final double DIST_MARGIN          = 1.0; // inches
     public static final double DIST_NEAR            = 4.0; // inches
     public static final double DIST_SLOWDOWN        = 16.0; // inches
-    public static final double TIMEOUT_DEFAULT      = 5.0; // seconds
-    public static final double TIMEOUT_SHORT        = 3.0; // seconds
+    public static final double TIMEOUT_LONG         = 5.0; // seconds
+    public static final double TIMEOUT_DEFAULT      = 3.0; // seconds
+    public static final double TIMEOUT_SHORT        = 1.5; // seconds
+    public static final double TIMEOUT_QUICK        = 1.0; // seconds
 
     // member variables for state
     private LinearOpMode        myOpMode;       // Access to the OpMode object
@@ -183,8 +185,16 @@ public class MecaBotMove {
         movementStatus = String.format("Done To Angle=%.1f, Spd=%1.1f in T=%1.1f", targetAngle, turnSpeed, runtime.seconds());
     }
 
+    public void odometryRotateToHeading(double targetAngle, boolean slowDownAtEnd) {
+        odometryRotateToHeading(targetAngle, ROTATE_SPEED_DEFAULT, TIMEOUT_DEFAULT, slowDownAtEnd);
+    }
+
+    public void odometryRotateToHeading(double targetAngle, double turnSpeed, double timeout) {
+        odometryRotateToHeading(targetAngle, turnSpeed, timeout, true);
+    }
+
     public void odometryRotateToHeading(double targetAngle) {
-        odometryRotateToHeading(targetAngle, ROTATE_SPEED_DEFAULT, TIMEOUT_SHORT, true);
+        odometryRotateToHeading(targetAngle, ROTATE_SPEED_DEFAULT, TIMEOUT_DEFAULT, true);
     }
 
     /**
@@ -220,6 +230,11 @@ public class MecaBotMove {
         }
         robot.stopDriving();
         movementStatus = String.format("Reached X=%3.2f, Y=%2.2f, Spd=%1.1f in T=%1.1f", x, y, speed, runtime.seconds());
+    }
+
+    public void goToPosition(double x, double y, boolean slowDownAtEnd) {
+
+        goToPosition(x, y, DRIVE_SPEED_DEFAULT, TIMEOUT_DEFAULT, slowDownAtEnd);
     }
 
     public void goToPosition(double x, double y, double speed, double timeout) {

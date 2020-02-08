@@ -16,6 +16,8 @@ import org.firstinspires.ftc.teamcode.purepursuit.MathFunctions;
 import org.firstinspires.ftc.teamcode.robot.MecaBot;
 import org.firstinspires.ftc.teamcode.robot.MecaBotMove;
 import org.firstinspires.ftc.teamcode.skystone.FieldSkystone.AllianceColor;
+import org.firstinspires.ftc.teamcode.skystone.SkystoneBotOperator.OperatorAction;
+import org.firstinspires.ftc.teamcode.skystone.SkystoneBotOperator.ActionMode;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -41,6 +43,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
     protected MecaBot robot;
     protected MecaBotMove nav;
     protected OdometryGlobalPosition globalPosition;
+    protected SkystoneBotOperator oper;
     private OpenCvCamera phoneCam;
     private SkystoneDetectorDogeCV skystoneDetector;
 //    private StoneDetector stoneDetector;
@@ -77,7 +80,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
 
     protected double flipAngle4Red(double value) {
         if (aColor == AllianceColor.RED) {
-            value = MathFunctions.angleWrap(value + 180);
+            value = MathFunctions.angleWrap(180 - value);
         }
         return value;
     }
@@ -104,14 +107,17 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         nav.startOdometry();
         // start printing messages to driver station asap
         setupTelemetry();
+        // start the robot operator thread
+        oper = new SkystoneBotOperator(this, robot);
+        oper.start();
     }
 
     // for testing mainly, at the end wait for driver to press STOP, meanwhile
     // continue updating odometry position of the manual movement of the robot
     public void waitForStop() {
 
+        oper.stop();
         while (opModeIsActive()) {
-
             telemetry.update();
         }
     }
@@ -127,7 +133,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
 // replaced with camera detection, using image recognition
 //        positionToDetectSkystoneWithColorSensor();
 //        pickupSkystoneWithColorSensor();
-
+//
         printSkystoneDetection(1.0);
         int pos = skystoneDetector.getSkystoneLocationInQuarry();
         pickupSkystoneAtPosition(pos);
@@ -294,7 +300,8 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         // move forwards towards the stone quarry corresponding to skystone position number
         // (assumption: skystone position has been detected by camera visual recognition)
         double xpos = FieldSkystone.HALF_LENGTH - (pos * FieldSkystone.STONE_LENGTH + 8);
-        double ypos = FieldSkystone.TILE_LENGTH * 1.5;  // middle of 2nd tile
+        double ypos = FieldSkystone.TILE_2_CENTER;  // 34.875 inches
+        message = String.format("start (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
         nav.goToPosition(flipX4Red(xpos), ypos);
 
         // Rotate to a diagonal heading so one green wheel will clear skystone and wrap around
@@ -303,30 +310,180 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         // start the intake green wheels for stone pickup
         robot.runIntake(0.6);
 
-        // Move the robot diagonal to position intake in front of skystone
-        message = String.format("diagonal (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
-        nav.odometryMoveDistance(flipX4Red(-6.0), MecaBotMove.DriveType.DIAGONAL);
+        // Move the robot diagonal to position intake in front of skystone, but it needs accuracy
+        // The rotation creates a drift from the desired position
+        // This drift varies with skystone position, more rotation = more drift
 
-        // Turn robot intake around the skystone to pick it up
+        // Compensate for the x-axis drift which causes Robot to be short from stone pickup
+        message = String.format(" X diagonal (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
+        // drift calcuation should be +ve here for both RED and BLUE,  // eg xpos=22, globalX = 17 on BLUE side
+        double drift = flipX4Red(xpos - globalPosition.getXinches());
+        if (drift > 1.0) {
+            // move diagonal RIGHT +ve for blue, move diagonal LEFT -ve for RED
+            nav.odometryMoveDistance(flipX4Red(drift), MecaBotMove.DriveType.DIAGONAL);
+        }
+
+        // Move the robot diagonal to position intake in front of skystone, but also adjust by amount of drift
+        // Compensate for robot y-axis drift due to Rotation
+        drift = globalPosition.getYinches() - ypos; // sign is same for BLUE and RED, we are interested in +ve or -ve
+        double dist = 8.0 - drift;
+        if (dist > 0.0) {
+            nav.odometryMoveDistance(flipX4Red(-(dist)), MecaBotMove.DriveType.DIAGONAL);
+        }
+
+        // Turn robot intake around the skystone and move forward a bit to pick it up
+        // no need to turn to zero degrees, the block is picked up before that and we need to go back at an angle
         message = String.format("rotate (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
-        nav.odometryRotateToHeading(flipAngle4Red(20));  // no need to turn to zero degrees, the block is picked up before that and we need to go back at an angle
+        nav.odometryRotateToHeading(flipAngle4Red(20));
 
         // Go back to the 2nd tile lane in preparation for run to deliver the skystone
         // This should be enough time to fully move the stone inside the robot, stop the intake wheels
-        message = String.format("start (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
-        robot.setFrontLiftarm();
-        nav.goToPosition(flipX4Red(xpos-12), ypos);
+        message = String.format("rotate (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
+        nav.odometryRotateToHeading(flipAngle4Red(45));
         robot.stopIntake();
 
-        ColorSensor cs = robot.blockColorSensor;
-        if (isSkystone(cs)) {
-            haveSkystone = true;
-            robot.grabStoneWithClaw();
-            message = "Stone secure with claw";
-        }
-        else {
-            message = "Stone not detected";
-        }
+        robot.setFrontLiftarm();
+        message = String.format("start (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
+        nav.goToPosition(flipX4Red(xpos - 24), ypos, false);
+        robot.grabStoneWithClaw();
+
+        // If stone is detected inside robot, then hold on to it with the claw
+//        ColorSensor cs = robot.blockColorSensor;
+//        if (isSkystone(cs)) {
+//            haveSkystone = true;
+//            robot.grabStoneWithClaw();
+//        }
+//        message = haveSkystone ? "Stone secured" : "Stone not detected";
+    }
+
+    public void deliverSkystone() {
+        // let's go to deliver the Skystone
+        actionString = "Deliver Skystone";
+        // For whatever reason if the stone wasn't detected and latched immediately upon pickup
+        // do that now, in preparation for stone delivery
+        OperatorAction action = oper.new OperatorAction(ActionMode.STONE_LATCH);
+        oper.actionPerform(action);
+
+        // Driving in reverse to avoid turn around and crashing into alliance partner robot
+        robot.setFrontLiftarm();
+        // destination is the centered on tile in front of center of foundation
+        message = String.format("start (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
+        telemetry.update(); // print the new orientation of the robot on driver station
+        nav.goToPosition(flipX4Red(-52), FieldSkystone.TILE_2_CENTER, MecaBotMove.DRIVE_SPEED_DEFAULT, MecaBotMove.TIMEOUT_LONG); // -9 is for indoor test only, full field value = -50
+        robot.setFrontIntake();
+
+        // turn robot back towards foundation
+        message = String.format("rotate (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
+        nav.odometryRotateToHeading(FieldSkystone.ANGLE_NEG_Y_AXIS);
+        // practical observation note: Rotation decrements the y-position by 3 inches
+        // robot position ~ y=32, robot half length = 8.5, foundation position ~ y=47
+        // The above for BLUE field, need to update observation for RED field rotation
+
+        // deliver skystone on the foundation, the lift arm will take time to move, meanwhile we
+        // will grab and move foundation. The stone delivery will complete in operator thread.
+        action = oper.new OperatorAction(ActionMode.STONE_DELIVER);
+        oper.actionPerform(action);
+
+        // move backwards to touch the foundation edge
+        message = String.format("backup (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
+        nav.odometryMoveForwardBack(-7, MecaBotMove.DRIVE_SPEED_SLOW);
+        telemetry.update(); // print the new orientation of the robot on driver station
+
+//        ColorSensor cs = robot.blockColorSensor;
+//        if (isSkystone(cs)) {
+//            message = String.format("Skystone detected, Operator action for delivery.");
+//            haveSkystone = true;
+//            action = oper.new OperatorAction(ActionMode.STONE_DELIVER);
+//            oper.actionPerform(action);
+//        }
+//        else {
+//            message = String.format("Skystone NOT detected, skipping delivery");
+//        }
+    }
+
+    public void moveFoundation() {
+        // clamp down on the foundation
+        robot.grabFoundation();
+
+        actionString = "Move Foundation";
+        message = String.format("turn (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
+
+        // DO NOT REMOVE this sleep() the clamps take a long time, if we don't sleep the robot moves away before clamping.
+        sleep(600);
+
+        // bring the foundation towards the build zone. When we rotate the foundation in next step,
+        // its corner will be in build zone when pushed against the scoreboard wall
+        nav.odometryRotateToHeading(flipAngle4Red(-80), MecaBotMove.ROTATE_SPEED_DEFAULT, MecaBotMove.TIMEOUT_SHORT, false);
+
+        message = String.format("start (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
+        nav.odometryMoveForwardBack(16, MecaBotMove.DRIVE_SPEED_FAST);
+
+        message = String.format("rotate (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
+        // rotate with the foundation to be square with the walls
+        // We use 10 degrees instead of 0 degrees since practically there is overshooting the target
+        nav.odometryRotateToHeading(flipAngle4Red(-10), MecaBotMove.ROTATE_SPEED_FAST, MecaBotMove.TIMEOUT_DEFAULT, false);
+/*
+        // CAUTION CAUTION -- The GYRO Angle DOES NOT MATCH the ODOMETRY Angle for the RED side.
+        // The gyro initialization CANNOT be controlled by software. It initializes hardware at ZERO angle on program init.
+        // GYRO angle is ZERO towards the stone quarry for BOTH BLUE and RED sides. DO NOT flipAngle4Red() here
+        nav.gyroRotateToHeading(FieldSkystone.ANGLE_POS_X_AXIS, MecaBotMove.ROTATE_SPEED_DEFAULT);
+        //nav.encoderTurn(40, true, MecaBotMove.DRIVE_SPEED_SLOW);
+*/
+
+        // foundation has been repositioned, release the clamps, we dont need them for pushing
+        robot.releaseFoundation();
+
+        // drive backwards to push the foundation against the scoreboard wall
+        message = String.format("backup (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
+        nav.odometryMoveDistance(-4, MecaBotMove.DriveType.TANK, MecaBotMove.DRIVE_SPEED_SLOW, MecaBotMove.TIMEOUT_QUICK);
+
+    }
+
+    public void parkAtInsideLane() {
+        actionString = "Park";
+        message = String.format("start (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
+        // go to middle of a tile in inside lane
+        //nav.goToPosition(flipX4Red(-23), 35);
+        // straighten up to travel along the X-Axis or the player alliance wall
+        //nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS));
+
+        // now go park under the skybridge, let the center of robot just stop short
+        nav.goToPosition(flipX4Red(-4.0), FieldSkystone.TILE_2_CENTER);
+        message = String.format("end (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
+    }
+
+    public void parkAtOutsideLane() {
+        actionString = "Park";
+        message = String.format("start (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
+        //
+        // assumption is that starting position is approximately ( -43, 18)
+        // therefore we are fairly straight angle to the outside lane
+        //
+        // now go park under the skybridge, let the center of robot just stop short
+        nav.goToPosition(flipX4Red(-4.0), FieldSkystone.TILE_1_CENTER);
+            message = String.format("end (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
+    }
+
+    public void startNearBuildZoneAndGoToFoundation() {
+        //
+        // Staring position is green wheels towards quarry, robot placed on build zone side of the skybridge
+        // BLUE: globalPosition.initGlobalPosition(-14.0, 9.0, 0.0);
+        // RED : globalPosition.initGlobalPosition(+14.0, 9.0, 180.0);
+        //
+        // Driving in reverse to avoid turn around and crashing into alliance partner robot
+        robot.setFrontLiftarm();
+        telemetry.update(); // print the new orientation of the robot on driver station
+        nav.goToPosition(flipX4Red(-2.0*FieldSkystone.TILE_LENGTH), FieldSkystone.TILE_2_CENTER); // Tried DRIVE_SPEED_FAST here, it resulted in overshooting 20% of times
+        robot.setFrontIntake();
+
+        // turn robot back towards foundation
+        nav.odometryRotateToHeading(FieldSkystone.ANGLE_NEG_Y_AXIS);
+        // OBSOLETE: gyroRotate has been replaced by odometryRotate at 2nd tournament. However with timeout it could be resurrected
+        // nav.gyroRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_NEG_Y_AXIS), MecaBotMove.ROTATE_SPEED_DEFAULT);
+
+        // move backwards to touch the foundation edge
+        nav.odometryMoveForwardBack(-6, MecaBotMove.DRIVE_SPEED_SLOW);
+        telemetry.update(); // print the new orientation of the robot on driver station
     }
 
     public void positionToDetectSkystoneWithColorSensor() {
@@ -424,133 +581,6 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
             return true;
         }
         return false;
-    }
-
-    public void deliverSkystone() {
-        // let's go to deliver the Skystone
-        actionString = "Deliver Skystone";
-        message = String.format("start (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
-        // Driving in reverse to avoid turn around and crashing into alliance partner robot
-        robot.setFrontLiftarm();
-        telemetry.update(); // print the new orientation of the robot on driver station
-        // destination is the centered on tile in front of center of foundation
-        //nav.goToXPosition(flipX4Red(-47), MecaBotMove.DRIVE_SPEED_SLOW);
-        nav.goToXPosition(flipX4Red(-9)); // 9 is for indoor test only, full field value = 55
-        robot.setFrontIntake();
-
-        message = String.format("rotate (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
-        // turn robot back towards foundation
-        nav.odometryRotateToHeading(FieldSkystone.ANGLE_NEG_Y_AXIS);
-/*
-        nav.gyroRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_NEG_Y_AXIS), MecaBotMove.ROTATE_SPEED_SLOW);
-*/
-        // practical observation note: Rotation decrements the y-position by 3 inches
-        // robot position ~ y=32, robot half length = 8.5, foundation position ~ y=47
-        // The above for BLUE field, need to update observation for RED field rotation
-
-        // deliver skystone on the foundation, the lift arm will take time to move, meanwhile we will grab and move foundation.
-        if (haveSkystone) {
-            nav.moveLiftArmOutside();
-        }
-
-        // move backwards to touch the foundation edge
-        nav.odometryMoveForwardBack(-8, MecaBotMove.DRIVE_SPEED_SLOW);
-        message = String.format("backup (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
-        telemetry.update(); // print the new orientation of the robot on driver station
-
-    }
-
-    public void moveFoundation() {
-        // clamp down on the foundation
-        robot.grabFoundation();
-
-        actionString = "Move Foundation";
-        message = String.format("turn (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
-
-        // DO NOT REMOVE this sleep() the clamps take a long time, if we don't sleep the robot moves away before clamping.
-        sleep(1000);
-
-        // bring the foundation towards the build zone. When we rotate the foundation in next step,
-        // its corner will be in build zone when pushed against the scoreboard wall
-        //nav.odometryMoveForwardBack(20, MecaBotMove.DRIVE_SPEED_SLOW);
-        //nav.goToPosition(flipX4Red(-38), 18, MecaBotMove.DRIVE_SPEED_DEFAULT, false);
-        // trying different approach
-        nav.odometryRotateToHeading(flipAngle4Red(-85), MecaBotMove.ROTATE_SPEED_DEFAULT, MecaBotMove.TIMEOUT_SHORT, false);
-
-        message = String.format("start (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
-        nav.odometryMoveForwardBack(20, MecaBotMove.DRIVE_SPEED_FAST);
-
-        message = String.format("rotate (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
-        // rotate with the foundation to be square with the walls
-        nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS), MecaBotMove.ROTATE_SPEED_FAST, MecaBotMove.TIMEOUT_SHORT, false);
-/*
-        // CAUTION CAUTION -- The GYRO Angle DOES NOT MATCH the ODOMETRY Angle for the RED side.
-        // The gyro initialization CANNOT be controlled by software. It initializes hardware at ZERO angle on program init.
-        // GYRO angle is ZERO towards the stone quarry for BOTH BLUE and RED sides. DO NOT flipAngle4Red() here
-        nav.gyroRotateToHeading(FieldSkystone.ANGLE_POS_X_AXIS, MecaBotMove.ROTATE_SPEED_DEFAULT);
-        //nav.encoderTurn(40, true, MecaBotMove.DRIVE_SPEED_SLOW);
-*/
-        message = String.format("release (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
-        // enough time elapsed in foundation movement, the lift arm must be out now, release skystone
-        if (haveSkystone) {
-            robot.releaseStoneWithClaw();
-            nav.moveLiftArmInside();
-        }
-        // drive backwards to push the foundation against the scoreboard wall
-        // foundation is 18.5 and half robot is 9
-        //disabled
-        //nav.encoderMoveForwardBack(-4);
-
-        // foundation has been repositioned, release the clamps
-        robot.releaseFoundation();
-    }
-
-    public void parkAtInsideLane() {
-        actionString = "Park";
-        message = String.format("start (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
-        // go to middle of a tile in inside lane
-        //nav.goToPosition(flipX4Red(-23), 35);
-        // straighten up to travel along the X-Axis or the player alliance wall
-        //nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS));
-
-        // now go park under the skybridge
-        //nav.goToPosition(FieldSkystone.X_ORIGIN, FieldSkystone.TILE_2_CENTER);
-        nav.goToPosition(FieldSkystone.TILE_2_CENTER, FieldSkystone.TILE_2_CENTER);
-        message = String.format("end (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
-    }
-
-    public void parkAtOutsideLane() {
-        actionString = "Park";
-        message = String.format("start (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
-        //
-        // assumption is that starting position is approximately ( -43, 18)
-        // therefore we are fairly straight angle to the outside lane
-        //
-        // now go park under the skybridge
-        nav.goToPosition(FieldSkystone.X_ORIGIN, FieldSkystone.TILE_1_CENTER);
-            message = String.format("end (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
-    }
-
-    public void startNearBuildZoneAndGoToFoundation() {
-        //
-        // Staring position is green wheels towards quarry, robot placed on build zone side of the skybridge
-        // BLUE: globalPosition.initGlobalPosition(-14.0, 9.0, 0.0);
-        // RED : globalPosition.initGlobalPosition(+14.0, 9.0, 180.0);
-        //
-        // Driving in reverse to avoid turn around and crashing into alliance partner robot
-        robot.setFrontLiftarm();
-        telemetry.update(); // print the new orientation of the robot on driver station
-        nav.goToPosition(flipX4Red(-2.0*FieldSkystone.TILE_LENGTH), FieldSkystone.TILE_2_CENTER); // Tried DRIVE_SPEED_FAST here, it resulted in overshooting 20% of times
-        robot.setFrontIntake();
-
-        // turn robot back towards foundation
-        nav.odometryRotateToHeading(FieldSkystone.ANGLE_NEG_Y_AXIS);
-        // OBSOLETE: gyroRotate has been replaced by odometryRotate at 2nd tournament. However with timeout it could be resurrected
-        // nav.gyroRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_NEG_Y_AXIS), MecaBotMove.ROTATE_SPEED_DEFAULT);
-
-        // move backwards to touch the foundation edge
-        nav.odometryMoveForwardBack(-6, MecaBotMove.DRIVE_SPEED_SLOW);
-        telemetry.update(); // print the new orientation of the robot on driver station
     }
 
 }

@@ -21,8 +21,10 @@ public class FieldSkystone {
     static final double     X_ORIGIN                    = 0.0;
     static final double     HALF_LENGTH                 = 70.25;
     static final double     TILE_LENGTH                 = 23.5;
-    static final double     TILE_1_CENTER               = TILE_LENGTH * 0.5;
-    static final double     TILE_2_CENTER               = TILE_LENGTH * 1.5;
+    static final double     TILE_WITHOUT_TABS           = 22.75;
+    static final double     TILE_1_CENTER               = TILE_WITHOUT_TABS * 0.5;
+    static final double     TILE_2_CENTER               = TILE_1_CENTER + TILE_LENGTH;
+    static final double     TILE_3_CENTER               = TILE_2_CENTER + TILE_LENGTH;
     static final double     SIDE_WALL_TO_FOUNDATION     = 47.0;
     static final double     BUILD_WALL_TO_FOUNDATION    = 4.0;
 
