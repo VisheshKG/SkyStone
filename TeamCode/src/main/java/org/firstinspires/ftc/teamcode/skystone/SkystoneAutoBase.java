@@ -107,8 +107,10 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         nav.startOdometry();
         // start printing messages to driver station asap
         setupTelemetry();
-        printSkystoneDetection(0.5);
+        printSkystoneDetection(0.3);
         telemetry.update();
+        // stop the vision pipeline until user hits play button (QT3 quick fix)
+        phoneCam.stopStreaming();
         // start the robot operator thread
         oper = new SkystoneBotOperator(this, robot);
         oper.start();
@@ -136,7 +138,16 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
 //        positionToDetectSkystoneWithColorSensor();
 //        pickupSkystoneWithColorSensor();
 //
+        // this is already set in init() but in case someone moved the robot location manually.
+        setOdometryStartingPosition();
+        // start counting Skystone detection counts only after play
+        phoneCam.startStreaming(IMG_WIDTH, IMG_HEIGHT, OpenCvCameraRotation.UPRIGHT);
+        // wait a bit for some frames to be delivered
+        sleep(1000);
+        // there should be several image frames collected now to detect skystone
         int pos = skystoneDetector.getSkystoneLocationInQuarry();
+        phoneCam.stopStreaming();
+        // Start moving to do rest of the work
         pickupSkystoneAtPosition(pos);
         deliverSkystone();
         moveFoundation();
@@ -320,11 +331,17 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
 
         // Compensate for the x-axis drift which causes Robot to be short from stone pickup
         message = String.format(" X diagonal (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
-        // drift calcuation should be +ve here for both RED and BLUE,  // eg xpos=22, globalX = 17 on BLUE side
-        double drift = flipX4Red(xpos - globalPosition.getXinches());
-        if (drift > 1.0) {
-            // move diagonal RIGHT +ve for blue, move diagonal LEFT -ve for RED
-            nav.odometryMoveDistance(flipX4Red(drift), MecaBotMove.DriveType.DIAGONAL);
+        // drift calculation should be +ve here for BLUE and -ve for RED,  // eg xpos=22, globalX = 17 on BLUE side
+        double drift = xpos - globalPosition.getXinches();
+        if (aColor == AllianceColor.BLUE) {
+            if (drift > 0.0) {
+                // move diagonal RIGHT +ve for blue, move diagonal LEFT -ve for RED
+                nav.odometryMoveDistance(drift, MecaBotMove.DriveType.DIAGONAL);
+            }
+        }
+        else if (aColor == AllianceColor.RED) {
+                // move diagonal RIGHT +ve for blue, move diagonal LEFT -ve for RED
+                nav.odometryMoveDistance(-3.0, MecaBotMove.DriveType.DIAGONAL);
         }
 
         // Move the robot diagonal to position intake in front of skystone, but also adjust by amount of drift
@@ -348,7 +365,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
 
         robot.setFrontLiftarm();
         message = String.format("start (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
-        nav.goToPosition(flipX4Red(xpos - 24), ypos, false);
+        nav.goToPosition(flipX4Red(xpos - 18), ypos, false);
         robot.grabStoneWithClaw();
 
         // If stone is detected inside robot, then hold on to it with the claw
@@ -452,7 +469,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         //nav.odometryRotateToHeading(flipAngle4Red(FieldSkystone.ANGLE_POS_X_AXIS));
 
         // now go park under the skybridge, let the center of robot just stop short
-        nav.goToPosition(flipX4Red(-4.0), FieldSkystone.TILE_2_CENTER);
+        nav.goToPosition(flipX4Red(-6.0), FieldSkystone.TILE_2_CENTER - 4);
         message = String.format("end (%.1f,%.1f)", globalPosition.getXinches(), globalPosition.getYinches());
     }
 
@@ -477,7 +494,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         // Driving in reverse to avoid turn around and crashing into alliance partner robot
         robot.setFrontLiftarm();
         telemetry.update(); // print the new orientation of the robot on driver station
-        nav.goToPosition(flipX4Red(-2.0*FieldSkystone.TILE_LENGTH), FieldSkystone.TILE_2_CENTER); // Tried DRIVE_SPEED_FAST here, it resulted in overshooting 20% of times
+        nav.goToPosition(flipX4Red(-52), FieldSkystone.TILE_2_CENTER); // Tried DRIVE_SPEED_FAST here, it resulted in overshooting 20% of times
         robot.setFrontIntake();
 
         // turn robot back towards foundation
