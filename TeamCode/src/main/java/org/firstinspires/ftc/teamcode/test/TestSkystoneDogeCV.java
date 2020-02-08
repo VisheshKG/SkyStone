@@ -35,6 +35,7 @@ public class TestSkystoneDogeCV extends LinearOpMode {
     private int previousCount = 0;
     private SkystoneDetectorDogeCV skystoneDetector;
 //    private StoneDetector stoneDetector;
+    boolean allianceColorIsBlue = true;
 
     @Override
     public void runOpMode() {
@@ -62,7 +63,7 @@ public class TestSkystoneDogeCV extends LinearOpMode {
          * of a frame from the camera. Note that switching pipelines on-the-fly
          * (while a streaming session is in flight) *IS* supported.
          */
-        skystoneDetector = new SkystoneDetectorDogeCV();
+        skystoneDetector = new SkystoneDetectorDogeCV(allianceColorIsBlue);
         skystoneDetector.setTargetAreaSize(STONE_RECT_AREA_MIN,STONE_RECT_AREA_MAX);
         phoneCam.setPipeline(skystoneDetector);
 
@@ -98,9 +99,12 @@ public class TestSkystoneDogeCV extends LinearOpMode {
             }
             telemetry.addData("Detection Count", "Current=%d, Previous=%d", currentCount, previousCount);
 
-            calculateSkystoneLocation();
-
-            previousCount = currentCount;
+            int[] quarry = skystoneDetector.getStoneQuarryCounts();
+            telemetry.addData("Quarry", "6:[%d  %d  %d  %d  %d  %d]:1", quarry[6], quarry[5], quarry[4], quarry[3], quarry[2], quarry[1]);
+            int pos = skystoneDetector.getSkystoneLocationInQuarry();
+            telemetry.addData("Skystone Detected", "%d  %d  %d  %d  %d  %d  %d  %d  %d  %d", pos, pos, pos, pos, pos, pos, pos, pos, pos, pos);
+            int[] reject = skystoneDetector.getRejectCounts();
+            telemetry.addData("Rejected", "ratio=%d, distance=%d, pan=%d", reject[1], reject[2], reject[3]);
 
             // CAUTION: NOTE that Y-coordinate is printed before X-coordinate deliberately
             // Phone camera rotation is locked to Portrait UPRIGHT however
@@ -133,6 +137,8 @@ public class TestSkystoneDogeCV extends LinearOpMode {
 //            telemetry.addData("Overhead time ms", phoneCam.getOverheadTimeMs());
 //            telemetry.addData("Theoretical max FPS", phoneCam.getCurrentPipelineMaxFps());
             telemetry.update();
+
+            previousCount = currentCount;
 
 
             /*
@@ -186,46 +192,4 @@ public class TestSkystoneDogeCV extends LinearOpMode {
         }
     }
 
-    int quarry[] = new int[NUM_STONES_IN_QUARRY+1];
-    int reject[] = new int[4];
-
-
-    protected void calculateSkystoneLocation() {
-
-        ArrayList<Rect> skystoneRects = skystoneDetector.getSkystoneCandidates();
-        for (Rect rect : skystoneRects) {
-            // skystone height / width ratio must be within a range around 1.6
-            double w = rect.width;
-            double h = rect.height;
-            double ratio = Math.max(Math.abs(h / w), Math.abs(w / h)); // We use max in case h and w get swapped due to image rotation
-            if (ratio < 1.4 || ratio > 1.8) {
-                reject[1]++;
-                continue;
-            }
-            // the bottom of rectangle (x value) should be close to 66% of the image dimension
-            if (Math.abs(rect.x - (IMG_HEIGHT * 0.66)) > 40) {
-                reject[2]++;
-                continue;
-            }
-
-            // ignore extraneous object images on the sides
-            int stoneWidth = IMG_WIDTH * 3 / 16;
-            int leftLimit = IMG_WIDTH / 4; // first stone starts at approx at 160 out of 640 pixels wide image
-            leftLimit -= (stoneWidth / 2);   // move leftLimit by half of stone width to center of stone
-            if (rect.y < (leftLimit)) {
-                reject[3]++;
-                continue;
-            }
-            // if we still have a rectangle then it meets all requirements of skystone in quarry
-            // calculate position (value = 0, 1, 2 or 3)
-            int pos = (rect.y - leftLimit) / stoneWidth;
-            // stone position in the quarry is counted from the audience wall starting with 1, reverse the count
-            pos = NUM_STONES_IN_QUARRY - pos;
-
-            // skystone detected at position pos in the quarry, increment count for that position
-            quarry[pos]++;
-        }
-        telemetry.addData("Quarry", "6:[%d  %d  %d  %d  %d  %d]:1", quarry[6], quarry[5], quarry[4], quarry[3], quarry[2], quarry[1]);
-        telemetry.addData("Rejected", "ratio=%d, distance=%d, pan=%d", reject[1], reject[2], reject[3]);
-    }
 }

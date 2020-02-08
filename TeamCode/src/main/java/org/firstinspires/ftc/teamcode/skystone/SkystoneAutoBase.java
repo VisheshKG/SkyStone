@@ -107,6 +107,8 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         nav.startOdometry();
         // start printing messages to driver station asap
         setupTelemetry();
+        printSkystoneDetection(0.5);
+        telemetry.update();
         // start the robot operator thread
         oper = new SkystoneBotOperator(this, robot);
         oper.start();
@@ -134,7 +136,6 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
 //        positionToDetectSkystoneWithColorSensor();
 //        pickupSkystoneWithColorSensor();
 //
-        printSkystoneDetection(1.0);
         int pos = skystoneDetector.getSkystoneLocationInQuarry();
         pickupSkystoneAtPosition(pos);
         deliverSkystone();
@@ -208,7 +209,7 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
         // Specify the image processing pipeline we wish to invoke upon receipt
         // of a frame from the camera. Note that switching pipelines on-the-fly
         // (while a streaming session is in flight) *IS* supported.
-        skystoneDetector = new SkystoneDetectorDogeCV();
+        skystoneDetector = new SkystoneDetectorDogeCV(aColor == AllianceColor.BLUE);
         skystoneDetector.setTargetAreaSize(STONE_RECT_AREA_MIN,STONE_RECT_AREA_MAX);
         phoneCam.setPipeline(skystoneDetector);
 
@@ -235,24 +236,27 @@ public abstract class SkystoneAutoBase extends LinearOpMode {
      * printSkystoneDetection()
      * This method prints all the internal variables using OpenCV for image recognition and
      * calculating the best position of the skystone in the quarry. Useful for development.
-     * In final program this method is not used, when the skystone detection is working reliably.
+     * In final program this method is used only in INIT mode, not in PLAY mode
+     * CAUTION: This method does not have while (opModeIsActive()) to break out of loop when
+     * user presses STOP on driver station. Using this method in play mode is dangerous
      */
     public void printSkystoneDetection(double timeout) {
 
         actionString = "Skystone Detection";
         message = "Detecting";
         ElapsedTime runTime = new ElapsedTime();
-        while (opModeIsActive() && runTime.seconds() < timeout) {
+        while (runTime.seconds() < timeout) {
             // if we have already analyzed the current picture frame, then simply return
             int currentCount = skystoneDetector.getRectangleDetectionCount();
             if (currentCount == previousCount) {
                 sleep(50);
                 continue;
             }
-            telemetry.addData("Detection Count", "Current=%d, Previous=%d", currentCount, previousCount);
+            // debug only
+            //telemetry.addData("Detection Count", "Current=%d, Previous=%d", currentCount, previousCount);
 
             int[] quarry = skystoneDetector.getStoneQuarryCounts();
-            telemetry.addData("Quarry", "6:[%d  %d  %d  %d  %d  %d]:1", quarry[6], quarry[5], quarry[4], quarry[3], quarry[2], quarry[1]);
+            telemetry.addData("Stone Quarry", "6:[%d  %d  %d  %d  %d  %d]:1", quarry[6], quarry[5], quarry[4], quarry[3], quarry[2], quarry[1]);
             int pos = skystoneDetector.getSkystoneLocationInQuarry();
             message = "Location " + pos;
             telemetry.addData("Skystone Detected", "%d  %d  %d  %d  %d  %d  %d  %d  %d  %d", pos, pos, pos, pos, pos, pos, pos, pos, pos, pos);

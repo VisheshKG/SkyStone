@@ -51,6 +51,7 @@ public class SkystoneDetectorDogeCV extends DogeCVDetector {
     // Attributes of the objects of interest to be recognized in the image.
     private int minRectArea     = 0;
     private int maxRectArea     = Integer.MAX_VALUE;
+    private boolean keepRight   = true;
 
     // image processing canvases
     private Mat rawImage = new Mat();
@@ -87,8 +88,13 @@ public class SkystoneDetectorDogeCV extends DogeCVDetector {
 
     public int[] getRejectCounts() { return reject; }
 
-    public SkystoneDetectorDogeCV() {
+    private SkystoneDetectorDogeCV() {
         detectorName = "Skystone Detector";
+    }
+
+    public SkystoneDetectorDogeCV(boolean keepRight) {
+        detectorName = "Skystone Detector";
+        this.keepRight = keepRight;
     }
 
     @Override
@@ -141,7 +147,7 @@ public class SkystoneDetectorDogeCV extends DogeCVDetector {
         blackFilter.process(workingMat.clone(), blackMask);
         List<MatOfPoint> contoursBlack = new ArrayList<>();
         Imgproc.findContours(blackMask, contoursBlack, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
-        Imgproc.drawContours(displayMat,contoursBlack,-1,new Scalar(0,255,0),2); // Draw contours in green
+        Imgproc.drawContours(displayMat,contoursBlack,-1,new Scalar(0, 176,240),2); // Draw contours in light blue
 
         // we want to allocate new memory since the stoneRects and skystoneRects is returned
         // outside this class and is used in different thread than the image proc pipeline
@@ -150,7 +156,7 @@ public class SkystoneDetectorDogeCV extends DogeCVDetector {
             // Get bounding rect of contour
             Rect rect = Imgproc.boundingRect(cont);
             // Draw rectangle on monitor display
-            Imgproc.rectangle(displayMat, rect.tl(), rect.br(), new Scalar(112,48,160),2); // Draw rect in purple
+            Imgproc.rectangle(displayMat, rect.tl(), rect.br(), new Scalar(0,255,0),2); // Draw rect in green
             // Record if it meets the target area size
             if ((rect.area() > minRectArea) && (rect.area() <= maxRectArea)) {
                 rectanglesBlack.add(rect);
@@ -219,7 +225,7 @@ public class SkystoneDetectorDogeCV extends DogeCVDetector {
             double w = rect.width;
             double h = rect.height;
             double ratio = Math.max(Math.abs(h / w), Math.abs(w / h)); // We use max in case h and w get swapped due to image rotation
-            if (ratio < 1.4 || ratio > 1.8) {
+            if (ratio < 1.7 || ratio > 2.0) {
                 reject[1]++;
                 continue;
             }
@@ -230,19 +236,34 @@ public class SkystoneDetectorDogeCV extends DogeCVDetector {
             }
 
             // ignore extraneous object images on the sides
-            int stoneWidth = IMG_WIDTH * 3 / 16;
-            int leftLimit = IMG_WIDTH / 4; // first stone starts at approx at 160 out of 640 pixels wide image
-            leftLimit -= (stoneWidth / 2);   // move leftLimit by half of stone width to center of stone
-            if (rect.y < (leftLimit)) {
-                reject[3]++;
-                continue;
+            int stoneWidth = IMG_WIDTH * 3 / 16; // stone width is approx 120 out of 640 pixels wide image
+            int cropLimit = IMG_WIDTH / 4; // first stone starts at approx at 160 out of 640 pixels wide image
+            cropLimit -= (stoneWidth / 2);   // move limit by half of stone width to center of stone
+
+            int pos;
+            // BLUE side of Skystone field has stone quarry on the right, therefore the image
+            // rectangles on the right side are of interest and those on the left to be discarded
+            if (keepRight) {
+                if (rect.y < (cropLimit)) {
+                    reject[3]++;
+                    continue;
+                }
+                // if we still have a rectangle then it meets all requirements of skystone in quarry
+                // calculate position (value = 0, 1, 2, 3 or 4)
+                pos = (rect.y - cropLimit) / stoneWidth;
             }
-            // if we still have a rectangle then it meets all requirements of skystone in quarry
-            // calculate position (value = 0, 1, 2 or 3)
-            int pos = (rect.y - leftLimit) / stoneWidth;
+            else { // keepLeft, RED side of skystone field has the stone quarry on the left
+                int y = (int)(rect.br().y);
+                if (y > (IMG_WIDTH - cropLimit)) {
+                    reject[3]++;
+                    continue;
+                }
+                // calculate position (value = 4, 3, 2, 1 or 0)
+                pos = (IMG_WIDTH - cropLimit - y) / stoneWidth;
+            }
+
             // stone position in the quarry is counted from the audience wall starting with 1, reverse the count
             pos = NUM_STONES_IN_QUARRY - pos;
-
             // skystone detected at position pos in the quarry, increment count for that position
             quarry[pos]++;
         }
