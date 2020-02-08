@@ -50,7 +50,7 @@ public class SkystoneFoundationRed extends SkystoneAutoBase {
         // starting position is against the wall (y=0), hence robot center is y = 9 inches
         // Robot (BLUE:left | RED:right) side is exactly on the 1st and 2nd tile line (47 inches from center)
         // Robot is facing the quarry (-ve X-axis on RED side) hence orientation is 180 degrees
-        globalPosition.initGlobalPosition(+14.0, 9.0, 180.0);
+        globalPosition.initGlobalPosition(+33.0, 9.0, -90.0);
 
     }
 
